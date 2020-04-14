@@ -1,0 +1,4 @@
+bot/
+*.pyc
+__pycache__/
+settings.json
