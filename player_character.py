@@ -44,12 +44,14 @@ class PlayerCharacter:
         return f"""{self.name} (<@{self.user}>)
 ```Level: {self.level}
 Gold: {self.gold}
-+-----------+---------+---+-----------+---------+
-| HP        | {self.current_hp}/{self.max_hp}{' ' * (7 - len(str(self.current_hp)) - len(str(self.max_hp)))}|   | Dexterity | {self.dexterity_modifier}{self.dexterity}{' ' * (7 - len(str(self.dexterity)))}|
-| Attack    | {self.attack}{' ' * (8 - len(str(self.attack)))}|   | Charisma  | {self.charisma_modifier}{self.charisma}{' ' * (7 - len(str(self.charisma)))}|
-| Defense   | {self.defense}{' ' * (8 - len(str(self.defense)))}|   | Knowledge | {self.knowledge_modifier}{self.knowledge}{' ' * (7 - len(str(self.knowledge)))}|
-| Speed     | {self.speed}{' ' * (8 - len(str(self.speed)))}|   | Wisdom    | {self.wisdom_modifier}{self.wisdom}{' ' * (7 - len(str(self.wisdom)))}|
-+-----------+---------+---+-----------+---------+
++--------------+---------+---+----------------+---------+
+| Primary Stat | Value   |   | Secondary Stat | Value   |
++--------------+---------+---+----------------+---------+
+| HP           | {self.current_hp}/{self.max_hp}{' ' * (7 - len(str(self.current_hp)) - len(str(self.max_hp)))}|   | Dexterity      | {self.dexterity_modifier}{self.dexterity}{' ' * (7 - len(str(self.dexterity)))}|
+| Attack       | {self.attack}{' ' * (8 - len(str(self.attack)))}|   | Charisma       | {self.charisma_modifier}{self.charisma}{' ' * (7 - len(str(self.charisma)))}|
+| Defense      | {self.defense}{' ' * (8 - len(str(self.defense)))}|   | Knowledge      | {self.knowledge_modifier}{self.knowledge}{' ' * (7 - len(str(self.knowledge)))}|
+| Speed        | {self.speed}{' ' * (8 - len(str(self.speed)))}|   | Wisdom         | {self.wisdom_modifier}{self.wisdom}{' ' * (7 - len(str(self.wisdom)))}|
++--------------+---------+---+----------------+---------+
 ```"""
 
     def rest_of_the_owl(self):
