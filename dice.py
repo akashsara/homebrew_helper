@@ -1,29 +1,81 @@
 import random
 import re
+import logging
 
-roll_format = r"(\d+)d(\d+)([+-])?(\d+)?"
+# logging.basicConfig(level=logging.INFO)
+roll_format = r"\d+d\d+"
+valid_characters = set(str(x) for x in range(0, 10)).union({"+", "-", "d", " "})
 
 
-def roll(roll):
-    match = re.match(roll_format, roll)
-    if match:
-        rolls = []
-        match = [x for x in match.groups() if x]
-        num_dice = int(match[0])
-        die_type = int(match[1])
-        if num_dice > 50 or die_type > 1000:
-            return "too high"
-        if len(match) > 2:
-            if match[2] == "+":
-                modifier_amount = int(match[3])
-            else:
-                modifier_amount = int("-" + match[3])
-        else:
-            modifier_amount = 0
-        rolls = [random.randint(1, die_type) for i in range(num_dice)]
-        final_value = sum(rolls) + modifier_amount
-        return roll, rolls, modifier_amount, final_value
+def split_the_roll(roll):
+    num_dice, die_type = roll.split("d")
+    return int(num_dice), int(die_type)
 
+
+def make_the_roll(num_dice, die_type):
+    return [random.randint(1, die_type) for i in range(num_dice)]
+
+
+def resolve_operation(accumulator, operation, value):
+    if operation == "+":
+        return accumulator + value
+    return accumulator - value
+
+
+def parse_roll(roll, final_value, total_modifier, operation, all_rolls):
+    if "d" in roll:
+        logging.debug("Dice roll detected.")
+        num_dice, die_type = split_the_roll(roll)
+        if num_dice > 50 or die_type > 100:
+            return "too high", 0, 0
+        roll_results = make_the_roll(num_dice, die_type)
+        all_rolls[roll] = roll_results
+        final_value = resolve_operation(final_value, operation, sum(roll_results))
+        logging.debug(f"Rolled: {roll_results}")
     else:
-        return "wrong"
+        logging.debug("Modifier update.")
+        total_modifier = resolve_operation(total_modifier, operation, int(roll))
+        logging.debug(f"New Modifier: {total_modifier}")
+    return all_rolls, final_value, total_modifier
 
+
+def roll(user_rolled_a):
+    # Preprocess
+    user_rolled_a = user_rolled_a.lower().replace(" ", "")
+    # Validate if this is even a roll
+    if not valid_characters.issuperset(set(user_rolled_a)):
+        return "wrong"
+    user_rolled_a += "$"
+    try:
+        all_rolls = {}
+        final_value = 0
+        total_modifier = 0
+        operation = "+"
+        current_roll = ""
+        for char in user_rolled_a:
+            logging.debug(f"Current Character: {char}. Current window: {current_roll}")
+            if char not in ["+", "-", "$"]:
+                current_roll += char
+            else:
+                all_rolls, final_value, total_modifier = parse_roll(
+                    current_roll, final_value, total_modifier, operation, all_rolls
+                )
+                if all_rolls == "too high":
+                    return "too high"
+                operation = char
+                current_roll = ""
+        if current_roll:
+            all_rolls, final_value, total_modifier = parse_roll(
+                current_roll, final_value, total_modifier, operation, all_rolls
+            )
+            if all_rolls == "too high":
+                return "too high"
+        return {
+            "user_roll": user_rolled_a[:-1],
+            "rolls": all_rolls,
+            "modifier": total_modifier,
+            "total": final_value + total_modifier,
+        }
+    except Exception as e:
+        logging.debug(e)
+        return "wrong"

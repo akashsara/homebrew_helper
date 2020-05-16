@@ -26,6 +26,23 @@ def save_file(data, type_):
         pickle.dump(data, fp)
 
 
+def pad(text_to_pad, length_to_pad_to, direction):
+    if direction == "left":
+        return (" " * (length_to_pad_to - len(text_to_pad))) + text_to_pad
+    return text_to_pad + (" " * (length_to_pad_to - len(text_to_pad)))
+
+
+def format_rolls(rolls):
+    new_roll = []
+    for key, value in rolls.items():
+        num_dice, die_size = key.split("d")
+        num_dice = pad(num_dice, 2, "left")
+        die_size = pad(die_size, 3, "right")
+        total = pad(str(sum(value)), 5, "left")
+        new_roll.append(f"{num_dice}d{die_size}: {total} :: {value}")
+    return "\n".join(new_roll)
+
+
 @client.command(name="roll_dice", aliases=["roll", "r", "R", "ROLL", "Roll"])
 async def roll_dice(context, *roll):
     roll = "".join(roll)
@@ -34,11 +51,17 @@ async def roll_dice(context, *roll):
     print("Roll:", author, roll)
     roll = dice.roll(roll)
     if roll == "too high":
-        await context.send(f"I'm not rolling that absurd number <@{author.id}>.")
+        await context.send(
+            f"One or more of your rolls are absurdly high. I'm not rolling that <@{author.id}>."
+        )
     elif roll == "wrong":
-        await context.send(f"That's not how you do it <@{author.id}>. Your roll should be of the format XDN or XDN+-Y. X = Number of dice, N = Size of die, Y = Modifier.")
+        await context.send(
+            f"That's not how you do it <@{author.id}>. Your roll should be of the format (roll)(operation)(modifier), where rolls should be of the format XdN (X = Number of Dice; N = Number of Die Faces). Operation is either + or - and modifier is your modifier. Examples: 1d20+2 or 1d20+2d6-2"
+        )
     else:
-        await context.send(f"<@{author.id}>'s Roll:\n```fix\nYou rolled a {roll[0]}.\nYou got: {', '.join(str(x) for x in roll[1])}\nYour modifier is: {str(roll[2])}```Your total roll is: **{roll[3]}**")
+        await context.send(
+            f"<@{author.id}>'s Roll:\n```fix\nYou rolled a {roll['user_roll']}.\nYou got: \n{format_rolls(roll['rolls'])}\nYour modifier is: {str(roll['modifier'])}```Your total roll is: **{str(roll['total'])}**"
+        )
 
 
 @client.command(name="create_character", aliases=["create_char", "cc"])
