@@ -46,70 +46,93 @@ def format_rolls(rolls):
 @client.command(name="roll_dice", aliases=["roll", "r", "R", "ROLL", "Roll"])
 async def roll_dice(context, *roll):
     roll = "".join(roll)
-    roll = roll.replace(" ", "")
     author = context.author
     print("Roll:", author, roll)
-    roll = dice.roll(roll)
-    if roll == "too high":
-        await context.send(
-            f"One or more of your rolls are absurdly high. I'm not rolling that <@{author.id}>."
+    advantage_or_disadvantage = False
+    if roll[-1] in ["a", "d"]:
+        advantage_or_disadvantage = roll[-1]
+        roll = roll[:-1]
+        result = roll_with_advantage_or_disadvantage(
+            roll, advantage_or_disadvantage, author.id
         )
-    elif roll == "wrong":
-        await context.send(
-            f"That's not how you do it <@{author.id}>. Your roll should be of the format (roll)(operation)(modifier), where rolls should be of the format XdN (X = Number of Dice; N = Number of Die Faces). Operation is either + or - and modifier is your modifier. Examples: 1d20+2 or 1d20+2d6-2"
-        )
+        await context.send(result)
     else:
-        await context.send(
-            f"<@{author.id}>'s Roll:\n```fix\nYou rolled a {roll['user_roll']}.\nYou got: \n{format_rolls(roll['rolls'])}\nYour modifier is: {str(roll['modifier'])}```Your total roll is: **{str(roll['total'])}**"
-        )
+        roll = dice.roll(roll)
+        if roll == "too high":
+            await context.send(
+                f"One or more of your rolls are absurdly high. I'm not rolling that <@{author.id}>."
+            )
+        elif roll == "wrong":
+            await context.send(
+                f"That's not how you do it <@{author.id}>. Your roll should be of the format (roll)(operation)(modifier)(special), where rolls should be of the format XdN (X = Number of Dice; N = Number of Die Faces). Operation is either + or - and modifier is your modifier. Special indicates advantage or disadvantage. Just append your roll with an a or d. Examples: 1d20+2 or 1d20+2d6-2 or 1d20a. "
+            )
+        else:
+            await context.send(
+                f"<@{author.id}>'s Roll:\n```fix\nYou rolled a {roll['user_roll']}.\nYou got: \n{format_rolls(roll['rolls'])}\nYour modifier is: {str(roll['modifier'])}```Your total roll is: **{str(roll['total'])}**"
+            )
 
 
-@client.command(name="create_character", aliases=["create_char", "cc"])
-async def create_character(context):
-    user = context.author.id
-    await context.send(
-        f"Hiya <@{user}>, let's make your character!\nWhat is your character called?"
-    )
-    message = await client.wait_for("message", timeout=120)
-    name = message.content
-    await context.send(
-        f"I see, so your character is called {message.content}.\nNow, enter your stats in the following order (space separated):\n<HP> <Attack> <Defense> <Speed> <Dexterity> <Charisma> <Knowledge> <Wisdom>"
-    )
-    message = await client.wait_for("message", timeout=120)
-    stats = message.content
-    gold = 0
-    level = 2
-    character = PlayerCharacter(user, name, *stats.split(" "), level, gold)
-    await context.send(
-        f"Got it! Your character has now been created. Check it out!\n{character.short_info()}Does that look alright?\nSend Y to confirm, N to reject."
-    )
-    message = await client.wait_for("message", timeout=120)
-    if message.content.lower()[0] == "y":
-        users[user] = character
-        save_file(users, "user")
-        await context.send(f"Your character has been saved!")
+def roll_with_advantage_or_disadvantage(roll, advantage_or_disadvantage, author_id):
+    first_roll = dice.roll(roll)
+    # Cover these cases in the 1st roll since we'll get the same for the 2nd
+    if first_roll == "too high":
+        return "One or more of your rolls are absurdly high. I'm not rolling that <@{author_id}>."
+    elif first_roll == "wrong":
+        return "That's not how you do it <@{author_id}>. Your roll should be of the format (roll)(operation)(modifier)(special), where rolls should be of the format XdN (X = Number of Dice; N = Number of Die Faces). Operation is either + or - and modifier is your modifier. Special indicates advantage or disadvantage. Just append your roll with an a or d. Examples: 1d20+2 or 1d20+2d6-2 or 1d20a. "
+    second_roll = dice.roll(roll)
+    base_string = f"<@{author_id}>:\n Attempt 1:\n```fix\nYou rolled a {first_roll['user_roll']}.\nYou got: \n{format_rolls(first_roll['rolls'])}\nYour modifier is: {str(first_roll['modifier'])}\nYour total roll is: {str(first_roll['total'])}```Attempt 2:\n```fix\nYou rolled a {second_roll['user_roll']}.\nYou got: \n{format_rolls(second_roll['rolls'])}\nYour modifier is: {str(second_roll['modifier'])}\nYour total roll is: {str(second_roll['total'])}```"
+    if advantage_or_disadvantage == "a":
+        return base_string + f"Your final roll is: **{max(first_roll['total'], second_roll['total'])}**."
     else:
-        await context.send(f"Well that was useless. Your character has not been saved.")
+        return base_string + f"Your final roll is: **{min(first_roll['total'], second_roll['total'])}**."
 
 
-@client.command(name="character_info", aliases=["ci", "info"])
-async def character_info(context):
-    user = context.author.id
-    if user in users:
-        character = users[user]
-        await context.send(character.short_info())
-        await context.send(character.rest_of_the_owl())
-    else:
-        await context.send(
-            f"Sorry <@{user}>, couldn't find a character linked to you. :/"
-        )
+# @client.command(name="create_character", aliases=["create_char", "cc"])
+# async def create_character(context):
+#     user = context.author.id
+#     await context.send(
+#         f"Hiya <@{user}>, let's make your character!\nWhat is your character called?"
+#     )
+#     message = await client.wait_for("message", timeout=120)
+#     name = message.content
+#     await context.send(
+#         f"I see, so your character is called {message.content}.\nNow, enter your stats in the following order (space separated):\n<HP> <Attack> <Defense> <Speed> <Dexterity> <Charisma> <Knowledge> <Wisdom>"
+#     )
+#     message = await client.wait_for("message", timeout=120)
+#     stats = message.content
+#     gold = 0
+#     level = 2
+#     character = PlayerCharacter(user, name, *stats.split(" "), level, gold)
+#     await context.send(
+#         f"Got it! Your character has now been created. Check it out!\n{character.short_info()}Does that look alright?\nSend Y to confirm, N to reject."
+#     )
+#     message = await client.wait_for("message", timeout=120)
+#     if message.content.lower()[0] == "y":
+#         users[user] = character
+#         save_file(users, "user")
+#         await context.send(f"Your character has been saved!")
+#     else:
+#         await context.send(f"Well that was useless. Your character has not been saved.")
 
 
-@client.command(name="create_ability")
-async def create_ability(context):
-    # Have a file containing abilities
-    # Only Admins can make abilities
-    pass
+# @client.command(name="character_info", aliases=["ci", "info"])
+# async def character_info(context):
+#     user = context.author.id
+#     if user in users:
+#         character = users[user]
+#         await context.send(character.short_info())
+#         await context.send(character.rest_of_the_owl())
+#     else:
+#         await context.send(
+#             f"Sorry <@{user}>, couldn't find a character linked to you. :/"
+#         )
+
+
+# @client.command(name="create_ability")
+# async def create_ability(context):
+#     # Have a file containing abilities
+#     # Only Admins can make abilities
+#     pass
 
 
 if __name__ == "__main__":
