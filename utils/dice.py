@@ -1,8 +1,8 @@
 import random
 import re
-import logging
+from logging import logger
 
-# logging.basicConfig(level=logging.INFO)
+logger = get_logger()
 roll_format = r"\d+d\d+"
 valid_characters = set(str(x) for x in range(0, 10)).union({"+", "-", "d", " "})
 
@@ -24,18 +24,18 @@ def resolve_operation(accumulator, operation, value):
 
 def parse_roll(roll, final_value, total_modifier, operation, all_rolls):
     if "d" in roll:
-        logging.debug("Dice roll detected.")
+        logger.debug("Dice roll detected.")
         num_dice, die_type = split_the_roll(roll)
         if num_dice > 50 or die_type > 100:
             return "too high", 0, 0
         roll_results = make_the_roll(num_dice, die_type)
         all_rolls.append((roll, roll_results))
         final_value = resolve_operation(final_value, operation, sum(roll_results))
-        logging.debug(f"Rolled: {roll_results}")
+        logger.debug(f"Rolled: {roll_results}")
     else:
-        logging.debug("Modifier update.")
+        logger.debug("Modifier update.")
         total_modifier = resolve_operation(total_modifier, operation, int(roll))
-        logging.debug(f"New Modifier: {total_modifier}")
+        logger.debug(f"New Modifier: {total_modifier}")
     return all_rolls, final_value, total_modifier
 
 
@@ -53,7 +53,7 @@ def roll(user_rolled_a):
         operation = "+"
         current_roll = ""
         for char in user_rolled_a:
-            logging.debug(f"Current Character: {char}. Current window: {current_roll}")
+            logger.debug(f"Current Character: {char}. Current window: {current_roll}")
             if char not in ["+", "-", "$"]:
                 current_roll += char
             else:
@@ -77,5 +77,5 @@ def roll(user_rolled_a):
             "total": final_value + total_modifier,
         }
     except Exception as e:
-        logging.debug(e)
+        logger.debug(e)
         return "wrong"

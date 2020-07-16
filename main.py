@@ -3,11 +3,12 @@ import re
 import discord
 import random
 import pickle
-from discord.ext.commands import Bot
-from player_character import PlayerCharacter
-from ability import Ability
-from item import Item
-import dice
+from discord.ext.commands import 
+from utils import dice
+from utils.player_character import PlayerCharacter
+from utils.ability import Ability
+from utils.item import Item
+from utils.logging import logger
 
 TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
 BOT_PREFIX = ("?",)
@@ -48,7 +49,7 @@ def format_rolls(rolls):
 async def roll_dice(context, *roll):
     roll = "".join(roll)
     author = context.author
-    print("Roll:", author, roll)
+    logger.info("Roll:", author, roll)
     advantage_or_disadvantage = False
     if roll[-1] in ["a", "d"]:
         advantage_or_disadvantage = roll[-1]
@@ -137,11 +138,11 @@ def roll_with_advantage_or_disadvantage(roll, advantage_or_disadvantage, author_
 
 
 if __name__ == "__main__":
-    print("Loading DnData..")
+    logger.info("Loading DnData..")
     if os.path.isfile("data/users.p"):
         with open("data/users.p", "rb") as fp:
             users = pickle.load(fp)
     else:
         users = dict()
-    print("Booting up client..")
+    logger.info("Booting up client..")
     client.run(TOKEN)
