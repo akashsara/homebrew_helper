@@ -58,7 +58,7 @@ def format_rolls(rolls):
 async def roll_dice(context, *roll):
     roll = "".join(roll)
     author = context.author
-    logger.info(f"Roll: {author.name + '#' + author.discriminator} :: {roll})
+    logger.info(f"Roll: {author.name + '#' + author.discriminator} :: {roll}")
     advantage_or_disadvantage = False
     if roll[-1] in ["a", "d"]:
         advantage_or_disadvantage = roll[-1]

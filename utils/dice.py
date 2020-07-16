@@ -49,7 +49,6 @@ def roll(user_rolled_a):
     # Validate if this is even a roll
     if not valid_characters.issuperset(set(user_rolled_a)):
         return "wrong"
-    user_rolled_a += "$"
     try:
         all_rolls = []
         final_value = 0
@@ -78,7 +77,8 @@ def roll(user_rolled_a):
                             operation,
                             all_rolls,
                         )
-            elif char not in ["+", "-", "$"]:
+                    current_roll = ""
+            elif char not in ["+", "-"]:
                 current_roll += char
             else:
                 all_rolls, final_value, total_modifier = parse_roll(
