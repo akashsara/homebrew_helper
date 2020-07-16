@@ -8,7 +8,7 @@ from utils import dice
 from utils.player_character import PlayerCharacter
 from utils.ability import Ability
 from utils.item import Item
-from utils.logging import logger
+from utils.logging_util import logger
 
 TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
 BOT_PREFIX = ("?",)
