@@ -1,5 +1,7 @@
-from ability import Ability
-from item import Item
+import sys
+sys.path.append('../')
+from utils.ability import Ability
+from utils.item import Item
 
 
 class PlayerCharacter:

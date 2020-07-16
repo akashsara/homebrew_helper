@@ -11,7 +11,7 @@ from utils.item import Item
 from utils.logging_util import logger
 
 TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
-BOT_PREFIX = ("?",)
+BOT_PREFIX = ("?", "!")
 DATA_LOCATION = "data/"
 client = Bot(command_prefix=BOT_PREFIX)
 
