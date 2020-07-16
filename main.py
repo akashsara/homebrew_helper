@@ -34,7 +34,8 @@ def pad(text_to_pad, length_to_pad_to, direction):
 
 def format_rolls(rolls):
     new_roll = []
-    for key, value in rolls.items():
+    for item in rolls:
+        key, value = item
         num_dice, die_size = key.split("d")
         num_dice = pad(num_dice, 2, "left")
         die_size = pad(die_size, 3, "right")

@@ -29,7 +29,7 @@ def parse_roll(roll, final_value, total_modifier, operation, all_rolls):
         if num_dice > 50 or die_type > 100:
             return "too high", 0, 0
         roll_results = make_the_roll(num_dice, die_type)
-        all_rolls[roll] = roll_results
+        all_rolls.append((roll, roll_results))
         final_value = resolve_operation(final_value, operation, sum(roll_results))
         logging.debug(f"Rolled: {roll_results}")
     else:
@@ -47,7 +47,7 @@ def roll(user_rolled_a):
         return "wrong"
     user_rolled_a += "$"
     try:
-        all_rolls = {}
+        all_rolls = []
         final_value = 0
         total_modifier = 0
         operation = "+"
