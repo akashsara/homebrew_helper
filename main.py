@@ -3,7 +3,7 @@ import re
 import discord
 import random
 import pickle
-from discord.ext.commands import 
+from discord.ext.commands import Bot
 from utils import dice
 from utils.player_character import PlayerCharacter
 from utils.ability import Ability
