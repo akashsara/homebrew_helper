@@ -1,6 +1,8 @@
 import random
 import re
-from logging_util import logger
+import sys
+sys.path.append('../')
+from utils.logging_util import logger
 
 roll_format = r"\d+d\d+"
 valid_characters = set(str(x) for x in range(0, 10)).union({"+", "-", "d", " "})
