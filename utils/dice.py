@@ -1,11 +1,14 @@
 import random
 import re
 import sys
-sys.path.append('../')
+
+sys.path.append("../")
 from utils.logging_util import logger
 
 roll_format = r"\d+d\d+"
-valid_characters = set(str(x) for x in range(0, 10)).union({"+", "-", "d", " "})
+valid_characters = set(str(x) for x in range(0, 10)).union(
+    {"+", "-", "d", " ", "(", ")"}
+)
 
 
 def split_the_roll(roll):
