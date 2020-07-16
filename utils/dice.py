@@ -51,9 +51,29 @@ def roll(user_rolled_a):
         total_modifier = 0
         operation = "+"
         current_roll = ""
+        nested_roll = False
         for char in user_rolled_a:
             logger.debug(f"Current Character: {char}. Current window: {current_roll}")
-            if char not in ["+", "-", "$"]:
+            if char == "(":
+                logger.debug("Entering nested_roll.")
+                nested_roll = True
+                num_rolls = current_roll
+                current_roll = ""
+            elif nested_roll:
+                if char != ")":
+                    logger.debug("Adding to nested roll.")
+                    current_roll += char
+                else:
+                    logger.debug("End of nested roll.")
+                    for i in range(int(num_rolls)):
+                        all_rolls, final_value, total_modifier = parse_roll(
+                            current_roll,
+                            final_value,
+                            total_modifier,
+                            operation,
+                            all_rolls,
+                        )
+            elif char not in ["+", "-", "$"]:
                 current_roll += char
             else:
                 all_rolls, final_value, total_modifier = parse_roll(
