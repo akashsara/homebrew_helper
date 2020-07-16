@@ -26,6 +26,15 @@ def save_file(data, type_):
     with open(f"{DATA_LOCATION}/{filename}", "wb") as fp:
         pickle.dump(data, fp)
 
+def load_files():
+    dicts = [{}, {}, {}]
+    for i, filename in enumerate(["users.p", "abilities.p", "items.p"]):
+        file_path = os.path.join(f"{DATA_LOCATION}/{filename}")
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as fp:
+                dicts[i] = pickle.load(fp)
+    return dicts
+
 
 def pad(text_to_pad, length_to_pad_to, direction):
     if direction == "left":
@@ -139,10 +148,6 @@ def roll_with_advantage_or_disadvantage(roll, advantage_or_disadvantage, author_
 
 if __name__ == "__main__":
     logger.info("Loading DnData..")
-    if os.path.isfile("data/users.p"):
-        with open("data/users.p", "rb") as fp:
-            users = pickle.load(fp)
-    else:
-        users = dict()
+    users, abilities, items = load_files()
     logger.info("Booting up client..")
     client.run(TOKEN)
