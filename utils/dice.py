@@ -95,7 +95,7 @@ def roll(user_rolled_a):
             if all_rolls == "too high":
                 return "too high"
         return {
-            "user_roll": user_rolled_a[:-1],
+            "user_roll": user_rolled_a,
             "rolls": all_rolls,
             "modifier": total_modifier,
             "total": final_value + total_modifier,
