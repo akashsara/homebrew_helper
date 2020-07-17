@@ -56,6 +56,17 @@ def format_rolls(rolls):
         new_roll.append(f"{num_dice}d{die_size}: {total} :: {value}")
     return "\n".join(new_roll)
 
+def format_repeated_rolls(rolls):
+    full_text = []
+    for item in rolls:
+        roll = item['user_roll']
+        all_in_one = []
+        for x, y in item['rolls']:
+            all_in_one.extend(y)
+        modifier = item['modifier']
+        total = item['total']
+        full_text.append(f"{roll} : {total} :: {modifier} + {all_in_one}")
+    return full_text
 
 @client.command(name="roll_dice", aliases=["roll", "r", "R", "ROLL", "Roll"])
 async def roll_dice(context, *roll):
@@ -114,7 +125,7 @@ def roll_and_repeat(roll, num_repeats, author_id):
     list_of_rolls = [first_roll]
     for _ in range(num_repeats - 1):
         list_of_rolls.append(dice.roll(roll))
-    outputs = [f"<@{author_id}'s Roll:", "```fix", f"You rolled {roll}."] + [f"{trial['user_roll']} : {trial['rolls']} + {trial['modifier']} = {trial['total']}" for trial in list_of_rolls] + ["```"]
+    outputs = [f"<@{author_id}>'s Roll:", "```fix", f"You rolled {roll}."] + format_repeated_rolls(list_of_rolls) + ["```"]
     return "\n".join(outputs)
 
 # @client.command(name="create_character", aliases=["create_char", "cc"])
