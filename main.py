@@ -63,14 +63,17 @@ async def roll_dice(context, *roll):
     author = context.author
     logger.info(f"Roll: {author.name + '#' + author.discriminator} :: {roll}")
     advantage_or_disadvantage = roll[-1] in ["a", "d"]
-    repeated_roll = len(roll.split('r')) > 1
+    repeat_roll = len(roll.split('r')) > 1
     if advantage_or_disadvantage:
         result = roll_with_advantage_or_disadvantage(
             roll[:-1], roll[-1], author.id
         )
-    elif repeated_roll:
+    elif repeat_roll:
         roll, repeats = roll.split('r')
-        result = repeated_roll(roll, repeats, author.id)
+        if repeats.isdigit():
+            result = roll_and_repeat(roll, int(repeats), author.id)
+        else:
+            result = "<@{author_id}>, if you want to roll multiple times, do ?r <roll>r<num_times>."
     else:
         result = roll_normally(roll, author.id)
     await context.send(result)
