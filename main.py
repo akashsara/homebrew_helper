@@ -15,6 +15,9 @@ BOT_PREFIX = ("?", "!")
 DATA_LOCATION = "data/"
 client = Bot(command_prefix=BOT_PREFIX)
 
+too_high = "One or more of your rolls are absurdly high. I'm not rolling that <@{author_id}>."
+wrong = "That's not how you do it <@{author_id}>. Your roll should be of the format (roll)(operation)(modifier)(special), where rolls should be of the format XdN (X = Number of Dice; N = Number of Die Faces). Operation is either + or - and modifier is your modifier. Special indicates advantage or disadvantage. Just append your roll with an a or d. Examples: 1d20+2 or 1d20+2d6-2 or 1d20a."
+
 
 def save_file(data, type_):
     if type_ == "user":
@@ -56,40 +59,40 @@ def format_rolls(rolls):
 
 @client.command(name="roll_dice", aliases=["roll", "r", "R", "ROLL", "Roll"])
 async def roll_dice(context, *roll):
-    roll = "".join(roll)
+    roll = "".join(roll).lower().replace(" ", "")
     author = context.author
     logger.info(f"Roll: {author.name + '#' + author.discriminator} :: {roll}")
-    advantage_or_disadvantage = False
-    if roll[-1] in ["a", "d"]:
-        advantage_or_disadvantage = roll[-1]
-        roll = roll[:-1]
+    advantage_or_disadvantage = roll[-1] in ["a", "d"]
+    repeated_roll = len(roll.split('r')) > 1
+    if advantage_or_disadvantage:
         result = roll_with_advantage_or_disadvantage(
-            roll, advantage_or_disadvantage, author.id
+            roll[:-1], roll[-1], author.id
         )
-        await context.send(result)
+    elif repeated_roll:
+        roll, repeats = roll.split('r')
+        result = repeated_roll(roll, repeats, author.id)
     else:
-        roll = dice.roll(roll)
-        if roll == "too high":
-            await context.send(
-                f"One or more of your rolls are absurdly high. I'm not rolling that <@{author.id}>."
-            )
-        elif roll == "wrong":
-            await context.send(
-                f"That's not how you do it <@{author.id}>. Your roll should be of the format (roll)(operation)(modifier)(special), where rolls should be of the format XdN (X = Number of Dice; N = Number of Die Faces). Operation is either + or - and modifier is your modifier. Special indicates advantage or disadvantage. Just append your roll with an a or d. Examples: 1d20+2 or 1d20+2d6-2 or 1d20a. "
-            )
-        else:
-            await context.send(
-                f"<@{author.id}>'s Roll:\n```fix\nYou rolled a {roll['user_roll']}.\nYou got: \n{format_rolls(roll['rolls'])}\nYour modifier is: {str(roll['modifier'])}```Your total roll is: **{str(roll['total'])}**"
-            )
+        result = roll_normally(roll, author.id)
+    await context.send(result)
+
+
+def roll_normally(roll, author_id):
+    roll = dice.roll(roll)
+    if roll == "too high":
+        return too_high.format(author_id=author_id)
+    elif roll == "wrong":
+        return wrong.format(author_id=author_id)
+    else:
+        return f"<@{author_id}>'s Roll:\n```fix\nYou rolled a {roll['user_roll']}.\nYou got: \n{format_rolls(roll['rolls'])}\nYour modifier is: {str(roll['modifier'])}```Your total roll is: **{str(roll['total'])}**"
 
 
 def roll_with_advantage_or_disadvantage(roll, advantage_or_disadvantage, author_id):
     first_roll = dice.roll(roll)
     # Cover these cases in the 1st roll since we'll get the same for the 2nd
     if first_roll == "too high":
-        return f"One or more of your rolls are absurdly high. I'm not rolling that <@{author_id}>."
+        return too_high.format(author_id=author_id)
     elif first_roll == "wrong":
-        return f"That's not how you do it <@{author_id}>. Your roll should be of the format (roll)(operation)(modifier)(special), where rolls should be of the format XdN (X = Number of Dice; N = Number of Die Faces). Operation is either + or - and modifier is your modifier. Special indicates advantage or disadvantage. Just append your roll with an a or d. Examples: 1d20+2 or 1d20+2d6-2 or 1d20a. "
+        return wrong.format(author_id=author_id)
     second_roll = dice.roll(roll)
     base_string = f"<@{author_id}>:\n Attempt 1:\n```fix\nYou rolled a {first_roll['user_roll']}.\nYou got: \n{format_rolls(first_roll['rolls'])}\nYour modifier is: {str(first_roll['modifier'])}\nYour total roll is: {str(first_roll['total'])}```Attempt 2:\n```fix\nYou rolled a {second_roll['user_roll']}.\nYou got: \n{format_rolls(second_roll['rolls'])}\nYour modifier is: {str(second_roll['modifier'])}\nYour total roll is: {str(second_roll['total'])}```"
     if advantage_or_disadvantage == "a":
@@ -97,6 +100,19 @@ def roll_with_advantage_or_disadvantage(roll, advantage_or_disadvantage, author_
     else:
         return base_string + f"Your final roll is: **{min(first_roll['total'], second_roll['total'])}**."
 
+
+def roll_and_repeat(roll, num_repeats, author_id):
+    first_roll = dice.roll(roll)
+    # Cover these cases in the 1st roll since we'll get the same for the 2nd
+    if first_roll == "too high":
+        return too_high.format(author_id=author_id)
+    elif first_roll == "wrong":
+        return wrong.format(author_id=author_id)
+    list_of_rolls = [first_roll]
+    for _ in range(num_repeats - 1):
+        list_of_rolls.append(dice.roll(roll))
+    outputs = [f"<@{author_id}'s Roll:", "```fix", f"You rolled {roll}."] + [f"{trial['user_roll']} : {trial['rolls']} + {trial['modifier']} = {trial['total']}" for trial in list_of_rolls] + ["```"]
+    return "\n".join(outputs)
 
 # @client.command(name="create_character", aliases=["create_char", "cc"])
 # async def create_character(context):
