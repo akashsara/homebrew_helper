@@ -58,15 +58,18 @@ def format_rolls(rolls):
 
 def format_repeated_rolls(rolls):
     full_text = []
+    ending = []
     for item in rolls:
         roll = item['user_roll']
         all_in_one = []
-        for x, y in item['rolls']:
+        for _, y in item['rolls']:
             all_in_one.extend(y)
-        modifier = item['modifier']
-        total = item['total']
+        modifier = pad(str(item['modifier']), 2, "left")
+        total = pad(str(item['total']), 5, "left")
+        ending.append(item['total'])
         full_text.append(f"{roll} : {total} :: {modifier} + {all_in_one}")
-    return full_text
+    ending = f"All Rolls: {ending}"
+    return full_text, ending
 
 @client.command(name="roll_dice", aliases=["roll", "r", "R", "ROLL", "Roll"])
 async def roll_dice(context, *roll):
@@ -84,7 +87,7 @@ async def roll_dice(context, *roll):
         if repeats.isdigit():
             result = roll_and_repeat(roll, int(repeats), author.id)
         else:
-            result = f"<@{author_id}>, if you want to roll multiple times, do`?r <roll>r<num_times>`."
+            result = f"<@{author.id}>, if you want to roll multiple times, do`?r <roll>r<num_times>`."
     else:
         result = roll_normally(roll, author.id)
     await context.send(result)
@@ -125,7 +128,8 @@ def roll_and_repeat(roll, num_repeats, author_id):
     list_of_rolls = [first_roll]
     for _ in range(num_repeats - 1):
         list_of_rolls.append(dice.roll(roll))
-    outputs = [f"<@{author_id}>'s Roll:", "```fix", f"You rolled {roll}."] + format_repeated_rolls(list_of_rolls) + ["```"]
+    main_rolls, ending = format_repeated_rolls(list_of_rolls)
+    outputs = [f"<@{author_id}>'s Roll:", "```fix", f"You rolled {roll}."] + main_rolls + ["```"] + [ending]
     return "\n".join(outputs)
 
 # @client.command(name="create_character", aliases=["create_char", "cc"])
