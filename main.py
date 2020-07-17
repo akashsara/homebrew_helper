@@ -68,7 +68,7 @@ def format_repeated_rolls(rolls):
         total = pad(str(item['total']), 5, "left")
         ending.append(item['total'])
         full_text.append(f"{roll} : {total} :: {modifier} + {all_in_one}")
-    ending = f"All Rolls: {ending}"
+    ending = f"Final Rolls: **{ending}**"
     return full_text, ending
 
 @client.command(name="roll_dice", aliases=["roll", "r", "R", "ROLL", "Roll"])
@@ -129,7 +129,7 @@ def roll_and_repeat(roll, num_repeats, author_id):
     for _ in range(num_repeats - 1):
         list_of_rolls.append(dice.roll(roll))
     main_rolls, ending = format_repeated_rolls(list_of_rolls)
-    outputs = [f"<@{author_id}>'s Roll:", "```fix", f"You rolled {roll}."] + main_rolls + ["```"] + [ending]
+    outputs = [f"<@{author_id}>'s Roll:", "```fix", f"You rolled {roll}."] + main_rolls + ["```" + ending]
     return "\n".join(outputs)
 
 # @client.command(name="create_character", aliases=["create_char", "cc"])
