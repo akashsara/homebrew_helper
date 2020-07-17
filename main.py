@@ -16,7 +16,7 @@ DATA_LOCATION = "data/"
 client = Bot(command_prefix=BOT_PREFIX)
 
 too_high = "One or more of your rolls are absurdly high. I'm not rolling that <@{author_id}>."
-wrong = "That's not how you do it <@{author_id}>. Your roll should be of the format (roll)(operation)(modifier)(special), where rolls should be of the format XdN (X = Number of Dice; N = Number of Die Faces). Operation is either + or - and modifier is your modifier. Special indicates advantage or disadvantage. Just append your roll with an a or d. Examples: 1d20+2 or 1d20+2d6-2 or 1d20a."
+wrong = "That's not how you do it <@{author_id}>. Your roll should be of the format (roll)(operation)(modifier)(special), where rolls should be of the format XdN (X = Number of Dice; N = Number of Die Faces). Operation is either + or - and modifier is your modifier. Special indicates advantage or disadvantage. Just append your roll with an a or d. Examples: `?r 1d20+2` or `?r 1d20+1d4-2` or `?r 1d20a`."
 
 
 def save_file(data, type_):
@@ -84,7 +84,7 @@ async def roll_dice(context, *roll):
         if repeats.isdigit():
             result = roll_and_repeat(roll, int(repeats), author.id)
         else:
-            result = "<@{author_id}>, if you want to roll multiple times, do ?r <roll>r<num_times>."
+            result = f"<@{author_id}>, if you want to roll multiple times, do`?r <roll>r<num_times>`."
     else:
         result = roll_normally(roll, author.id)
     await context.send(result)
