@@ -69,15 +69,13 @@ def roll(user_rolled_a):
                     current_roll += char
                 else:
                     logger.debug("End of nested roll.")
-                    for i in range(int(num_rolls)):
-                        all_rolls, final_value, total_modifier = parse_roll(
-                            current_roll,
-                            final_value,
-                            total_modifier,
-                            operation,
-                            all_rolls,
-                        )
+                    for _ in range(int(num_rolls)):
+                        results = roll(current_roll)
+                        all_rolls.extend(results["rolls"])
+                        total_modifier += results["modifier"]
+                        final_value += results["total"] - total_modifier
                     current_roll = ""
+                    nested_roll = False
             elif char not in ["+", "-"]:
                 current_roll += char
             else:
