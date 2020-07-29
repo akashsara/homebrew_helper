@@ -26,7 +26,7 @@ async def coin_toss(context, *num_tosses):
     num_tosses = 1 if not num_tosses.isdigit() else int(num_tosses)
     tosses = random.choices(population=[True, False], k=num_tosses)
     result = (
-        [f"You tossed the coin {num_tosses} time(s)! You got:", f"```diff"]
+        [f"Heya <@{context.author.id}>,", f"You tossed the coin {num_tosses} time(s)! You got:", f"```diff"]
         + ["+ Heads" if toss else "- Tails" for toss in tosses]
         + ["```"]
     )
