@@ -18,6 +18,7 @@ BOT_PREFIX = ("?", "!")
 DATA_LOCATION = "data/"
 DATAFILE_NAMES = {"user": "users.p", "ability": "abilities.p", "item": "items.p"}
 
+client = Bot(command_prefix=BOT_PREFIX)
 
 @client.command(name="coin_toss", aliases=["cointoss", "toss", "flip"])
 async def coin_toss(context, num_tosses):
@@ -107,5 +108,4 @@ if __name__ == "__main__":
     logger.info("Loading DnData..")
     users, abilities, items = gen_utils.load_files(DATA_LOCATION, DATAFILE_NAMES)
     logger.info("Booting up client..")
-    client = Bot(command_prefix=BOT_PREFIX)
     client.run(TOKEN)
