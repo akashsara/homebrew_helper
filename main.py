@@ -21,8 +21,9 @@ DATAFILE_NAMES = {"user": "users.p", "ability": "abilities.p", "item": "items.p"
 client = Bot(command_prefix=BOT_PREFIX)
 
 @client.command(name="coin_toss", aliases=["cointoss", "toss", "flip"])
-async def coin_toss(context, num_tosses):
-    num_tosses = 1 if not num_tosses.isdigit() else num_tosses
+async def coin_toss(context, *num_tosses):
+    num_tosses = "".join(num_tosses)
+    num_tosses = 1 if not num_tosses.isdigit() else int(num_tosses)
     tosses = random.choices(population=[True, False], k=num_tosses)
     result = (
         [f"You tossed the coin {num_tosses} time(s)! You got:", f"```diff"]
