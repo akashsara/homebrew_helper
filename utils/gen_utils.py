@@ -7,10 +7,10 @@ def save_file(data, file_path):
         pickle.dump(data, fp)
 
 
-def load_files(file_path, file_dict):
+def load_files(file_root_dir, file_dict):
     dicts = [{}, {}, {}]
     for key, value in file_dict.items():
-        file_path = os.path.join(f"{DATA_LOCATION}/{value}")
+        file_path = os.path.join(f"{file_root_dir}/{value}")
         if os.path.exists(file_path):
             with open(file_path, "rb") as fp:
                 dicts[key] = pickle.load(fp)
@@ -48,4 +48,4 @@ def format_repeated_rolls(rolls):
         ending.append(item["total"])
         full_text.append(f"{roll} : {total} :: {modifier} + {all_in_one}")
     ending = f"Final Rolls: **{ending}**"
-    return full_text, endingF
+    return full_text, ending

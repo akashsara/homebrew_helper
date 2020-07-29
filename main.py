@@ -1,14 +1,17 @@
 import os
-import re
-import discord
-import random
 import pickle
+import random
+import re
+
+import discord
 from discord.ext.commands import Bot
-from dice import roll
-from utils.player_character import PlayerCharacter
+
+from dice import roll_dice
+from utils import gen_utils
 from utils.ability import Ability
 from utils.item import Item
 from utils.logging_util import logger
+from utils.player_character import PlayerCharacter
 
 TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
 BOT_PREFIX = ("?", "!")
@@ -29,22 +32,24 @@ async def coin_toss(context, num_tosses):
 
 
 @client.command(name="roll_dice", aliases=["roll", "r", "R", "ROLL", "Roll"])
-async def roll_dice(context, *roll):
+async def roll(context, *roll):
     roll = "".join(roll).lower().replace(" ", "")
     author = context.author
     logger.info(f"Roll: {author.name + '#' + author.discriminator} :: {roll}")
     advantage_or_disadvantage = roll[-1] in ["a", "d"]
     repeat_roll = len(roll.split("r")) > 1
     if advantage_or_disadvantage:
-        result = roll.with_advantage_or_disadvantage(roll[:-1], roll[-1], author.id)
+        result = roll_dice.with_advantage_or_disadvantage(
+            roll[:-1], roll[-1], author.id
+        )
     elif repeat_roll:
         roll, repeats = roll.split("r")
         if repeats.isdigit():
-            result = roll.and_repeat(roll, int(repeats), author.id)
+            result = roll_dice.and_repeat(roll, int(repeats), author.id)
         else:
             result = f"<@{author.id}>, if you want to roll multiple times, do`?r <roll>r<num_times>`."
     else:
-        result = roll.normally(roll, author.id)
+        result = roll_dice.normally(roll, author.id)
     await context.send(result)
 
 
@@ -100,7 +105,7 @@ async def roll_dice(context, *roll):
 
 if __name__ == "__main__":
     logger.info("Loading DnData..")
-    users, abilities, items = load_files()
+    users, abilities, items = gen_utils.load_files(DATA_LOCATION, DATAFILE_NAMES)
     logger.info("Booting up client..")
     client = Bot(command_prefix=BOT_PREFIX)
     client.run(TOKEN)
