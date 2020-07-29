@@ -41,7 +41,7 @@ async def coin_toss(context, *num_tosses):
                 f"```diff",
             ]
             + ["+ Heads" if toss else "- Tails" for toss in tosses]
-            + ["```", f"Heads: {counts[True]}", f"Tails: {counts[False]}"]
+            + [f"```Heads: {counts[True]}", f"Tails: {counts[False]}"]
         )
     await context.send("\n".join(result))
 
