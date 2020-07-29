@@ -30,7 +30,7 @@ async def coin_toss(context, *num_tosses):
         + ["+ Heads" if toss else "- Tails" for toss in tosses]
         + ["```"]
     )
-    await context.send(result)
+    await context.send('\n'.join(result))
 
 
 @client.command(name="roll_dice", aliases=["roll", "r", "R", "ROLL", "Roll"])
