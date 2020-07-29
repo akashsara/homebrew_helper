@@ -2,6 +2,7 @@ import os
 import pickle
 import random
 import re
+from collections import Counter
 
 import discord
 from discord.ext.commands import Bot
@@ -20,17 +21,31 @@ DATAFILE_NAMES = {"user": "users.p", "ability": "abilities.p", "item": "items.p"
 
 client = Bot(command_prefix=BOT_PREFIX)
 
+
 @client.command(name="coin_toss", aliases=["cointoss", "toss", "flip"])
 async def coin_toss(context, *num_tosses):
     num_tosses = "".join(num_tosses)
     num_tosses = 1 if not num_tosses.isdigit() else int(num_tosses)
-    tosses = random.choices(population=[True, False], k=num_tosses)
-    result = (
-        [f"Heya <@{context.author.id}>,", f"You tossed the coin {num_tosses} time(s)! You got:", f"```diff"]
-        + ["+ Heads" if toss else "- Tails" for toss in tosses]
-        + ["```"]
-    )
-    await context.send('\n'.join(result))
+    if num_tosses > 20:
+        result = [
+            f"Heya <@{context.author.id}>,",
+            "That's just ridiculous and I refuse to do that.",
+        ]
+    else:
+        tosses = random.choices(population=[True, False], k=num_tosses)
+        counts = Counter(tosses)
+        result = (
+            [
+                f"Heya <@{context.author.id}>,",
+                f"You tossed the coin {num_tosses} time(s)! You got:",
+                f"```diff",
+            ]
+            + ["+ Heads" if toss else "- Tails" for toss in tosses]
+            + ["```"]
+            + [f"Heads: {counts[True]}"]
+            + [f"Tails: {counts[False]}"]
+        )
+    await context.send("\n".join(result))
 
 
 @client.command(name="roll_dice", aliases=["roll", "r", "R", "ROLL", "Roll"])
