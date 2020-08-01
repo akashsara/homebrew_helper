@@ -69,8 +69,8 @@ async def roll(context, *roll):
 
 
 @client.command(name="bungee_gum", aliases=["bg", "bungee", "gum"])
-async def roll(context):
-    await context.send(f"<@author.id}>, bungee gum possesses the properties of both rubber and gum.")
+async def bungee_gum(context):
+    await context.send(f"<@{context.author.id}>, bungee gum possesses the properties of both rubber and gum.")
 
 # @client.command(name="create_character", aliases=["create_char", "cc"])
 # async def create_character(context):
