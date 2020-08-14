@@ -1,6 +1,6 @@
 import os
 import pickle
-import defaultdict
+from collections import defaultdict
 
 
 def save_file(data, file_path):
