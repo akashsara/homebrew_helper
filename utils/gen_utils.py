@@ -1,12 +1,10 @@
 import os
-import pickle
+import joblib
 from collections import defaultdict
 
 
 def save_file(data, file_path):
-    if data:
-        with open(file_path, "wb") as fp:
-            pickle.dump(data, fp)
+    joblib.dump(data, file_path)
 
 
 def load_files(file_root_dir, file_dict):
@@ -18,8 +16,7 @@ def load_files(file_root_dir, file_dict):
     for key, value in file_dict.items():
         file_path = os.path.join(f"{file_root_dir}/{value}")
         if os.path.exists(file_path):
-            with open(file_path, "rb") as fp:
-                dicts[key] = pickle.load(fp)
+            dicts[key] = joblib.load(file_path)
     return dicts["users"], dicts["abilities"], dicts["items"]
 
 

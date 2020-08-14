@@ -1,5 +1,5 @@
 import os
-import pickle
+import joblib
 import random
 import re
 from collections import Counter
@@ -18,7 +18,11 @@ from utils.player_character import PlayerCharacter
 TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
 BOT_PREFIX = ("?", "!")
 DATA_LOCATION = "data/"
-DATAFILE_NAMES = {"users": "users.p", "abilities": "abilities.p", "items": "items.p"}
+DATAFILE_NAMES = {
+    "users": "users.joblib",
+    "abilities": "abilities.joblib",
+    "items": "items.joblib",
+}
 
 client = Bot(command_prefix=BOT_PREFIX)
 
@@ -114,6 +118,7 @@ async def character_info(context):
         await context.send(
             f"Hey <@{context.author.id}>, it looks like you haven't created any characters yet."
         )
+
 
 # @client.command(name="create_ability")
 # async def create_ability(context):
