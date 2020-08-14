@@ -141,9 +141,11 @@ async def on_ready():
 
 
 @client.event
-async def on_command_error(error, context):
+async def on_command_error(context, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await context.send(f"Not enough parameters for that command!")
+        await context.send(
+            f"<@{context.author.id}>, doesn't seem like you gave enough information for that command!"
+        )
     else:
         logger.info(error)
 
