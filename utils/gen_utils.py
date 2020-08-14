@@ -1,10 +1,12 @@
 import os
-import joblib
+import json
 from collections import defaultdict
 
 
 def save_file(data, file_path):
-    joblib.dump(data, file_path)
+    if data:
+        with open(file_path, "wb") as fp:
+            json.dump(data, fp)
 
 
 def load_files(file_root_dir, file_dict):
@@ -16,7 +18,8 @@ def load_files(file_root_dir, file_dict):
     for key, value in file_dict.items():
         file_path = os.path.join(f"{file_root_dir}/{value}")
         if os.path.exists(file_path):
-            dicts[key] = joblib.load(file_path)
+            with open(file_path, "rb") as fp:
+                dicts[key] = json.load(fp)
     return dicts["users"], dicts["abilities"], dicts["items"]
 
 

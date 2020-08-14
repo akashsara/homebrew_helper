@@ -1,5 +1,4 @@
 import os
-import joblib
 import random
 import re
 from collections import Counter
@@ -19,9 +18,9 @@ TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
 BOT_PREFIX = ("?", "!")
 DATA_LOCATION = "data/"
 DATAFILE_NAMES = {
-    "users": "users.joblib",
-    "abilities": "abilities.joblib",
-    "items": "items.joblib",
+    "users": "users.json",
+    "abilities": "abilities.json",
+    "items": "items.json",
 }
 
 client = Bot(command_prefix=BOT_PREFIX)
