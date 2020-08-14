@@ -5,6 +5,7 @@ import re
 from collections import Counter
 
 import discord
+from discord.ext import commands
 from discord.ext.commands import Bot
 
 from dice import roll_dice
@@ -17,7 +18,7 @@ from utils.player_character import PlayerCharacter
 TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
 BOT_PREFIX = ("?", "!")
 DATA_LOCATION = "data/"
-DATAFILE_NAMES = {"user": "users.p", "ability": "abilities.p", "item": "items.p"}
+DATAFILE_NAMES = {"users": "users.p", "abilities": "abilities.p", "items": "items.p"}
 
 client = Bot(command_prefix=BOT_PREFIX)
 
@@ -70,36 +71,48 @@ async def roll(context, *roll):
 
 @client.command(name="bungee_gum", aliases=["bg", "bungee", "gum", "bungeegum"])
 async def bungee_gum(context):
-    await context.send(f"<@{context.author.id}>, bungee gum possesses the properties of both rubber and gum.")
+    await context.send(
+        f"<@{context.author.id}>, bungee gum possesses the properties of both rubber and gum."
+    )
 
-# @client.command(name="create_character", aliases=["create_char", "cc"])
-# async def create_character(context):
-#     user = context.author.id
-#     await context.send(
-#         f"Hiya <@{user}>, let's make your character!\nWhat is your character called?"
-#     )
-#     message = await client.wait_for("message", timeout=120)
-#     name = message.content
-#     await context.send(
-#         f"I see, so your character is called {message.content}.\nNow, enter your stats in the following order (space separated):\n<HP> <Attack> <Defense> <Speed> <Dexterity> <Charisma> <Knowledge> <Wisdom>"
-#     )
-#     message = await client.wait_for("message", timeout=120)
-#     stats = message.content
-#     gold = 0
-#     level = 2
-#     character = PlayerCharacter(user, name, *stats.split(" "), level, gold)
-#     await context.send(
-#         f"Got it! Your character has now been created. Check it out!\n{character.short_info()}Does that look alright?\nSend Y to confirm, N to reject."
-#     )
-#     message = await client.wait_for("message", timeout=120)
-#     if message.content.lower()[0] == "y":
-#         users[user] = character
-#         filename = DATAFILE_NAMES.get('user')
-#         file_path = os.path.join(DATA_LOCATION, filename)
-#         save_file(users, file_path)
-#         await context.send(f"Your character has been saved!")
-#     else:
-#         await context.send(f"Well that was useless. Your character has not been saved.")
+
+@client.command(name="create_character", aliases=["create_char", "cc"])
+@commands.has_permissions(administer=True)
+async def create_character(context, user, name, level, gold, *stats):
+    try:
+        character = PlayerCharacter(user, name, *stats, level, gold)
+    except TypeError:
+        await context.send(
+            f"Hey uh <@{context.author.id}>, you're missing some stats there."
+        )
+        return
+    await context.send(
+        f"Got it! Your character has now been created. Check it out! If it looks good, send a Y to confirm. Otherwise send a N."
+    )
+    await context.send(character.info())
+    message = await client.wait_for("message", timeout=20)
+    if message and message.content.lower()[0] == "y":
+        server = context.guild.id
+        users[server][user].append(character)
+        filename = DATAFILE_NAMES.get("user")
+        file_path = os.path.join(DATA_LOCATION, filename)
+        gen_utils.save_file(users, file_path)
+        await context.send(f"Your character has been saved!")
+    else:
+        await context.send(f"Well that was useless. Your character has not been saved.")
+
+
+@client.command(name="info")
+async def character_info(context):
+    server = context.guild.id
+    user = context.author.id
+    characters = users[server][user]
+    if characters:
+        await context.send(characters[-1].info())
+    else:
+        await context.send(
+            f"Hey <@{context.author.id}>, it looks like you haven't created any characters yet."
+        )
 
 
 # @client.command(name="character_info", aliases=["ci", "info"])
