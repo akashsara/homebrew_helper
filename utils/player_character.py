@@ -44,7 +44,7 @@ class PlayerCharacter:
         # self.long_rest()
 
     def info(self):
-        return f"""{self.name} (<@{self.user}>)
+        return f"""{self.name} ({self.user})
 ```
 +--------------+---------+---+----------------+---------+
 | Primary Stat | Value   |   | Secondary Stat | Value   |

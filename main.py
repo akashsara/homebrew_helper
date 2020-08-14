@@ -79,6 +79,7 @@ async def bungee_gum(context):
 @client.command(name="create_character", aliases=["create_char", "cc"])
 @commands.has_permissions(administrator=True)
 async def create_character(context, user, name, level, gold, *stats):
+    # Stats = HP, Attack, Defense, Speed, Dexterity, Charisma, Knowledge, Wisdom, Strength, Constitution,
     try:
         character = PlayerCharacter(user, name, *stats, level, gold)
     except TypeError:
@@ -114,20 +115,6 @@ async def character_info(context):
             f"Hey <@{context.author.id}>, it looks like you haven't created any characters yet."
         )
 
-
-# @client.command(name="character_info", aliases=["ci", "info"])
-# async def character_info(context):
-#     user = context.author.id
-#     if user in users:
-#         character = users[user]
-#         await context.send(character.short_info())
-#         await context.send(character.rest_of_the_owl())
-#     else:
-#         await context.send(
-#             f"Sorry <@{user}>, couldn't find a character linked to you. :/"
-#         )
-
-
 # @client.command(name="create_ability")
 # async def create_ability(context):
 #     # Have a file containing abilities
@@ -147,7 +134,7 @@ async def on_command_error(context, error):
             f"<@{context.author.id}>, doesn't seem like you gave enough information for that command!"
         )
     else:
-        logger.info(error)
+        raise error
 
 
 if __name__ == "__main__":
