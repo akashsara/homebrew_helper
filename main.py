@@ -77,7 +77,7 @@ async def bungee_gum(context):
 
 
 @client.command(name="create_character", aliases=["create_char", "cc"])
-@commands.has_permissions(administer=True)
+@commands.has_permissions(administrator=True)
 async def create_character(context, user, name, level, gold, *stats):
     try:
         character = PlayerCharacter(user, name, *stats, level, gold)
@@ -133,6 +133,19 @@ async def character_info(context):
 #     # Have a file containing abilities
 #     # Only Admins can make abilities
 #     pass
+
+
+@client.event
+async def on_ready():
+    await client.change_presence(activity=discord.Game("with fate."))
+
+
+@client.event
+async def on_command_error(error, context):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await context.send(f"Not enough parameters for that command!")
+    else:
+        logger.info(error)
 
 
 if __name__ == "__main__":
