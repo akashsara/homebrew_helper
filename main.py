@@ -97,6 +97,7 @@ async def create_character(context, user, name, level, gold, *stats):
         users[server][user].append(character)
         filename = DATAFILE_NAMES.get("users")
         file_path = os.path.join(DATA_LOCATION, filename)
+        save_file(users, file_path)
         await context.send(f"Your character has been saved!")
     else:
         await context.send(f"Well that was useless. Your character has not been saved.")
