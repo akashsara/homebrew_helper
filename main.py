@@ -18,9 +18,9 @@ TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
 BOT_PREFIX = ("?", "!")
 DATA_LOCATION = "data/"
 DATAFILE_NAMES = {
-    "users": "users.json",
-    "abilities": "abilities.json",
-    "items": "items.json",
+    "users": "users.joblib",
+    "abilities": "abilities.joblib",
+    "items": "items.joblib",
 }
 
 client = Bot(command_prefix=BOT_PREFIX)
@@ -97,10 +97,12 @@ async def create_character(context, user, name, level, gold, *stats):
     message = await client.wait_for("message", timeout=20)
     if message and message.content.lower()[0] == "y":
         server = context.guild.id
+        user = re.findall("\d+", user)[0]
         users[server][user].append(character)
         filename = DATAFILE_NAMES.get("users")
         file_path = os.path.join(DATA_LOCATION, filename)
         gen_utils.save_file(users, file_path)
+        logger.info(f"Created Character for {name} ({user})")
         await context.send(f"Your character has been saved!")
     else:
         await context.send(f"Well that was useless. Your character has not been saved.")
@@ -109,11 +111,12 @@ async def create_character(context, user, name, level, gold, *stats):
 @client.command(name="info")
 async def character_info(context):
     server = context.guild.id
-    user = context.author.id
+    user = str(context.author.id)
     characters = users[server][user]
     if characters:
         await context.send(characters[-1].info())
     else:
+        logger.info(f"{server} couldn't find character ID: {user}")
         await context.send(
             f"Hey <@{context.author.id}>, it looks like you haven't created any characters yet."
         )

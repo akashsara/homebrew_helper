@@ -1,25 +1,23 @@
 import os
-import json
+import joblib
+from functools import partial
 from collections import defaultdict
 
 
 def save_file(data, file_path):
-    if data:
-        with open(file_path, "wb") as fp:
-            json.dump(data, fp)
+    joblib.dump(data, file_path)
 
 
 def load_files(file_root_dir, file_dict):
     dicts = {
-        "users": defaultdict(lambda: defaultdict(list)),
-        "abilities": defaultdict(lambda: defaultdict(dict)),
-        "items": defaultdict(lambda: defaultdict(dict)),
+        "users": defaultdict(partial(defaultdict, list)),
+        "abilities": defaultdict(partial(defaultdict, dict)),
+        "items": defaultdict(partial(defaultdict, dict)),
     }
     for key, value in file_dict.items():
         file_path = os.path.join(f"{file_root_dir}/{value}")
         if os.path.exists(file_path):
-            with open(file_path, "rb") as fp:
-                dicts[key] = json.load(fp)
+            dicts[key] = joblib.load(file_path)
     return dicts["users"], dicts["abilities"], dicts["items"]
 
 
