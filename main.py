@@ -31,7 +31,14 @@ def get_file_path(filename):
     return os.path.join(DATA_LOCATION, filename)
 
 
-@client.command(name="coin_toss", aliases=["cointoss", "toss", "flip"])
+def get_user_id(user):
+    user = re.findall("\d+", user)[0]
+    while user in aliases:
+        user = aliases.get(user)
+    return user
+
+
+@client.command(name="coin_toss", aliases=["cointoss", "toss", "flip", "cointoin"])
 async def coin_toss(context, *num_tosses):
     num_tosses = "".join(num_tosses)
     num_tosses = 1 if not num_tosses.isdigit() else int(num_tosses)
@@ -107,7 +114,7 @@ async def create_character(context, user, name, level, gold, *stats):
     message = await client.wait_for("message", timeout=20)
     if message and message.content.lower()[0] == "y":
         server = context.guild.id
-        user = re.findall("\d+", user)[0]
+        user = get_user_id(user)
         uuid = gen_utils.generate_unique_id(characters)
         characters[uuid] = character
         users[server][user]["characters"].append(uuid)
@@ -123,7 +130,7 @@ async def create_character(context, user, name, level, gold, *stats):
 @client.command(name="info")
 async def character_info(context):
     server = context.guild.id
-    user = str(context.author.id)
+    user = get_user_id(str(context.author.id))
     current = users[server][user].get("active")
     if current:
         await context.send(characters[current].info())
@@ -134,11 +141,11 @@ async def character_info(context):
         )
 
 
-@client.command(name="change_gold", aliases=["cg", "gold"])
+@client.command(name="change_gold", aliases=["gold"])
 @commands.has_permissions(administrator=True)
 async def change_gold(context, user, amount):
     server = context.guild.id
-    user = re.findall("\d+", user)[0]
+    user = get_user_id(user)
     amount = int(amount)
     current = users[server][user].get("active")
     if current:
@@ -152,7 +159,26 @@ async def change_gold(context, user, amount):
                 f"{current.get_name()} (<@{context.author.id}>) doesn't have enough gold for that. They currently have {gold} gold."
             )
     else:
-        await context.send(f"<@{context.author.id}> doesn't have any characters")
+        await context.send(f"<@{context.author.id}> doesn't have any characters")   
+
+
+@client.command(name="add_alias", aliases=["add_alt", "aa"])
+@commands.has_permissions(administrator=True)
+async def change_gold(context, user1, user2):
+    server = context.guild.id
+    user1 = get_user_id(user1)
+    user2 = get_user_id(user2)
+    if user2 not in aliases:
+        aliases[user2] = user1
+        users[server][user1]["characters"].extend(users[server][user2]["characters"])
+        users[server][user2]["characters"] = []
+        gen_utils.save_file(users, get_file_path("users"))
+        gen_utils.save_file(aliases, get_file_path("aliases"))
+        await context.send(
+            f"{<@{user2}>} is now an alias of {<@{user1}>}"
+        )
+    else:
+        await context.send(f"<@{user2}> is already an alias of <@{aliases.get(user2)}>.")
 
 
 # @client.command(name="create_ability")
@@ -179,7 +205,7 @@ async def on_command_error(context, error):
 
 if __name__ == "__main__":
     logger.info("Loading DnData..")
-    users, characters, abilities, items = gen_utils.load_files(
+    users, characters, abilities, items, aliases = gen_utils.load_files(
         DATA_LOCATION, DATAFILE_NAMES
     )
     logger.info("Booting up client..")
