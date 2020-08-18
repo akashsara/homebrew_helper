@@ -1,0 +1,20 @@
+Users:
+SERVER:
+        USER:
+                ACTIVE: Currently Active Character
+                CHARACTERS: List of Characters
+===================================================
+Characters:
+ID: PlayerCharacter 
+===================================================
+Abilities:
+SERVER:
+        ABILITY: Ability information
+===================================================
+Items:
+SERVER:
+        ITEM: Item Information
+===================================================
+Aliases:
+ALIAS: ALIAS_OF
+===================================================
