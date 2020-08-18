@@ -122,6 +122,27 @@ async def character_info(context):
         )
 
 
+@client.command(name="change_gold", aliases=["cg", "gold"])
+@commands.has_permissions(administrator=True)
+async def change_gold(context, user, amount):
+    server = context.guild.id
+    user = re.findall("\d+", user)[0]
+    amount = int(amount)
+    characters = users[server][user]
+    if characters:
+        status, gold = characters[-1].change_gold(amount)
+        if status:
+            await context.send(
+                f"<@{context.author.id}> received {amount} gold. Their new total is {gold} gold."
+            )
+        else:
+            await context.send(
+                f"<@{context.author.id}> doesn't have enough gold for that. They currently have {gold} gold."
+            )
+    else:
+        await context.send(f"<@{context.author.id}> doesn't have any characters")
+
+
 # @client.command(name="create_ability")
 # async def create_ability(context):
 #     # Have a file containing abilities

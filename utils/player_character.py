@@ -132,11 +132,8 @@ class PlayerCharacter:
     #     # Else delete
     #     pass
 
-    def change_gold(self, amount, operator):
-        if operator == "-" and self.gold >= amount:
-            self.gold -= amount
-            return True
-        elif operator == "+":
+    def change_gold(self, amount):
+        if self.gold + amount >= 0:
             self.gold += amount
-            return True
-        return False
+            return True, self.gold
+        return False, self.gold
