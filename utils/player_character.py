@@ -137,3 +137,6 @@ class PlayerCharacter:
             self.gold += amount
             return True, self.gold
         return False, self.gold
+
+    def get_name(self):
+        return self.name
