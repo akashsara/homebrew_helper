@@ -26,6 +26,11 @@ DATAFILE_NAMES = {
 client = Bot(command_prefix=BOT_PREFIX)
 
 
+def get_file_path(filename):
+    filename = DATAFILE_NAMES.get(filename)
+    return os.path.join(DATA_LOCATION, filename)
+
+
 @client.command(name="coin_toss", aliases=["cointoss", "toss", "flip"])
 async def coin_toss(context, *num_tosses):
     num_tosses = "".join(num_tosses)
@@ -79,6 +84,11 @@ async def bungee_gum(context):
     )
 
 
+################################################################################
+# Functions that use/need a PlayerCharacter
+################################################################################
+
+
 @client.command(name="create_character", aliases=["create_char", "cc"])
 @commands.has_permissions(administrator=True)
 async def create_character(context, user, name, level, gold, *stats):
@@ -98,10 +108,12 @@ async def create_character(context, user, name, level, gold, *stats):
     if message and message.content.lower()[0] == "y":
         server = context.guild.id
         user = re.findall("\d+", user)[0]
-        users[server][user].append(character)
-        filename = DATAFILE_NAMES.get("users")
-        file_path = os.path.join(DATA_LOCATION, filename)
-        gen_utils.save_file(users, file_path)
+        uuid = gen_utils.generate_unique_id(characters)
+        characters[uuid] = character
+        users[server][user]["characters"].append(uuid)
+        users[server][user]["active"] = uuid
+        gen_utils.save_file(users, get_file_path("users"))
+        gen_utils.save_file(characters, get_file_path("characters"))
         logger.info(f"Created Character for {name} ({user})")
         await context.send(f"Your character has been saved!")
     else:
@@ -112,11 +124,11 @@ async def create_character(context, user, name, level, gold, *stats):
 async def character_info(context):
     server = context.guild.id
     user = str(context.author.id)
-    characters = users[server][user]
-    if characters:
-        await context.send(characters[-1].info())
+    current = users[server][user].get("active")
+    if current:
+        await context.send(characters[current].info())
     else:
-        logger.info(f"{server} couldn't find character ID: {user}")
+        logger.info(f"{server} couldn't find character ID for {user}")
         await context.send(
             f"Hey <@{context.author.id}>, it looks like you haven't created any characters yet."
         )
@@ -128,16 +140,16 @@ async def change_gold(context, user, amount):
     server = context.guild.id
     user = re.findall("\d+", user)[0]
     amount = int(amount)
-    characters = users[server][user]
-    if characters:
-        status, gold = characters[-1].change_gold(amount)
+    current = users[server][user].get("active")
+    if current:
+        status, gold = characters[current].change_gold(amount)
         if status:
             await context.send(
-                f"<@{context.author.id}> received {amount} gold. Their new total is {gold} gold."
+                f"{current.get_name()} (<@{context.author.id}>) received {amount} gold. Their new total is {gold} gold."
             )
         else:
             await context.send(
-                f"<@{context.author.id}> doesn't have enough gold for that. They currently have {gold} gold."
+                f"{current.get_name()} (<@{context.author.id}>) doesn't have enough gold for that. They currently have {gold} gold."
             )
     else:
         await context.send(f"<@{context.author.id}> doesn't have any characters")
@@ -167,6 +179,8 @@ async def on_command_error(context, error):
 
 if __name__ == "__main__":
     logger.info("Loading DnData..")
-    users, abilities, items = gen_utils.load_files(DATA_LOCATION, DATAFILE_NAMES)
+    users, characters, abilities, items = gen_utils.load_files(
+        DATA_LOCATION, DATAFILE_NAMES
+    )
     logger.info("Booting up client..")
     client.run(TOKEN)

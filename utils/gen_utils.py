@@ -1,16 +1,26 @@
 import os
 import joblib
+import uuid
 from functools import partial
 from collections import defaultdict
+
+
+def generate_id():
+    return str(uuid.uuid4())
 
 
 def save_file(data, file_path):
     joblib.dump(data, file_path)
 
 
+def get_default_user():
+    return {"active": None, "characters": []}
+
+
 def load_files(file_root_dir, file_dict):
     dicts = {
-        "users": defaultdict(partial(defaultdict, list)),
+        "users": defaultdict(partial(defaultdict, get_default_user)),
+        "characters": dict(),
         "abilities": defaultdict(partial(defaultdict, dict)),
         "items": defaultdict(partial(defaultdict, dict)),
     }
@@ -18,7 +28,7 @@ def load_files(file_root_dir, file_dict):
         file_path = os.path.join(f"{file_root_dir}/{value}")
         if os.path.exists(file_path):
             dicts[key] = joblib.load(file_path)
-    return dicts["users"], dicts["abilities"], dicts["items"]
+    return dicts["users"], dicts["characters"], dicts["abilities"], dicts["items"]
 
 
 def pad(text_to_pad, length_to_pad_to, direction):
