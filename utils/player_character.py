@@ -4,7 +4,6 @@ sys.path.append("../")
 from utils.ability import Ability
 from utils.item import Item
 
-
 class PlayerCharacter:
     def __init__(
         self,
@@ -138,5 +137,18 @@ class PlayerCharacter:
             return True, self.gold
         return False, self.gold
 
+
     def get_name(self):
         return self.name
+
+    
+    def get_stat(self, stat):
+        stat_lookup = {
+            "dex": self.dexterity,
+            "cha": self.charisma,
+            "kno": self.knowledge,
+            "wis": self.wisdom,
+            "con": self.constitution,
+            "str": self.strength
+        }
+        return stat_lookup[stat]

@@ -23,19 +23,13 @@ def load_files(file_root_dir, file_dict):
         "characters": dict(),
         "abilities": defaultdict(partial(defaultdict, dict)),
         "items": defaultdict(partial(defaultdict, dict)),
-        "aliases": defaultdict(list),
+        "aliases": defaultdict(list)
     }
     for key, value in file_dict.items():
         file_path = os.path.join(f"{file_root_dir}/{value}")
         if os.path.exists(file_path):
             dicts[key] = joblib.load(file_path)
-    return (
-        dicts["users"],
-        dicts["characters"],
-        dicts["abilities"],
-        dicts["items"],
-        dicts["aliases"],
-    )
+    return dicts["users"], dicts["characters"], dicts["abilities"], dicts["items"], dicts["aliases"]
 
 
 def pad(text_to_pad, length_to_pad_to, direction):

@@ -164,7 +164,7 @@ async def change_gold(context, user, amount):
 
 @client.command(name="add_alias", aliases=["add_alt", "aa"])
 @commands.has_permissions(administrator=True)
-async def change_gold(context, user1, user2):
+async def add_alias(context, user1, user2):
     server = context.guild.id
     user1 = get_user_id(user1)
     user2 = get_user_id(user2)
@@ -180,6 +180,28 @@ async def change_gold(context, user1, user2):
     else:
         await context.send(f"<@{user2}> is already an alias of <@{aliases.get(user2)}>.")
 
+
+@client.command(name="saving_throw", aliases=["st"])
+async def saving_throw(context, stat, advantage_or_disadvantage=False):
+    server = context.guild.id
+    user = get_user_id(str(context.author.id))
+    stat = stat.to_lower()[:3]
+    current = users[server][user].get("active")
+    if current:
+        sign = '+'
+        bonus = characters[current].get_stat(stat)
+        if bonus[0] == '-':
+            sign = '-'
+            bonus = bonus[1:]
+        query = f"r 1d20{sign}{bonus}"
+        if advantage_or_disadvantage:
+            query += advantage_or_disadvantage[0]
+        await context.invoke(client.get_command('roll'), roll='query')
+    else:
+        logger.info(f"{server} couldn't find character ID for {user}")
+        await context.send(
+            f"Hey <@{context.author.id}>, it looks like you haven't created any characters yet."
+        )
 
 # @client.command(name="create_ability")
 # async def create_ability(context):
