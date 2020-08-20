@@ -154,6 +154,7 @@ async def change_gold(context, user, amount):
     if current:
         status, gold = characters[current].change_gold(amount)
         if status:
+            gen_utils.save_file(characters, get_file_path("characters"))
             await context.send(
                 f"{characters[current].get_name()} (<@{context.author.id}>) received {amount} gold. Their new total is {gold} gold."
             )
