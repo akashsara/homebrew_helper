@@ -24,6 +24,7 @@ DATAFILE_NAMES = {
     "characters": "characters.joblib",
     "aliases": "aliases.joblib",
 }
+ALLOWED_STATS = ["dex", "con", "cha", "kno", "wis", "str"]
 
 client = Bot(command_prefix=BOT_PREFIX)
 
@@ -154,14 +155,14 @@ async def change_gold(context, user, amount):
         status, gold = characters[current].change_gold(amount)
         if status:
             await context.send(
-                f"{current.get_name()} (<@{context.author.id}>) received {amount} gold. Their new total is {gold} gold."
+                f"{characters[current].get_name()} (<@{context.author.id}>) received {amount} gold. Their new total is {gold} gold."
             )
         else:
             await context.send(
-                f"{current.get_name()} (<@{context.author.id}>) doesn't have enough gold for that. They currently have {gold} gold."
+                f"{characters[current].get_name()} (<@{context.author.id}>) doesn't have enough gold for that. They currently have {gold} gold."
             )
     else:
-        await context.send(f"<@{context.author.id}> doesn't have any characters")
+        await context.send(f"<@{user}> doesn't have any characters")
 
 
 @client.command(name="add_alias", aliases=["add_alt", "aa"])
@@ -189,7 +190,7 @@ async def saving_throw(context, stat, advantage_or_disadvantage=False):
     user = get_user_id(str(context.author.id))
     stat = stat.lower()[:3]
     current = users[server][user].get("active")
-    if current:
+    if current and stat and stat in ALLOWED_STATS:
         bonus = characters[current].get_stat(stat)
         sign = "+"
         if bonus < 0:
@@ -199,6 +200,14 @@ async def saving_throw(context, stat, advantage_or_disadvantage=False):
         if advantage_or_disadvantage:
             query += advantage_or_disadvantage[0]
         await context.invoke(client.get_command("roll"), query)
+    elif current and stat:
+        await context.send(
+            f"Hey <@{context.author.id}>, that doesn't seem like a valid stat."
+        )
+    elif current:
+        await context.send(
+            f"Hey <@{context.author.id}>, to do a saving throw or ability check do `!st <stat>` where stat is one of (con, cha, str, dex, kno, wis)."
+        )
     else:
         logger.info(f"{server} couldn't find character ID for {user}")
         await context.send(
