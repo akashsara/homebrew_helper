@@ -1,8 +1,8 @@
 Users:
 SERVER:
         USER:
-                ACTIVE: Currently Active Character
-                CHARACTERS: List of Characters
+                ACTIVE: Currently Active Character ID
+                CHARACTERS: List of Character IDs
 ===================================================
 Characters:
 ID: PlayerCharacter 
