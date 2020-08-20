@@ -196,8 +196,10 @@ async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
     current = users[server][user].get("active")
     if current and stat in ALLOWED_STATS:
         bonus = characters[current].get_stat(stat)
-        sign = "+" if bonus >= 0 else "-"
-        bonus *= -1
+        sign = "+" 
+        if bonus >= 0: 
+            sign = "-"
+            bonus = -1
         query = f"1d20{sign}{bonus}"
         if advantage_or_disadvantage:
             query += advantage_or_disadvantage[0]
