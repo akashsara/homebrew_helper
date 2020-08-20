@@ -185,28 +185,26 @@ async def add_alias(context, user1, user2):
 
 
 @client.command(name="saving_throw", aliases=["st"])
-async def saving_throw(context, stat, advantage_or_disadvantage=False):
+async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
     server = context.guild.id
     user = get_user_id(str(context.author.id))
+    if not stat:
+        await context.send(
+            f"Hey <@{context.author.id}>, to do a saving throw or ability check do `!st <stat> (a|d)` where stat is one of (con, cha, str, dex, kno, wis). You can also add an a or d to signify advantage or disadvantage."
+        )
     stat = stat.lower()[:3]
     current = users[server][user].get("active")
-    if current and stat and stat in ALLOWED_STATS:
+    if current and stat in ALLOWED_STATS:
         bonus = characters[current].get_stat(stat)
-        sign = "+"
-        if bonus < 0:
-            sign = "-"
-            bonus = bonus * -1
+        sign = "+" if bonus >= 0 else "-"
+        bonus *= -1
         query = f"1d20{sign}{bonus}"
         if advantage_or_disadvantage:
             query += advantage_or_disadvantage[0]
         await context.invoke(client.get_command("roll"), query)
-    elif current and stat:
-        await context.send(
-            f"Hey <@{context.author.id}>, that doesn't seem like a valid stat."
-        )
     elif current:
         await context.send(
-            f"Hey <@{context.author.id}>, to do a saving throw or ability check do `!st <stat>` where stat is one of (con, cha, str, dex, kno, wis)."
+            f"Hey <@{context.author.id}>, that doesn't seem like a valid stat."
         )
     else:
         logger.info(f"{server} couldn't find character ID for {user}")
