@@ -9,6 +9,13 @@ def generate_id():
     return str(uuid.uuid4())
 
 
+def generate_unique_id(generated):
+    id_ = generate_id()
+    while id_ in generated:
+        id_ = generate_id()
+    return id_
+
+
 def save_file(data, file_path):
     joblib.dump(data, file_path)
 
@@ -23,13 +30,19 @@ def load_files(file_root_dir, file_dict):
         "characters": dict(),
         "abilities": defaultdict(partial(defaultdict, dict)),
         "items": defaultdict(partial(defaultdict, dict)),
-        "aliases": defaultdict(list)
+        "aliases": defaultdict(list),
     }
     for key, value in file_dict.items():
         file_path = os.path.join(f"{file_root_dir}/{value}")
         if os.path.exists(file_path):
             dicts[key] = joblib.load(file_path)
-    return dicts["users"], dicts["characters"], dicts["abilities"], dicts["items"], dicts["aliases"]
+    return (
+        dicts["users"],
+        dicts["characters"],
+        dicts["abilities"],
+        dicts["items"],
+        dicts["aliases"],
+    )
 
 
 def pad(text_to_pad, length_to_pad_to, direction):

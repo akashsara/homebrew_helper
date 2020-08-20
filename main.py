@@ -21,6 +21,8 @@ DATAFILE_NAMES = {
     "users": "users.joblib",
     "abilities": "abilities.joblib",
     "items": "items.joblib",
+    "characters": "characters.joblib",
+    "aliases": "aliases.joblib",
 }
 
 client = Bot(command_prefix=BOT_PREFIX)
@@ -35,7 +37,7 @@ def get_user_id(user):
     user = re.findall("\d+", user)[0]
     while user in aliases:
         user = aliases.get(user)
-    return user
+    return str(user)
 
 
 @client.command(name="coin_toss", aliases=["cointoss", "toss", "flip", "cointoin"])
@@ -115,7 +117,7 @@ async def create_character(context, user, name, level, gold, *stats):
     if message and message.content.lower()[0] == "y":
         server = context.guild.id
         user = get_user_id(user)
-        uuid = gen_utils.generate_unique_id(characters)
+        uuid = gen_utils.generate_unique_id(set(characters.keys()))
         characters[uuid] = character
         users[server][user]["characters"].append(uuid)
         users[server][user]["active"] = uuid
@@ -159,7 +161,7 @@ async def change_gold(context, user, amount):
                 f"{current.get_name()} (<@{context.author.id}>) doesn't have enough gold for that. They currently have {gold} gold."
             )
     else:
-        await context.send(f"<@{context.author.id}> doesn't have any characters")   
+        await context.send(f"<@{context.author.id}> doesn't have any characters")
 
 
 @client.command(name="add_alias", aliases=["add_alt", "aa"])
@@ -174,34 +176,35 @@ async def add_alias(context, user1, user2):
         users[server][user2]["characters"] = []
         gen_utils.save_file(users, get_file_path("users"))
         gen_utils.save_file(aliases, get_file_path("aliases"))
-        await context.send(
-            f"{<@{user2}>} is now an alias of {<@{user1}>}"
-        )
+        await context.send(f"<@{user2}> is now an alias of <@{user1}>")
     else:
-        await context.send(f"<@{user2}> is already an alias of <@{aliases.get(user2)}>.")
+        await context.send(
+            f"<@{user2}> is already an alias of <@{aliases.get(user2)}>."
+        )
 
 
 @client.command(name="saving_throw", aliases=["st"])
 async def saving_throw(context, stat, advantage_or_disadvantage=False):
     server = context.guild.id
     user = get_user_id(str(context.author.id))
-    stat = stat.to_lower()[:3]
+    stat = stat.lower()[:3]
     current = users[server][user].get("active")
     if current:
-        sign = '+'
         bonus = characters[current].get_stat(stat)
-        if bonus[0] == '-':
-            sign = '-'
-            bonus = bonus[1:]
-        query = f"r 1d20{sign}{bonus}"
+        sign = "+"
+        if bonus < 0:
+            sign = "-"
+            bonus = bonus * -1
+        query = f"1d20{sign}{bonus}"
         if advantage_or_disadvantage:
             query += advantage_or_disadvantage[0]
-        await context.invoke(client.get_command('roll'), roll='query')
+        await context.invoke(client.get_command("roll"), query)
     else:
         logger.info(f"{server} couldn't find character ID for {user}")
         await context.send(
             f"Hey <@{context.author.id}>, it looks like you haven't created any characters yet."
         )
+
 
 # @client.command(name="create_ability")
 # async def create_ability(context):
