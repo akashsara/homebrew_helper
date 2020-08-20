@@ -3,7 +3,8 @@ import joblib
 import uuid
 from functools import partial
 from collections import defaultdict
-
+sys.path.append("../")
+from utils.logging_util import logger
 
 def generate_id():
     return str(uuid.uuid4())
@@ -17,6 +18,7 @@ def generate_unique_id(generated):
 
 
 def save_file(data, file_path):
+    logger.info(f"Saving to {file_path}")
     joblib.dump(data, file_path)
 
 
@@ -35,6 +37,7 @@ def load_files(file_root_dir, file_dict):
     for key, value in file_dict.items():
         file_path = os.path.join(f"{file_root_dir}/{value}")
         if os.path.exists(file_path):
+            logger.info(f"Loading from {file_path}")
             dicts[key] = joblib.load(file_path)
     return (
         dicts["users"],

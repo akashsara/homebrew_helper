@@ -197,7 +197,7 @@ async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
     if current and stat in ALLOWED_STATS:
         bonus = characters[current].get_stat(stat)
         sign = "+" 
-        if bonus >= 0: 
+        if bonus < 0: 
             sign = "-"
             bonus *= -1
         query = f"1d20{sign}{bonus}"
