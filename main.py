@@ -156,11 +156,11 @@ async def change_gold(context, user, amount):
         if status:
             gen_utils.save_file(characters, get_file_path("characters"))
             await context.send(
-                f"{characters[current].get_name()} (<@{context.author.id}>) received {amount} gold. Their new total is {gold} gold."
+                f"{characters[current].get_name()} (<@{user}>) received {amount} gold. Their new total is {gold} gold."
             )
         else:
             await context.send(
-                f"{characters[current].get_name()} (<@{context.author.id}>) doesn't have enough gold for that. They currently have {gold} gold."
+                f"{characters[current].get_name()} (<@{user}>) doesn't have enough gold for that. They currently have {gold} gold."
             )
     else:
         await context.send(f"<@{user}> doesn't have any characters")
@@ -233,6 +233,10 @@ async def on_command_error(context, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await context.send(
             f"<@{context.author.id}>, doesn't seem like you gave enough information for that command!"
+        )
+    elif isinstance(error, commands.MissingPermissions):
+        await context.send(
+            f"You have no power here, <@{context.author.id}> the Grey."
         )
     else:
         raise error
