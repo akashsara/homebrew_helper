@@ -131,16 +131,19 @@ async def create_character(context, user, name, level, gold, *stats):
 
 
 @client.command(name="info")
-async def character_info(context):
+async def character_info(context, user=None):
     server = context.guild.id
-    user = get_user_id(str(context.author.id))
+    if user:
+        user = get_user_id(user)
+    else:
+        user = get_user_id(str(context.author.id))
     current = users[server][user].get("active")
     if current:
         await context.send(characters[current].info())
     else:
-        logger.info(f"{server} couldn't find character ID for {user}")
+        logger.info(f"{server}: couldn't find character ID for {user}")
         await context.send(
-            f"Hey <@{context.author.id}>, it looks like you haven't created any characters yet."
+            f"<@{context.author.id}> doesn't have any characters yet."
         )
 
 
