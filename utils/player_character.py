@@ -152,3 +152,7 @@ class PlayerCharacter:
             "str": self.strength
         }
         return stat_lookup[stat]
+
+
+    def change_user(self, new_user):
+        self.user = new_user

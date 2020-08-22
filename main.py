@@ -143,7 +143,7 @@ async def character_info(context, user=None):
     else:
         logger.info(f"{server}: couldn't find character ID for {user}")
         await context.send(
-            f"<@{context.author.id}> doesn't have any characters yet."
+            f"<@{user}> doesn't have any characters yet."
         )
 
 
@@ -177,6 +177,8 @@ async def add_alias(context, user1, user2):
     user2 = get_user_id(user2)
     if user2 not in aliases:
         aliases[user2] = user1
+        for character in users[server][user2]["characters"]:
+            character.change_user(user1)
         users[server][user1]["characters"].extend(users[server][user2]["characters"])
         users[server][user2]["characters"] = []
         gen_utils.save_file(users, get_file_path("users"))
