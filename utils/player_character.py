@@ -154,5 +154,8 @@ class PlayerCharacter:
     def get_stat(self, stat):
         return self.stats[self.stat_lookup[stat]]
 
+    def set_stat(self, stat, value):
+        self.stats[self.stat_lookup[stat]] = value
+
     def change_user(self, new_user):
         self.user = new_user
