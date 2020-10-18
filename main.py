@@ -221,6 +221,32 @@ async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
         )
 
 
+@client.command(name="change_stat", aliases=["stat_change"])
+@commands.has_permissions(administrator=True)
+async def change_stat(context, user, stat, value):
+    server = context.guild.id
+    user = get_user_id(user)
+    value = int(value)
+    stat = stat.lower()[:3]
+    current = users[server][user].get("active")
+    if current and stat in ALLOWED_STATS:
+        old_value = characters[current].get_stat(stat)
+        characters[current].set_stat(stat, value)
+        character_name = characters[current].get_name()
+        await context.send(
+            f"Successfully changed the stat for {character_name}(<@{user}>) from {old_value} to {value}!"
+        )
+    elif current:
+        await context.send(
+            f"Hey <@{context.author.id}>, that doesn't seem like a valid stat."
+        )
+    else:
+        logger.info(f"{server} couldn't find character ID for {user}")
+        await context.send(
+            f"Hey <@{context.author.id}>, it looks like that person doesn't have any characters yet."
+        )
+
+
 # @client.command(name="create_ability")
 # async def create_ability(context):
 #     # Have a file containing abilities
