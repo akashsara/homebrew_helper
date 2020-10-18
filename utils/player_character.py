@@ -4,6 +4,7 @@ sys.path.append("../")
 from utils.ability import Ability
 from utils.item import Item
 
+
 class PlayerCharacter:
     def __init__(
         self,
@@ -24,17 +25,19 @@ class PlayerCharacter:
     ):
         self.user = user
         self.name = name
-        self.max_hp = int(hp)
-        self.current_hp = self.max_hp
-        self.attack = int(attack)
-        self.defense = int(defense)
-        self.speed = int(speed)
-        self.dexterity = int(dexterity)
-        self.charisma = int(charisma)
-        self.knowledge = int(knowledge)
-        self.wisdom = int(wisdom)
-        self.strength = int(strength)
-        self.constitution = int(constitution)
+        self.stats = {
+            "max_hp": int(hp),
+            "current_hp": int(hp),
+            "attack": int(attack),
+            "defense": int(defense),
+            "speed": int(speed),
+            "dexterity": int(dexterity),
+            "charisma": int(charisma),
+            "knowledge": int(knowledge),
+            "wisdom": int(wisdom),
+            "strength": int(strength),
+            "constitution": int(constitution),
+        }
         self.level = int(level)
         self.gold = int(gold)
         # self.items = dict()
@@ -48,12 +51,12 @@ class PlayerCharacter:
 +--------------+---------+---+----------------+---------+
 | Primary Stat | Value   |   | Secondary Stat | Value   |
 +--------------+---------+---+----------------+---------+
-| HP           | {self.current_hp}/{self.max_hp}{' ' * (7 - len(str(self.current_hp)) - len(str(self.max_hp)))}|   | Dexterity      | {self.dexterity}{' ' * (8 - len(str(self.dexterity)))}|
-| Attack       | {self.attack}{' ' * (8 - len(str(self.attack)))}|   | Charisma       | {self.charisma}{' ' * (8 - len(str(self.charisma)))}|
-| Defense      | {self.defense}{' ' * (8 - len(str(self.defense)))}|   | Knowledge      | {self.knowledge}{' ' * (8 - len(str(self.knowledge)))}|
-| Speed        | {self.speed}{' ' * (8 - len(str(self.speed)))}|   | Wisdom         | {self.wisdom}{' ' * (8 - len(str(self.wisdom)))}|
-| Level        | {self.level}{' ' * (8 - len(str(self.level)))}|   | Strength       | {self.strength}{' ' * (8 - len(str(self.strength)))}|
-| Gold         | {self.gold}{' ' * (8 - len(str(self.gold)))}|   | Constitution   | {self.constitution}{' ' * (8 - len(str(self.constitution)))}|
+| HP           | {self.stats['current_hp']}/{self.stats['max_hp']}{' ' * (7 - len(str(self.stats['current_hp'])) - len(str(self.stats['max_hp'])))}|   | Dexterity      | {self.stats['dexterity']}{' ' * (8 - len(str(self.stats['dexterity'])))}|
+| Attack       | {self.stats['attack']}{' ' * (8 - len(str(self.stats['attack'])))}|   | Charisma       | {self.stats['charisma']}{' ' * (8 - len(str(self.stats['charisma'])))}|
+| Defense      | {self.stats['defense']}{' ' * (8 - len(str(self.stats['defense'])))}|   | Knowledge      | {self.stats['knowledge']}{' ' * (8 - len(str(self.stats['knowledge'])))}|
+| Speed        | {self.stats['speed']}{' ' * (8 - len(str(self.stats['speed'])))}|   | Wisdom         | {self.stats['wisdom']}{' ' * (8 - len(str(self.stats['wisdom'])))}|
+| Level        | {self.level}{' ' * (8 - len(str(self.level)))}|   | Strength       | {self.stats['strength']}{' ' * (8 - len(str(self.stats['strength'])))}|
+| Gold         | {self.gold}{' ' * (8 - len(str(self.gold)))}|   | Constitution   | {self.stats['constitution']}{' ' * (8 - len(str(self.stats['constitution'])))}|
 +--------------+---------+---+----------------+---------+
 ```"""
 
@@ -137,22 +140,19 @@ class PlayerCharacter:
             return True, self.gold
         return False, self.gold
 
-
     def get_name(self):
         return self.name
 
-    
     def get_stat(self, stat):
         stat_lookup = {
-            "dex": self.dexterity,
-            "cha": self.charisma,
-            "kno": self.knowledge,
-            "wis": self.wisdom,
-            "con": self.constitution,
-            "str": self.strength
+            "dex": "dexterity",
+            "cha": "charisma",
+            "kno": "knowledge",
+            "wis": "wisdom",
+            "con": "constitution",
+            "str": "strength",
         }
-        return stat_lookup[stat]
-
+        return self.stats[stat_lookup[stat]]
 
     def change_user(self, new_user):
         self.user = new_user
