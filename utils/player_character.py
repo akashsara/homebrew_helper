@@ -38,6 +38,14 @@ class PlayerCharacter:
             "strength": int(strength),
             "constitution": int(constitution),
         }
+        self.stat_lookup = {
+            "dex": "dexterity",
+            "cha": "charisma",
+            "kno": "knowledge",
+            "wis": "wisdom",
+            "con": "constitution",
+            "str": "strength",
+        }
         self.level = int(level)
         self.gold = int(gold)
         # self.items = dict()
@@ -144,15 +152,7 @@ class PlayerCharacter:
         return self.name
 
     def get_stat(self, stat):
-        stat_lookup = {
-            "dex": "dexterity",
-            "cha": "charisma",
-            "kno": "knowledge",
-            "wis": "wisdom",
-            "con": "constitution",
-            "str": "strength",
-        }
-        return self.stats[stat_lookup[stat]]
+        return self.stats[self.stat_lookup[stat]]
 
     def change_user(self, new_user):
         self.user = new_user
