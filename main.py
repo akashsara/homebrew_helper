@@ -232,8 +232,9 @@ async def change_stat(context, user, stat, value):
     if current and stat in ALLOWED_STATS:
         old_value = characters[current].get_stat(stat)
         characters[current].set_stat(stat, value)
+        character_name = characters[current].get_name()
         await context.send(
-            f"Successfully changed the stat for <@{user}> from {old_value} to {value}!"
+            f"Successfully changed the stat for {character_name}(<@{user}>) from {old_value} to {value}!"
         )
     elif current:
         await context.send(
