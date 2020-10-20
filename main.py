@@ -1,13 +1,17 @@
+import asyncio
 import os
 import random
 import re
 from collections import Counter
 
 import discord
+from discord import reaction
+from discord import message
+from discord import channel
 from discord.ext import commands
 from discord.ext.commands import Bot
 
-from dice import roll_dice
+from dice import roll_dice, dice
 from utils import gen_utils
 from utils.ability import Ability
 from utils.item import Item
@@ -94,6 +98,53 @@ async def bungee_gum(context):
     )
 
 
+@client.command(name="roll_initiative", aliases=["initiative", "ri", "RI", "rolli"])
+async def roll_initiative(context):
+    roll_initiative_message = await context.send(f"React with 👍 to add to the initiative order or 🛑 to start rolling")
+    await roll_initiative_message.add_reaction('👍')
+    await roll_initiative_message.add_reaction('🛑')
+
+    def check(reaction, user):
+        return user != client.user
+
+    count = 0
+    initPlayers = set()
+    while count < 2:
+        try:                
+            reaction, reaction_user = await client.wait_for('reaction_add', timeout=60, check=check)
+            if(str(reaction.emoji) == '👍'):
+                initPlayers.add(str(reaction_user.name))
+            elif(str(reaction.emoji) == '🛑'):
+                if(reaction_user == context.author):
+                    count = 10
+                else:
+                    await context.send(f"Only <@{context.author.id}> can start the roll")
+        except asyncio.TimeoutError:
+            break
+
+    if(len(initPlayers) != 0):
+        rollList = []
+        displayOutput = "Roll Order:\n```\n+------+----------------------------------+\n| Roll | Player Name                      |\n+------+----------------------------------+"
+        for x in initPlayers:
+            result = {
+                "player": x,
+                "roll": dice.roll('1d20')['total']
+            }
+            rollList.append(result)
+        for playerRoll in sorted(rollList, key=lambda x:x['roll'], reverse=True):
+            roll = playerRoll['roll']
+            playerName = playerRoll['player']
+            if len(str(roll)) == 1:
+                roll = f" {roll}"
+            if len(playerName) < 32:
+                for i in range(32-len(playerName)):
+                    playerName += " "
+            displayOutput += f"\n|  {roll}  | {playerName} |"
+        await context.send(displayOutput+"\n+------+----------------------------------+```")
+    else:
+        await context.send("Thank you for wasting my time :)")
+    
+    
 ################################################################################
 # Functions that use/need a PlayerCharacter
 ################################################################################

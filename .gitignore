@@ -3,3 +3,4 @@ bot/
 __pycache__/
 settings.json
 data/
+venv/
