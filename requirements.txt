@@ -15,7 +15,6 @@ lazy-object-proxy==1.4.3
 mccabe==0.6.1
 multidict==4.7.5
 pathspec==0.7.0
-pkg-resources==0.0.0
 pylint==2.4.4
 regex==2020.4.4
 six==1.14.0
