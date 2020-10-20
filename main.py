@@ -5,9 +5,6 @@ import re
 from collections import Counter
 
 import discord
-from discord import reaction
-from discord import message
-from discord import channel
 from discord.ext import commands
 from discord.ext.commands import Bot
 
@@ -109,11 +106,18 @@ async def roll_initiative(context):
 
     count = 0
     initPlayers = set()
+    server = context.guild.id
     while count < 2:
         try:                
             reaction, reaction_user = await client.wait_for('reaction_add', timeout=60, check=check)
             if(str(reaction.emoji) == '👍'):
-                initPlayers.add(str(reaction_user.name))
+                user = get_user_id(str(reaction_user.id))
+                current = users[server][user].get("active")
+                if current:
+                    characterName = characters[current].get_name()
+                    initPlayers.add(str(characterName))
+                else:
+                    initPlayers.add(str(reaction_user.name))
             elif(str(reaction.emoji) == '🛑'):
                 if(reaction_user == context.author):
                     count = 10
