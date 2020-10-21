@@ -95,11 +95,11 @@ async def bungee_gum(context):
     )
 
 
-@client.command(name="roll_initiative", aliases=["initiative", "ri", "RI", "rolli"])
-async def roll_initiative(context):
-    roll_initiative_message = await context.send(f"React with 👍 to add to the initiative order or 🛑 to start rolling")
-    await roll_initiative_message.add_reaction('👍')
-    await roll_initiative_message.add_reaction('🛑')
+@client.command(name="rollInitiative", aliases=["initiative", "ri", "RI", "rolli"])
+async def rollInitiative(context, npcCount=None, npcName=None):
+    rollInitiativeMessage = await context.send(f"React with 👍 to add to the initiative order or 🛑 to start rolling")
+    await rollInitiativeMessage.add_reaction('👍')
+    await rollInitiativeMessage.add_reaction('🛑')
 
     def check(reaction, user):
         return user != client.user
@@ -107,19 +107,31 @@ async def roll_initiative(context):
     count = 0
     initPlayers = set()
     server = context.guild.id
+    if npcCount:
+        npcCharacterCount = int(npcCount)
+        npcCharacterName = "NPC"
+        if npcName:
+            npcCharacterName = npcName
+            if len(npcCharacterName) >29:
+                npcCharacterName = npcCharacterName[:30]
+        if npcCharacterCount > 10:
+            npcCharacterCount = 10
+            await context.send("Max of 10 NPC's allowed")
+        for i in range(npcCharacterCount):
+            initPlayers.add(f"{npcCharacterName} {i+1}")
     while count < 2:
         try:                
-            reaction, reaction_user = await client.wait_for('reaction_add', timeout=60, check=check)
+            reaction, reactionUser = await client.wait_for('reaction_add', timeout=60, check=check)
             if(str(reaction.emoji) == '👍'):
-                user = get_user_id(str(reaction_user.id))
+                user = get_user_id(str(reactionUser.id))
                 current = users[server][user].get("active")
                 if current:
                     characterName = characters[current].get_name()
                     initPlayers.add(str(characterName))
                 else:
-                    initPlayers.add(str(reaction_user.name))
+                    initPlayers.add(str(reactionUser.name))
             elif(str(reaction.emoji) == '🛑'):
-                if(reaction_user == context.author):
+                if(reactionUser == context.author):
                     count = 10
                 else:
                     await context.send(f"Only <@{context.author.id}> can start the roll")
