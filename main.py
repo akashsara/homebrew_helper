@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
 
-from dice import roll_dice, dice
+from dice import dice, roll_dice
 from utils import gen_utils
 from utils.ability import Ability
 from utils.item import Item
@@ -95,72 +95,77 @@ async def bungee_gum(context):
     )
 
 
-@client.command(name="rollInitiative", aliases=["initiative", "ri", "RI", "rolli"])
-async def rollInitiative(context, npcCount=None, npcName=None):
-    rollInitiativeMessage = await context.send(f"React with 👍 to add to the initiative order or 🛑 to start rolling")
-    await rollInitiativeMessage.add_reaction('👍')
-    await rollInitiativeMessage.add_reaction('🛑')
+@client.command(name="roll_initiative", aliases=["initiative", "ri", "RI", "rolli"])
+async def roll_initiative(context, npc_count=None, npc_name_template=None):
+    roll_initiative_message = await context.send(
+        f"React with 👍 to add to the initiative order or 🛑 to start rolling"
+    )
+    await roll_initiative_message.add_reaction("👍")
+    await roll_initiative_message.add_reaction("🛑")
 
     def check(reaction, user):
         return user != client.user
 
     count = 0
-    initPlayers = set()
+    players_to_roll_for = set()
     server = context.guild.id
-    if npcCount:
-        npcCharacterCount = int(npcCount)
-        npcCharacterName = "NPC"
-        if npcName:
-            npcCharacterName = npcName
-            if len(npcCharacterName) >29:
-                npcCharacterName = npcCharacterName[:30]
-        if npcCharacterCount > 10:
-            npcCharacterCount = 10
+    if npc_count:
+        npc_character_count = int(npc_count)
+        npc_character_name = "NPC"
+        if npc_name_template:
+            npc_character_name = npc_name_template
+            if len(npc_character_name) > 29:
+                npc_character_name = npc_character_name[:30]
+        if npc_character_count > 10:
+            npc_character_count = 10
             await context.send("Max of 10 NPC's allowed")
-        for i in range(npcCharacterCount):
-            initPlayers.add(f"{npcCharacterName} {i+1}")
+        for i in range(npc_character_count):
+            players_to_roll_for.add(f"{npc_character_name} {i+1}")
     while count < 2:
-        try:                
-            reaction, reactionUser = await client.wait_for('reaction_add', timeout=60, check=check)
-            if(str(reaction.emoji) == '👍'):
-                user = get_user_id(str(reactionUser.id))
+        try:
+            reaction, reaction_user = await client.wait_for(
+                "reaction_add", timeout=60, check=check
+            )
+            if str(reaction.emoji) == "👍":
+                user = get_user_id(str(reaction_user.id))
                 current = users[server][user].get("active")
                 if current:
-                    characterName = characters[current].get_name()
-                    initPlayers.add(str(characterName))
+                    character_name = characters[current].get_name()
+                    players_to_roll_for.add(str(character_name))
                 else:
-                    initPlayers.add(str(reactionUser.name))
-            elif(str(reaction.emoji) == '🛑'):
-                if(reactionUser == context.author):
+                    players_to_roll_for.add(str(reaction_user.name))
+            elif str(reaction.emoji) == "🛑":
+                if reaction_user == context.author:
                     count = 10
                 else:
-                    await context.send(f"Only <@{context.author.id}> can start the roll")
+                    await context.send(
+                        f"Only <@{context.author.id}> can start the roll"
+                    )
         except asyncio.TimeoutError:
             break
 
-    if(len(initPlayers) != 0):
-        rollList = []
-        displayOutput = "Roll Order:\n```\n+------+----------------------------------+\n| Roll | Player Name                      |\n+------+----------------------------------+"
-        for x in initPlayers:
-            result = {
-                "player": x,
-                "roll": dice.roll('1d20')['total']
-            }
-            rollList.append(result)
-        for playerRoll in sorted(rollList, key=lambda x:x['roll'], reverse=True):
-            roll = playerRoll['roll']
-            playerName = playerRoll['player']
+    if len(players_to_roll_for) != 0:
+        roll_list = []
+        display_output = "Roll Order:\n```\n+------+----------------------------------+\n| Roll | Player Name                      |\n+------+----------------------------------+"
+        for x in players_to_roll_for:
+            result = {"player": x, "roll": dice.roll("1d20")["total"]}
+            roll_list.append(result)
+        for player_roll in sorted(roll_list, key=lambda x: x["roll"], reverse=True):
+            roll = player_roll["roll"]
+            player_name = player_roll["player"]
             if len(str(roll)) == 1:
                 roll = f" {roll}"
-            if len(playerName) < 32:
-                for i in range(32-len(playerName)):
-                    playerName += " "
-            displayOutput += f"\n|  {roll}  | {playerName} |"
-        await context.send(displayOutput+"\n+------+----------------------------------+```")
+            if len(player_name) < 32:
+                for i in range(32 - len(player_name)):
+                    player_name += " "
+            display_output += f"\n|  {roll}  | {player_name} |"
+        await context.send(
+            display_output + "\n+------+----------------------------------+```"
+        )
     else:
         await context.send("Thank you for wasting my time :)")
-    
-    
+
+
 ################################################################################
 # Functions that use/need a PlayerCharacter
 ################################################################################
@@ -209,9 +214,7 @@ async def character_info(context, user=None):
         await context.send(characters[current].info())
     else:
         logger.info(f"{server}: couldn't find character ID for {user}")
-        await context.send(
-            f"<@{user}> doesn't have any characters yet."
-        )
+        await context.send(f"<@{user}> doesn't have any characters yet.")
 
 
 @client.command(name="change_gold", aliases=["gold"])
@@ -269,8 +272,8 @@ async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
     current = users[server][user].get("active")
     if current and stat in ALLOWED_STATS:
         bonus = characters[current].get_stat(stat)
-        sign = "+" 
-        if bonus < 0: 
+        sign = "+"
+        if bonus < 0:
             sign = "-"
             bonus *= -1
         query = f"1d20{sign}{bonus}"
@@ -333,9 +336,7 @@ async def on_command_error(context, error):
             f"<@{context.author.id}>, doesn't seem like you gave enough information for that command!"
         )
     elif isinstance(error, commands.MissingPermissions):
-        await context.send(
-            f"You have no power here, <@{context.author.id}> the Grey."
-        )
+        await context.send(f"You have no power here, <@{context.author.id}> the Grey.")
     else:
         raise error
 
