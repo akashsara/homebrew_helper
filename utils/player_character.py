@@ -142,11 +142,14 @@ class PlayerCharacter:
     #     # Else delete
     #     pass
 
+    def has_gold(self, amount):
+        return (self.gold + amount) >= 0
+
     def change_gold(self, amount):
-        if self.gold + amount >= 0:
+        has_enough_gold = self.has_gold(amount)
+        if has_enough_gold:
             self.gold += amount
-            return True, self.gold
-        return False, self.gold
+        return has_enough_gold, self.gold
 
     def get_name(self):
         return self.name
