@@ -1,5 +1,11 @@
 ## Homebrew Helper
 
-Not putting much here right now since this is a WIP. If you have feature requests, open up a new issue. I'll organize the code nicely soon enough. 
+Homebrew helper is a discord bot for making playing DND online simpler.
 
-For now the only proper feature in it is the dice roll.
+Currently allows character creation, rolls(includes advantage and disadvantage), and tracks ablities and inventories.
+
+Next Steps:
+	Add a method to split and transfer gold
+	Add a logo for the bot
+	Add a help command
+	Update the list of commands
