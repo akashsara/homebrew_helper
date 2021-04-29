@@ -90,7 +90,7 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
 
     count = 0
     players_to_roll_for = set()
-    server = context.guild.id
+    server = str(context.guild.id)
     if npc_count:
         npc_character_count = int(npc_count)
         npc_character_name = "NPC"
@@ -174,7 +174,7 @@ async def create_character(context, user, name, level, gold, *stats):
     await context.send(character.info())
     message = await client.wait_for("message", timeout=20)
     if message and message.content.lower()[0] == "y":
-        server = context.guild.id
+        server = str(context.guild.id)
         user = gen_utils.discord_name_to_id(user)
         uuid = gen_utils.generate_unique_id(set(character_cache.keys()))
         character_cache[uuid] = character
@@ -197,7 +197,7 @@ async def create_character(context, user, name, level, gold, *stats):
 
 @client.command(name="info")
 async def character_info(context, user=None):
-    server = context.guild.id
+    server = str(context.guild.id)
     if user:
         user = gen_utils.discord_name_to_id(user)
     else:
@@ -216,7 +216,7 @@ async def character_info(context, user=None):
 @client.command(name="change_gold", aliases=["gold"])
 @commands.has_permissions(administrator=True)
 async def change_gold(context, user, amount):
-    server = context.guild.id
+    server = str(context.guild.id)
     user = gen_utils.discord_name_to_id(user)
     amount = int(amount)
     # Get active character
@@ -243,7 +243,7 @@ async def change_gold(context, user, amount):
 
 @client.command(name="saving_throw", aliases=["st"])
 async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
-    server = context.guild.id
+    server = str(context.guild.id)
     user = gen_utils.discord_name_to_id(str(context.author.id))
     if not stat:
         await context.send(
@@ -278,7 +278,7 @@ async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
 @client.command(name="change_stat", aliases=["stat_change"])
 @commands.has_permissions(administrator=True)
 async def change_stat(context, user, stat, value):
-    server = context.guild.id
+    server = str(context.guild.id)
     user = gen_utils.discord_name_to_id(user)
     value = int(value)
     stat = stat.lower()[:3]
@@ -313,7 +313,7 @@ async def change_stat(context, user, stat, value):
 @client.command(name="add_alias", aliases=["add_alt", "aa"])
 @commands.has_permissions(administrator=True)
 async def add_alias(context, user1, user2):
-    server = context.guild.id
+    server = str(context.guild.id)
     user1 = gen_utils.discord_name_to_id(user1)
     user2 = gen_utils.discord_name_to_id(user2)
     db = database.connect_to_db(DB_TOKEN)
