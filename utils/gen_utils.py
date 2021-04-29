@@ -1,10 +1,11 @@
 import os
-import sys
-import joblib
-import uuid
 import re
-from functools import partial
+import sys
+import uuid
 from collections import defaultdict
+from functools import partial
+
+import joblib
 
 sys.path.append("../")
 from utils.logging_util import logger

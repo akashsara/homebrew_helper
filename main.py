@@ -9,7 +9,6 @@ from discord.ext import commands
 from discord.ext.commands import Bot
 
 import database
-
 from dice import dice, roll_dice
 from utils import gen_utils
 from utils.ability import Ability
@@ -104,7 +103,7 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
             await context.send("Max of 10 NPC's allowed")
         for i in range(npc_character_count):
             players_to_roll_for.add(f"{npc_character_name} {i+1}")
-    
+
     db = database.connect_to_db(DB_TOKEN)
     while count < 2:
         try:
