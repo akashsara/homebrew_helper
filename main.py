@@ -343,6 +343,8 @@ async def on_command_error(context, error):
 
 if __name__ == "__main__":
     logger.info("Loading DnData..")
+    if not os.path.exists(DATA_LOCATION):
+        os.mkdir(DATA_LOCATION)
     users, characters, abilities, items, aliases = gen_utils.load_files(
         DATA_LOCATION, DATAFILE_NAMES
     )
