@@ -8,21 +8,22 @@ from utils.item import Item
 class PlayerCharacter:
     def __init__(
         self,
-        user,
-        name,
-        hp,
-        attack,
-        defense,
-        speed,
-        dexterity,
-        charisma,
-        knowledge,
-        wisdom,
-        strength,
-        constitution,
-        level,
-        gold,
+        user="",
+        name="",
+        hp=1,
+        attack=0,
+        defense=0,
+        speed=0,
+        dexterity=0,
+        charisma=0,
+        knowledge=0,
+        wisdom=0,
+        strength=0,
+        constitution=0,
+        level=1,
+        gold=0,
     ):
+        # Everything below this is stored in a DB
         self.user = user
         self.name = name
         self.stats = {
@@ -38,6 +39,9 @@ class PlayerCharacter:
             "strength": int(strength),
             "constitution": int(constitution),
         }
+        self.level = int(level)
+        self.gold = int(gold)
+        # Everything below this is not stored in the DB
         self.stat_lookup = {
             "dex": "dexterity",
             "cha": "charisma",
@@ -46,15 +50,29 @@ class PlayerCharacter:
             "con": "constitution",
             "str": "strength",
         }
-        self.level = int(level)
-        self.gold = int(gold)
         # self.items = dict()
         # self.abilities = {}  # ability_name:Ability Obj
         # self.weapons = []
         # self.long_rest()
 
+    def export_stats(self):
+        return {
+            "user": self.user,
+            "name": self.name,
+            "stats": self.stats,
+            "level": self.level,
+            "gold": self.gold,
+        }
+
+    def import_stats(self, character):
+        self.user = character["user"]
+        self.name = character["name"]
+        self.stats = character["stats"]
+        self.level = character["level"]
+        self.gold = character["gold"]
+
     def info(self):
-        return f"""{self.name} ({self.user})
+        return f"""{self.name} (<@!{self.user}>)
 ```
 +--------------+---------+---+----------------+---------+
 | Primary Stat | Value   |   | Secondary Stat | Value   |

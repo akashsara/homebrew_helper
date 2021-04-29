@@ -8,6 +8,8 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
 
+import database
+
 from dice import dice, roll_dice
 from utils import gen_utils
 from utils.ability import Ability
@@ -16,30 +18,11 @@ from utils.logging_util import logger
 from utils.player_character import PlayerCharacter
 
 TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
+DB_TOKEN = os.environ.get("DATABASE_TOKEN")
 BOT_PREFIX = ("?", "!")
-DATA_LOCATION = "data/"
-DATAFILE_NAMES = {
-    "users": "users.joblib",
-    "abilities": "abilities.joblib",
-    "items": "items.joblib",
-    "characters": "characters.joblib",
-    "aliases": "aliases.joblib",
-}
 ALLOWED_STATS = ["dex", "con", "cha", "kno", "wis", "str"]
 
 client = Bot(command_prefix=BOT_PREFIX)
-
-
-def get_file_path(filename):
-    filename = DATAFILE_NAMES.get(filename)
-    return os.path.join(DATA_LOCATION, filename)
-
-
-def get_user_id(user):
-    user = re.findall("\d+", user)[0]
-    while user in aliases:
-        user = aliases.get(user)
-    return str(user)
 
 
 @client.command(name="coin_toss", aliases=["cointoss", "toss", "flip", "cointoin"])
@@ -121,16 +104,20 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
             await context.send("Max of 10 NPC's allowed")
         for i in range(npc_character_count):
             players_to_roll_for.add(f"{npc_character_name} {i+1}")
+    
+    db = database.connect_to_db(DB_TOKEN)
     while count < 2:
         try:
             reaction, reaction_user = await client.wait_for(
                 "reaction_add", timeout=60, check=check
             )
             if str(reaction.emoji) == "👍":
-                user = get_user_id(str(reaction_user.id))
-                current = users[server][user].get("active")
+                user = gen_utils.discord_name_to_id(str(reaction_user.id))
+                # Get active character
+                query = {"server": server, "user": user}
+                current = database.get_details(query, "users", db).get("active")
                 if current:
-                    character_name = characters[current].get_name()
+                    character_name = character_cache[current].get_name()
                     players_to_roll_for.add(str(character_name))
                 else:
                     players_to_roll_for.add(str(reaction_user.name))
@@ -189,13 +176,20 @@ async def create_character(context, user, name, level, gold, *stats):
     message = await client.wait_for("message", timeout=20)
     if message and message.content.lower()[0] == "y":
         server = context.guild.id
-        user = get_user_id(user)
-        uuid = gen_utils.generate_unique_id(set(characters.keys()))
-        characters[uuid] = character
-        users[server][user]["characters"].append(uuid)
-        users[server][user]["active"] = uuid
-        gen_utils.save_file(users, get_file_path("users"))
-        gen_utils.save_file(characters, get_file_path("characters"))
+        user = gen_utils.discord_name_to_id(user)
+        uuid = gen_utils.generate_unique_id(set(character_cache.keys()))
+        character_cache[uuid] = character
+        # Write character to DB
+        db = database.connect_to_db(DB_TOKEN)
+        payload = character_cache[uuid].export_stats()
+        query = {"character_id": uuid}
+        database.set_details(query, payload, "characters", db)
+        # Update user information & set as active character
+        query = {"server": server, "user": user}
+        user_info = database.get_details(query, "users", db)
+        user_info["characters"].append(uuid)
+        user_info["active"] = uuid
+        database.set_details(query, user_info, "users", db)
         logger.info(f"Created Character for {name} ({user})")
         await context.send(f"Your character has been saved!")
     else:
@@ -206,12 +200,15 @@ async def create_character(context, user, name, level, gold, *stats):
 async def character_info(context, user=None):
     server = context.guild.id
     if user:
-        user = get_user_id(user)
+        user = gen_utils.discord_name_to_id(user)
     else:
-        user = get_user_id(str(context.author.id))
-    current = users[server][user].get("active")
+        user = gen_utils.discord_name_to_id(str(context.author.id))
+    # Get active character
+    db = database.connect_to_db(DB_TOKEN)
+    query = {"server": server, "user": user}
+    current = database.get_details(query, "users", db).get("active")
     if current:
-        await context.send(characters[current].info())
+        await context.send(character_cache[current].info())
     else:
         logger.info(f"{server}: couldn't find character ID for {user}")
         await context.send(f"<@{user}> doesn't have any characters yet.")
@@ -221,57 +218,45 @@ async def character_info(context, user=None):
 @commands.has_permissions(administrator=True)
 async def change_gold(context, user, amount):
     server = context.guild.id
-    user = get_user_id(user)
+    user = gen_utils.discord_name_to_id(user)
     amount = int(amount)
-    current = users[server][user].get("active")
+    # Get active character
+    db = database.connect_to_db(DB_TOKEN)
+    query = {"server": server, "user": user}
+    current = database.get_details(query, "users", db).get("active")
     if current:
-        status, gold = characters[current].change_gold(amount)
+        status, gold = character_cache[current].change_gold(amount)
         if status:
-            gen_utils.save_file(characters, get_file_path("characters"))
+            # Write changes to DB
+            payload = character_cache[current].export_stats()
+            query = {"character_id": current}
+            database.set_details(query, payload, "characters", db)
             await context.send(
-                f"{characters[current].get_name()} (<@{user}>) received {amount} gold. Their new total is {gold} gold."
+                f"{character_cache[current].get_name()} (<@{user}>) received {amount} gold. Their new total is {gold} gold."
             )
         else:
             await context.send(
-                f"{characters[current].get_name()} (<@{user}>) doesn't have enough gold for that. They currently have {gold} gold."
+                f"{character_cache[current].get_name()} (<@{user}>) doesn't have enough gold for that. They currently have {gold} gold."
             )
     else:
         await context.send(f"<@{user}> doesn't have any characters")
 
 
-@client.command(name="add_alias", aliases=["add_alt", "aa"])
-@commands.has_permissions(administrator=True)
-async def add_alias(context, user1, user2):
-    server = context.guild.id
-    user1 = get_user_id(user1)
-    user2 = get_user_id(user2)
-    if user2 not in aliases:
-        aliases[user2] = user1
-        for character in users[server][user2]["characters"]:
-            character.change_user(user1)
-        users[server][user1]["characters"].extend(users[server][user2]["characters"])
-        users[server][user2]["characters"] = []
-        gen_utils.save_file(users, get_file_path("users"))
-        gen_utils.save_file(aliases, get_file_path("aliases"))
-        await context.send(f"<@{user2}> is now an alias of <@{user1}>")
-    else:
-        await context.send(
-            f"<@{user2}> is already an alias of <@{aliases.get(user2)}>."
-        )
-
-
 @client.command(name="saving_throw", aliases=["st"])
 async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
     server = context.guild.id
-    user = get_user_id(str(context.author.id))
+    user = gen_utils.discord_name_to_id(str(context.author.id))
     if not stat:
         await context.send(
             f"Hey <@{context.author.id}>, to do a saving throw or ability check do `!st <stat> (a|d)` where stat is one of (con, cha, str, dex, kno, wis). You can also add an a or d to signify advantage or disadvantage."
         )
     stat = stat.lower()[:3]
-    current = users[server][user].get("active")
+    # Get active character
+    db = database.connect_to_db(DB_TOKEN)
+    query = {"server": server, "user": user}
+    current = database.get_details(query, "users", db).get("active")
     if current and stat in ALLOWED_STATS:
-        bonus = characters[current].get_stat(stat)
+        bonus = character_cache[current].get_stat(stat)
         sign = "+"
         if bonus < 0:
             sign = "-"
@@ -295,14 +280,23 @@ async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
 @commands.has_permissions(administrator=True)
 async def change_stat(context, user, stat, value):
     server = context.guild.id
-    user = get_user_id(user)
+    user = gen_utils.discord_name_to_id(user)
     value = int(value)
     stat = stat.lower()[:3]
-    current = users[server][user].get("active")
+
+    # Get active character
+    db = database.connect_to_db(DB_TOKEN)
+    query = {"server": server, "user": user}
+    current = database.get_details(query, "users", db).get("active")
     if current and stat in ALLOWED_STATS:
-        old_value = characters[current].get_stat(stat)
-        characters[current].set_stat(stat, value)
-        character_name = characters[current].get_name()
+        old_value = character_cache[current].get_stat(stat)
+        character_cache[current].set_stat(stat, value)
+        character_name = character_cache[current].get_name()
+        # Write changes to DB
+        payload = character_cache[current].export_stats()
+        query = {"character_id": current}
+        database.set_details(query, payload, "characters", db)
+
         await context.send(
             f"Successfully changed the stat for {character_name}(<@{user}>) from {old_value} to {value}!"
         )
@@ -317,11 +311,31 @@ async def change_stat(context, user, stat, value):
         )
 
 
+@client.command(name="add_alias", aliases=["add_alt", "aa"])
+@commands.has_permissions(administrator=True)
+async def add_alias(context, user1, user2):
+    server = context.guild.id
+    user1 = gen_utils.discord_name_to_id(user1)
+    user2 = gen_utils.discord_name_to_id(user2)
+    db = database.connect_to_db(DB_TOKEN)
+    # Change Alias
+    query = {"alias": user1}
+    payload = {"alias": user1, "original": user2}
+    database.set_details(query, payload, "aliases", db)
+    # Transfer characters
+    database.transfer_characters(server, user1, user2, db)
+    await context.send(f"<@!{user1}> is now an alias of <@!{user2}>")
+
+
 # @client.command(name="create_ability")
 # async def create_ability(context):
 #     # Have a file containing abilities
 #     # Only Admins can make abilities
 #     pass
+
+################################################################################
+# Housekeeping Functions
+################################################################################
 
 
 @client.event
@@ -341,12 +355,19 @@ async def on_command_error(context, error):
         raise error
 
 
+def load_all_characters():
+    db = database.connect_to_db(DB_TOKEN)
+    character_information = database.load_all_characters(db)
+    characters = {}
+    for character_id, character_data in character_information.items():
+        character = PlayerCharacter()
+        character.import_stats(character_data)
+        characters[character_id] = character
+    return characters
+
+
 if __name__ == "__main__":
     logger.info("Loading DnData..")
-    if not os.path.exists(DATA_LOCATION):
-        os.mkdir(DATA_LOCATION)
-    users, characters, abilities, items, aliases = gen_utils.load_files(
-        DATA_LOCATION, DATAFILE_NAMES
-    )
+    character_cache = load_all_characters()
     logger.info("Booting up client..")
     client.run(TOKEN)

@@ -1,20 +1,60 @@
-Users:
-SERVER:
-        USER:
-                ACTIVE: Currently Active Character ID
-                CHARACTERS: List of Character IDs
-===================================================
-Characters:
-ID: PlayerCharacter 
-===================================================
 Abilities:
-SERVER:
-        ABILITY: Ability information
-===================================================
-Items:
-SERVER:
-        ITEM: Item Information
+{
+        "_id": "unique_id",
+        "server": "server_id",
+        "ability_name": "ability_name",
+        "ability_information": {}
+}
+GET query_format: {"server": "server_id", "ability_name": "ability_name"}
 ===================================================
 Aliases:
-ALIAS: ALIAS_OF
+{
+        "_id": "unique_id",
+        "alias": "alias_name",
+        "original": "true_name"
+}
+GET query_format: {"alias": "alias_name"}
+===================================================
+Characters:
+{
+        "_id": "unique_id",
+        "character_id": "character_id",
+        "user": "discord_user_id",
+        "name": "character_name",
+        "stats": {
+                "max_hp": max_hp (int),
+                "current_hp": current_hp (int),
+                "attack": attack (int),
+                "defense": defense (int),
+                "speed": speed (int),
+                "dexterity": dexterity (int),
+                "charisma": charisma (int),
+                "knowledge": knowledge (int),
+                "wisdom": wisdom (int),
+                "strength": strength (int),
+                "constitution": constitution (int)
+        },
+        "level": character_level (int),
+        "gold": character_gold (int)
+}
+GET query_format: {"character_id": "character_id"}
+===================================================
+Items:
+{
+        "_id": "unique_id",
+        "server": "server_id",
+        "item_name": item_name,
+        "item_information": {}
+}
+GET query_format: {"server": "server_id", "item_name": "item_name"}
+===================================================
+Users:
+{
+        "_id": "unique_id",
+        "server": "discord_server_id",
+        "user": "discord_user_id",
+        "active": "currently_active_character_id",
+        "characters": ["list", "of", "character_ids"]
+}
+GET query_format: {"server": "server_id", "user": "user_id"}
 ===================================================

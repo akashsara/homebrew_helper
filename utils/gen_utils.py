@@ -2,10 +2,13 @@ import os
 import sys
 import joblib
 import uuid
+import re
 from functools import partial
 from collections import defaultdict
+
 sys.path.append("../")
 from utils.logging_util import logger
+
 
 def generate_id():
     return str(uuid.uuid4())
@@ -27,26 +30,8 @@ def get_default_user():
     return {"active": None, "characters": []}
 
 
-def load_files(file_root_dir, file_dict):
-    dicts = {
-        "users": defaultdict(partial(defaultdict, get_default_user)),
-        "characters": dict(),
-        "abilities": defaultdict(partial(defaultdict, dict)),
-        "items": defaultdict(partial(defaultdict, dict)),
-        "aliases": defaultdict(list),
-    }
-    for key, value in file_dict.items():
-        file_path = os.path.join(f"{file_root_dir}/{value}")
-        if os.path.exists(file_path):
-            logger.info(f"Loading from {file_path}")
-            dicts[key] = joblib.load(file_path)
-    return (
-        dicts["users"],
-        dicts["characters"],
-        dicts["abilities"],
-        dicts["items"],
-        dicts["aliases"],
-    )
+def discord_name_to_id(name):
+    return str(re.findall("\d+", name)[0])
 
 
 def pad(text_to_pad, length_to_pad_to, direction):
