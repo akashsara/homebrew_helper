@@ -49,6 +49,11 @@ class PlayerCharacter:
             "wis": "wisdom",
             "con": "constitution",
             "str": "strength",
+            "atk": "attack",
+            "def": "defense",
+            "max_hp": "max_hp",
+            "current_hp": "current_hp",
+            "speed": "speed",
         }
         # self.items = dict()
         # self.abilities = {}  # ability_name:Ability Obj

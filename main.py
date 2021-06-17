@@ -19,7 +19,7 @@ from utils.player_character import PlayerCharacter
 TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
 DB_TOKEN = os.environ.get("DATABASE_TOKEN")
 BOT_PREFIX = ("?", "!")
-ALLOWED_STATS = ["dex", "con", "cha", "kno", "wis", "str"]
+ALLOWED_STATS = ["dex", "con", "cha", "kno", "wis", "str", "atk", "def", "speed", "max_hp", "current_hp"]
 
 client = Bot(command_prefix=BOT_PREFIX)
 
