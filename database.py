@@ -40,11 +40,15 @@ def set_details(
     collection: the table in our DB
     db: MongoDB database cursor
     """
-    collection = db[COLLECTION_MAP[collection]]
-    details = collection.find_one(query)
-    result = details.replace_one(query, payload, upsert=True)
-    if result.modified_count == 0 and not result.upserted_id:
-        logger.info(f"Unknown error occured.\n{result.raw_result}")
+    try:
+        collection = db[COLLECTION_MAP[collection]]
+        result = collection.replace_one(query, payload, upsert=True)
+        if result.modified_count == 0 and not result.upserted_id:
+            logger.info(f"Unknown error occured.\n{result.raw_result}")
+        return True
+    except Exception as e:
+        logger.info(f"Exception in set_details: {e}")
+        return False
 
 
 def load_all_characters(db: pymongo.database.Database):
@@ -64,23 +68,28 @@ def transfer_characters(
     target_user: User to transfer characters to
     db: MongoDB database cursor
     """
-    # Get source user information
-    source_query = {"server": server_id, "user": source_user}
-    source = get_details(source_query, "users", db)
-    # Get target user information
-    target_query = {"server": server_id, "user": target_user}
-    target = get_details(target_query, "users", db)
-    # Change user for all characters in source to target
-    for character_id in source["characters"]:
-        # Get character info
-        query = {"character_id": character_id}
-        character = get_details(query, "characters", db)
-        # Change user associated with character
-        character["user"] = target_user
-        set_details(query, character, "characters", db)
-        target["characters"].append(character_id)
-    source["characters"] = []
-    # Set source user information
-    set_details(source_query, source, "characters", db)
-    # Set target user information
-    set_details(target_query, target, "characters", db)
+    try:
+        # Get source user information
+        source_query = {"server": server_id, "user": source_user}
+        source = get_details(source_query, "users", db)
+        # Get target user information
+        target_query = {"server": server_id, "user": target_user}
+        target = get_details(target_query, "users", db)
+        # Change user for all characters in source to target
+        for character_id in source["characters"]:
+            # Get character info
+            query = {"character_id": character_id}
+            character = get_details(query, "characters", db)
+            # Change user associated with character
+            character["user"] = target_user
+            set_details(query, character, "characters", db)
+            target["characters"].append(character_id)
+        source["characters"] = []
+        # Set source user information
+        set_details(source_query, source, "characters", db)
+        # Set target user information
+        set_details(target_query, target, "characters", db)
+        return True
+    except Exception as e:
+        logger.info(f"Exception in set_details: {e}")
+        return False
