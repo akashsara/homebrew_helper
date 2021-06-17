@@ -32,7 +32,11 @@ def get_default_user():
 
 
 def discord_name_to_id(name):
-    return str(re.findall("\d+", name)[0])
+    search = re.findall("\d+", name)
+    logger.info(f"Found {search} from {name}.")
+    if search:
+        return str(search[0])
+    return None
 
 
 def pad(text_to_pad, length_to_pad_to, direction):

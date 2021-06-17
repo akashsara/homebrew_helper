@@ -19,7 +19,19 @@ from utils.player_character import PlayerCharacter
 TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
 DB_TOKEN = os.environ.get("DATABASE_TOKEN")
 BOT_PREFIX = ("?", "!")
-ALLOWED_STATS = ["dex", "con", "cha", "kno", "wis", "str", "atk", "def", "speed", "max_hp", "current_hp"]
+ALLOWED_STATS = [
+    "dex",
+    "con",
+    "cha",
+    "kno",
+    "wis",
+    "str",
+    "atk",
+    "def",
+    "speed",
+    "max_hp",
+    "current_hp",
+]
 
 client = Bot(command_prefix=BOT_PREFIX)
 
@@ -161,38 +173,44 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
 @commands.has_permissions(administrator=True)
 async def create_character(context, user, name, level, gold, *stats):
     # Stats = HP, Attack, Defense, Speed, Dexterity, Charisma, Knowledge, Wisdom, Strength, Constitution,
-    try:
-        character = PlayerCharacter(user, name, *stats, level, gold)
-    except TypeError:
+    server = str(context.guild.id)
+    user = gen_utils.discord_name_to_id(user)
+    if user:
+        try:
+            character = PlayerCharacter(user, name, *stats, level, gold)
+        except TypeError:
+            await context.send(
+                f"Hey uh <@{context.author.id}>, you're missing some stats there."
+            )
+            return
         await context.send(
-            f"Hey uh <@{context.author.id}>, you're missing some stats there."
+            f"Got it! Your character has now been created. Check it out! If it looks good, send a Y to confirm. Otherwise send a N."
         )
-        return
-    await context.send(
-        f"Got it! Your character has now been created. Check it out! If it looks good, send a Y to confirm. Otherwise send a N."
-    )
-    await context.send(character.info())
-    message = await client.wait_for("message", timeout=20)
-    if message and message.content.lower()[0] == "y":
-        server = str(context.guild.id)
-        user = gen_utils.discord_name_to_id(user)
-        uuid = gen_utils.generate_unique_id(set(character_cache.keys()))
-        character_cache[uuid] = character
-        # Write character to DB
-        db = database.connect_to_db(DB_TOKEN)
-        payload = character_cache[uuid].export_stats()
-        query = {"character_id": uuid}
-        database.set_details(query, payload, "characters", db)
-        # Update user information & set as active character
-        query = {"server": server, "user": user}
-        user_info = database.get_details(query, "users", db)
-        user_info["characters"].append(uuid)
-        user_info["active"] = uuid
-        database.set_details(query, user_info, "users", db)
-        logger.info(f"Created Character for {name} ({user})")
-        await context.send(f"Your character has been saved!")
+        await context.send(character.info())
+        message = await client.wait_for("message", timeout=20)
+        if message and message.content.lower()[0] == "y":
+            uuid = gen_utils.generate_unique_id(set(character_cache.keys()))
+            character_cache[uuid] = character
+            # Write character to DB
+            db = database.connect_to_db(DB_TOKEN)
+            payload = character_cache[uuid].export_stats()
+            query = {"character_id": uuid}
+            database.set_details(query, payload, "characters", db)
+            # Update user information & set as active character
+            query = {"server": server, "user": user}
+            user_info = database.get_details(query, "users", db)
+            user_info["characters"].append(uuid)
+            user_info["active"] = uuid
+            database.set_details(query, user_info, "users", db)
+            logger.info(f"Created Character for {name} ({user})")
+            await context.send(f"Your character has been saved!")
+        else:
+            await context.send(
+                f"Well that was useless. Your character has not been saved."
+            )
     else:
-        await context.send(f"Well that was useless. Your character has not been saved.")
+        logger.info(f"{server}: couldn't find user: {user}")
+        await context.send(f"<@{user}> doesn't exist.")
 
 
 @client.command(name="info")
@@ -202,15 +220,19 @@ async def character_info(context, user=None):
         user = gen_utils.discord_name_to_id(user)
     else:
         user = gen_utils.discord_name_to_id(str(context.author.id))
-    # Get active character
-    db = database.connect_to_db(DB_TOKEN)
-    query = {"server": server, "user": user}
-    current = database.get_details(query, "users", db).get("active")
-    if current:
-        await context.send(character_cache[current].info())
+    if user:
+        # Get active character
+        db = database.connect_to_db(DB_TOKEN)
+        query = {"server": server, "user": user}
+        current = database.get_details(query, "users", db).get("active")
+        if current:
+            await context.send(character_cache[current].info())
+        else:
+            logger.info(f"{server}: couldn't find character ID for {user}")
+            await context.send(f"<@{user}> doesn't have any characters yet.")
     else:
-        logger.info(f"{server}: couldn't find character ID for {user}")
-        await context.send(f"<@{user}> doesn't have any characters yet.")
+        logger.info(f"{server}: couldn't find user: {user}")
+        await context.send(f"<@{user}> doesn't exist.")
 
 
 @client.command(name="change_gold", aliases=["gold"])
@@ -219,26 +241,30 @@ async def change_gold(context, user, amount):
     server = str(context.guild.id)
     user = gen_utils.discord_name_to_id(user)
     amount = int(amount)
-    # Get active character
-    db = database.connect_to_db(DB_TOKEN)
-    query = {"server": server, "user": user}
-    current = database.get_details(query, "users", db).get("active")
-    if current:
-        status, gold = character_cache[current].change_gold(amount)
-        if status:
-            # Write changes to DB
-            payload = character_cache[current].export_stats()
-            query = {"character_id": current}
-            database.set_details(query, payload, "characters", db)
-            await context.send(
-                f"{character_cache[current].get_name()} (<@{user}>) received {amount} gold. Their new total is {gold} gold."
-            )
+    if user:
+        # Get active character
+        db = database.connect_to_db(DB_TOKEN)
+        query = {"server": server, "user": user}
+        current = database.get_details(query, "users", db).get("active")
+        if current:
+            status, gold = character_cache[current].change_gold(amount)
+            if status:
+                # Write changes to DB
+                payload = character_cache[current].export_stats()
+                query = {"character_id": current}
+                database.set_details(query, payload, "characters", db)
+                await context.send(
+                    f"{character_cache[current].get_name()} (<@{user}>) received {amount} gold. Their new total is {gold} gold."
+                )
+            else:
+                await context.send(
+                    f"{character_cache[current].get_name()} (<@{user}>) doesn't have enough gold for that. They currently have {gold} gold."
+                )
         else:
-            await context.send(
-                f"{character_cache[current].get_name()} (<@{user}>) doesn't have enough gold for that. They currently have {gold} gold."
-            )
+            await context.send(f"<@{user}> doesn't have any characters")
     else:
-        await context.send(f"<@{user}> doesn't have any characters")
+        logger.info(f"{server}: couldn't find user: {user}")
+        await context.send(f"<@{user}> doesn't exist.")
 
 
 @client.command(name="saving_throw", aliases=["st"])
@@ -283,31 +309,35 @@ async def change_stat(context, user, stat, value):
     value = int(value)
     stat = stat.lower()[:3]
 
-    # Get active character
-    db = database.connect_to_db(DB_TOKEN)
-    query = {"server": server, "user": user}
-    current = database.get_details(query, "users", db).get("active")
-    if current and stat in ALLOWED_STATS:
-        old_value = character_cache[current].get_stat(stat)
-        character_cache[current].set_stat(stat, value)
-        character_name = character_cache[current].get_name()
-        # Write changes to DB
-        payload = character_cache[current].export_stats()
-        query = {"character_id": current}
-        database.set_details(query, payload, "characters", db)
+    if user:
+        # Get active character
+        db = database.connect_to_db(DB_TOKEN)
+        query = {"server": server, "user": user}
+        current = database.get_details(query, "users", db).get("active")
+        if current and stat in ALLOWED_STATS:
+            old_value = character_cache[current].get_stat(stat)
+            character_cache[current].set_stat(stat, value)
+            character_name = character_cache[current].get_name()
+            # Write changes to DB
+            payload = character_cache[current].export_stats()
+            query = {"character_id": current}
+            database.set_details(query, payload, "characters", db)
 
-        await context.send(
-            f"Successfully changed the stat for {character_name}(<@{user}>) from {old_value} to {value}!"
-        )
-    elif current:
-        await context.send(
-            f"Hey <@{context.author.id}>, that doesn't seem like a valid stat."
-        )
+            await context.send(
+                f"Successfully changed the stat for {character_name}(<@{user}>) from {old_value} to {value}!"
+            )
+        elif current:
+            await context.send(
+                f"Hey <@{context.author.id}>, that doesn't seem like a valid stat."
+            )
+        else:
+            logger.info(f"{server} couldn't find character ID for {user}")
+            await context.send(
+                f"Hey <@{context.author.id}>, it looks like that person doesn't have any characters yet."
+            )
     else:
-        logger.info(f"{server} couldn't find character ID for {user}")
-        await context.send(
-            f"Hey <@{context.author.id}>, it looks like that person doesn't have any characters yet."
-        )
+        logger.info(f"{server}: couldn't find user: {user}")
+        await context.send(f"<@{user}> doesn't exist.")
 
 
 @client.command(name="add_alias", aliases=["add_alt", "aa"])
@@ -316,14 +346,22 @@ async def add_alias(context, user1, user2):
     server = str(context.guild.id)
     user1 = gen_utils.discord_name_to_id(user1)
     user2 = gen_utils.discord_name_to_id(user2)
-    db = database.connect_to_db(DB_TOKEN)
-    # Change Alias
-    query = {"alias": user1}
-    payload = {"alias": user1, "original": user2}
-    database.set_details(query, payload, "aliases", db)
-    # Transfer characters
-    database.transfer_characters(server, user1, user2, db)
-    await context.send(f"<@!{user1}> is now an alias of <@!{user2}>")
+    if user1 and user2:
+        db = database.connect_to_db(DB_TOKEN)
+        # Change Alias
+        query = {"alias": user1}
+        payload = {"alias": user1, "original": user2}
+        database.set_details(query, payload, "aliases", db)
+        # Transfer characters
+        database.transfer_characters(server, user1, user2, db)
+        await context.send(f"<@!{user1}> is now an alias of <@!{user2}>")
+    else:
+        if user1:
+            logger.info(f"{server}: couldn't find user: {user2}")
+            await context.send(f"<@{user2}> doesn't exist.")
+        else:
+            logger.info(f"{server}: couldn't find user: {user2}")
+            await context.send(f"<@{user1}> doesn't exist.")
 
 
 # @client.command(name="create_ability")
