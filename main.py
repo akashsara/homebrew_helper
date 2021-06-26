@@ -177,7 +177,8 @@ async def create_character(context, user, name, level, gold, *stats):
     user = gen_utils.discord_name_to_id(user)
     if user:
         try:
-            character = PlayerCharacter(user, name, *stats, level, gold)
+            uuid = gen_utils.generate_unique_id(set(character_cache.keys()))
+            character = PlayerCharacter(user, name, uuid, *stats, level, gold)
         except TypeError:
             await context.send(
                 f"Hey uh <@{context.author.id}>, you're missing some stats there."
@@ -189,7 +190,6 @@ async def create_character(context, user, name, level, gold, *stats):
         await context.send(character.info())
         message = await client.wait_for("message", timeout=20)
         if message and message.content.lower()[0] == "y":
-            uuid = gen_utils.generate_unique_id(set(character_cache.keys()))
             character_cache[uuid] = character
             # Write character to DB
             db = database.connect_to_db(DB_TOKEN)

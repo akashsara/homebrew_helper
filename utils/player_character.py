@@ -10,6 +10,7 @@ class PlayerCharacter:
         self,
         user="",
         name="",
+        character_id="",
         hp=1,
         attack=0,
         defense=0,
@@ -26,6 +27,7 @@ class PlayerCharacter:
         # Everything below this is stored in a DB
         self.user = user
         self.name = name
+        self.character_id = character_id
         self.stats = {
             "max_hp": int(hp),
             "current_hp": int(hp),
@@ -64,6 +66,7 @@ class PlayerCharacter:
         return {
             "user": self.user,
             "name": self.name,
+            "character_id": self.character_id,
             "stats": self.stats,
             "level": self.level,
             "gold": self.gold,
@@ -72,6 +75,7 @@ class PlayerCharacter:
     def import_stats(self, character):
         self.user = character["user"]
         self.name = character["name"]
+        self.character_id = character["character_id"]
         self.stats = character["stats"]
         self.level = character["level"]
         self.gold = character["gold"]
