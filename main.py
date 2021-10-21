@@ -19,6 +19,7 @@ from config import *
 
 client = Bot(command_prefix=BOT_PREFIX)
 
+
 @client.command(name="coin_toss", aliases=["cointoss", "toss", "flip", "cointoin"])
 async def coin_toss(context, *num_tosses):
     num_tosses = "".join(num_tosses)
@@ -65,13 +66,6 @@ async def roll(context, *roll):
     await context.send(result)
 
 
-@client.command(name="bungee_gum", aliases=["bg", "bungee", "gum", "bungeegum"])
-async def bungee_gum(context):
-    await context.send(
-        f"<@{context.author.id}>, bungee gum possesses the properties of both rubber and gum."
-    )
-
-
 @client.command(name="roll_initiative", aliases=["initiative", "ri", "RI", "rolli"])
 async def roll_initiative(context, npc_count=None, npc_name_template=None):
     roll_initiative_message = await context.send(
@@ -95,7 +89,9 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
                 npc_character_name = npc_character_name[:30]
         if npc_character_count > INITIATIVE_MAX_NPCS:
             npc_character_count = INITIATIVE_MAX_NPCS
-            await context.send("Um...if you have more than 20 NPCs in combat, please don't. I'm considering only 20.")
+            await context.send(
+                "Um...if you have more than 20 NPCs in combat, please don't. I'm considering only 20."
+            )
         for i in range(npc_character_count):
             players_to_roll_for.add(f"{npc_character_name} {i+1}")
 
@@ -147,6 +143,44 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
         )
     else:
         await context.send("Thank you for wasting my time :)")
+
+
+################################################################################
+# Fun Commands - No Dependencies
+################################################################################
+
+
+@client.command(name="bungee_gum", aliases=["bg", "bungee", "gum", "bungeegum"])
+async def bungee_gum(context):
+    await context.send(
+        f"<@{context.author.id}>, bungee gum possesses the properties of both rubber and gum."
+    )
+
+
+@client.command(name="cow", aliases=["moo"])
+async def cow(context):
+    await context.send(f"MOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.")
+
+
+@client.command(name="rick", aliases=["rickroll"])
+async def rickroll(context):
+    selection = random.choice(RICK_ROLL_LYRICS)
+    await context.send(f"```{'\n'.join(selection)}```")
+
+
+@client.command(name="oracle")
+async def oracle(context, question):
+    author = f"<@{context.author.id}>"
+    await context.send(f"{author}: question\nAnswer:{random.choice(ORACLE_ANSWERS)}")
+
+@client.command(name="report", aliases=["report_lan"])
+async def report(context):
+    author = f"<@{context.author.id}>"
+    message = await context.send(f"{author}: Please wait...preparing report.")
+    asyncio.sleep(1)
+    await message.edit(content="Report Prepared.")
+    asyncio.sleep(1)
+    await message.edit(content="Thank you for reporting Lan, {author}!")
 
 
 ################################################################################
