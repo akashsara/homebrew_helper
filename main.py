@@ -171,7 +171,8 @@ async def rickroll(context):
 @client.command(name="oracle")
 async def oracle(context,):
     author = f"<@{context.author.id}>"
-    await context.send(f"{author}: {context.message.content}\nAnswer: {random.choice(ORACLE_ANSWERS)}")
+    message = context.message.content[8:]
+    await context.send(f"{author}: {message}\nAnswer: {random.choice(ORACLE_ANSWERS)}")
 
 @client.command(name="report", aliases=["report_lan"])
 async def report(context):
