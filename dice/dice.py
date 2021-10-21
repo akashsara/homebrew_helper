@@ -4,13 +4,12 @@ import sys
 
 sys.path.append("../")
 from utils.logging_util import logger
+from config import *
 
 roll_format = r"\d+d\d+"
 valid_characters = set(str(x) for x in range(0, 10)).union(
     {"+", "-", "d", " ", "(", ")"}
 )
-
-
 def split_the_roll(roll):
     num_dice, die_type = roll.split("d")
     return int(num_dice), int(die_type)
@@ -30,7 +29,7 @@ def parse_roll(roll, final_value, total_modifier, operation, all_rolls):
     if "d" in roll:
         logger.debug("Dice roll detected.")
         num_dice, die_type = split_the_roll(roll)
-        if num_dice > 50 or die_type > 100:
+        if num_dice > DICE_ROLL_MAX_DICE or die_type > DICE_ROLL_LARGEST_DIE:
             return "too high", 0, 0
         roll_results = make_the_roll(num_dice, die_type)
         all_rolls.append((roll, roll_results))
