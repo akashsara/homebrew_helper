@@ -90,7 +90,7 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
         if npc_character_count > INITIATIVE_MAX_NPCS:
             npc_character_count = INITIATIVE_MAX_NPCS
             await context.send(
-                "Um...if you have more than 20 NPCs in combat, please don't. I'm considering only 20."
+                f"Um...if you have more than {INITIATIVE_MAX_NPCS} NPCs in combat, please don't. I'm considering only {INITIATIVE_MAX_NPCS}."
             )
         for i in range(npc_character_count):
             players_to_roll_for.add(f"{npc_character_name} {i+1}")
@@ -165,13 +165,13 @@ async def cow(context):
 @client.command(name="rick", aliases=["rickroll"])
 async def rickroll(context):
     selection = random.choice(RICK_ROLL_LYRICS)
-    await context.send(f"```{'\n'.join(selection)}```")
+    await context.send("```"+ '\n'.join(selection) + "```")
 
 
 @client.command(name="oracle")
 async def oracle(context, question):
     author = f"<@{context.author.id}>"
-    await context.send(f"{author}: question\nAnswer:{random.choice(ORACLE_ANSWERS)}")
+    await context.send(f"{author}: {question}\nAnswer: {random.choice(ORACLE_ANSWERS)}")
 
 @client.command(name="report", aliases=["report_lan"])
 async def report(context):
