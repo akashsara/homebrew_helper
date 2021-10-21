@@ -15,35 +15,18 @@ from utils.ability import Ability
 from utils.item import Item
 from utils.logging_util import logger
 from utils.player_character import PlayerCharacter
-
-TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
-DB_TOKEN = os.environ.get("DATABASE_TOKEN")
-BOT_PREFIX = ("?", "!")
-ALLOWED_STATS = [
-    "dex",
-    "con",
-    "cha",
-    "kno",
-    "wis",
-    "str",
-    "atk",
-    "def",
-    "speed",
-    "max_hp",
-    "current_hp",
-]
+from config import *
 
 client = Bot(command_prefix=BOT_PREFIX)
-
 
 @client.command(name="coin_toss", aliases=["cointoss", "toss", "flip", "cointoin"])
 async def coin_toss(context, *num_tosses):
     num_tosses = "".join(num_tosses)
     num_tosses = 1 if not num_tosses.isdigit() else int(num_tosses)
-    if num_tosses > 20:
+    if num_tosses > COIN_TOSS_MAX_TOSSES:
         result = [
-            f"Heya <@{context.author.id}>,",
-            "That's just ridiculous and I refuse to do that.",
+            f"Yo <@{context.author.id}>,",
+            "That's just ridiculous and I ain't doing that.",
         ]
     else:
         tosses = random.choices(population=[True, False], k=num_tosses)
@@ -110,9 +93,9 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
             npc_character_name = npc_name_template
             if len(npc_character_name) > 29:
                 npc_character_name = npc_character_name[:30]
-        if npc_character_count > 10:
-            npc_character_count = 10
-            await context.send("Max of 10 NPC's allowed")
+        if npc_character_count > INITIATIVE_MAX_NPCS:
+            npc_character_count = INITIATIVE_MAX_NPCS
+            await context.send("Um...if you have more than 20 NPCs in combat, please don't. I'm considering only 20.")
         for i in range(npc_character_count):
             players_to_roll_for.add(f"{npc_character_name} {i+1}")
 
@@ -156,6 +139,8 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
             if len(player_name) < 32:
                 for i in range(32 - len(player_name)):
                     player_name += " "
+            if len(player_name) > 32:
+                player_name = player_name[:32]
             display_output += f"\n|  {roll}  | {player_name} |"
         await context.send(
             display_output + "\n+------+----------------------------------+```"
