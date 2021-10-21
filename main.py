@@ -177,10 +177,10 @@ async def oracle(context, question):
 async def report(context):
     author = f"<@{context.author.id}>"
     message = await context.send(f"{author}: Please wait...preparing report.")
-    asyncio.sleep(1)
+    asyncio.sleep(5)
     await message.edit(content="Report Prepared.")
-    asyncio.sleep(1)
-    await message.edit(content="Thank you for reporting Lan, {author}!")
+    asyncio.sleep(3)
+    await message.edit(content=f"Thank you for reporting Lan, {author}!")
 
 
 ################################################################################
