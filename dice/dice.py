@@ -6,10 +6,6 @@ sys.path.append("../")
 from utils.logging_util import logger
 from config import *
 
-roll_format = r"\d+d\d+"
-valid_characters = set(str(x) for x in range(0, 10)).union(
-    {"+", "-", "d", " ", "(", ")"}
-)
 def split_the_roll(roll):
     num_dice, die_type = roll.split("d")
     return int(num_dice), int(die_type)
@@ -44,7 +40,7 @@ def parse_roll(roll, final_value, total_modifier, operation, all_rolls):
 
 def roll(user_rolled_a):
     # Validate if this is even a roll
-    if not valid_characters.issuperset(set(user_rolled_a)):
+    if not VALID_ROLL_CHARACTERS.issuperset(set(user_rolled_a)):
         return "wrong"
     try:
         all_rolls = []
