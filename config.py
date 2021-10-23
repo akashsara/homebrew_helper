@@ -36,6 +36,11 @@ WRONG = "That's not how you do it <@{author_id}>. Your roll should be of the for
 ######################################################################
 ############# Used Specifically For Certain Bot Commands #############
 ######################################################################
+# Report Command
+REPORTABLE_PEOPLE = ["Songs", "rtzGod"]
+ALWAYS_REPORT = "Lan"
+
+# Rick Roll Command
 RICK_ROLL_LYRICS = [
     [
         "♫♫♫ We're no strangers to love ♫♫♫",
@@ -59,6 +64,7 @@ RICK_ROLL_LYRICS = [
     ],
 ]
 
+# Oracle Command
 ORACLE_ANSWERS = [
     "HELL YEAH",
     "Yes.",
