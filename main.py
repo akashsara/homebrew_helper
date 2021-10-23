@@ -340,7 +340,7 @@ def transfer_gold_between_players(server, source_user, target_user, amount):
 @client.command(name="transfer_gold", aliases=["transfer"])
 async def transfer_gold(context, amount, target):
     server = str(context.guild.id)
-    source_user = context.author.id
+    source_user = str(context.author.id)
     target_user = gen_utils.discord_name_to_id(target)
     amount = int(amount)
     status, result = transfer_gold_between_players(
