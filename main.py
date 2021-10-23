@@ -119,7 +119,9 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
                         f"Only <@{context.author.id}> can start the roll"
                     )
         except asyncio.TimeoutError:
-            break
+            await context.send(
+                f"Look, a minute's gone by and I'm not waiting anymore."
+            )
 
     if len(players_to_roll_for) != 0:
         roll_list = []
@@ -181,8 +183,11 @@ async def report(context):
     message = await context.send(f"{author}: Please wait...preparing report.")
     await asyncio.sleep(2)
     await message.edit(content="Report Prepared.")
-    await asyncio.sleep(1)
-    await message.edit(content=f"Thank you for reporting Lan, {author}!")
+    await asyncio.sleep(2)
+    if random.randint(0, 100) == 69:
+        await message.edit(content=f"Thank you for reporting {random.choice(REPORTABLE_PEOPLE)}, {author}!")
+    else:
+        await message.edit(content=f"Thank you for reporting {ALWAYS_REPORT}, {author}!")
 
 
 ################################################################################
@@ -201,6 +206,9 @@ async def create_character(context, user, name, level, gold, *stats):
             uuid = gen_utils.generate_unique_id(set(character_cache.keys()))
             character = PlayerCharacter(user, name, uuid, *stats, level, gold)
         except TypeError:
+            logger.info(
+                f"{server}: {context.author.id} submitted an invalid set of stats.>"
+            )
             await context.send(
                 f"Hey uh <@{context.author.id}>, you're missing some stats there."
             )
@@ -278,10 +286,14 @@ async def change_gold(context, user, amount):
                     f"{character_cache[current].get_name()} (<@{user}>) received {amount} gold. Their new total is {gold} gold."
                 )
             else:
+                logger.info(
+                    f"{server}: User {user} (Character {current}) does not have enough {gold}"
+                )
                 await context.send(
                     f"{character_cache[current].get_name()} (<@{user}>) doesn't have enough gold for that. They currently have {gold} gold."
                 )
         else:
+            logger.info(f"{server}: {user} has no characters.")
             await context.send(f"<@{user}> doesn't have any characters")
     else:
         logger.info(f"{server}: couldn't find user: {user}")
@@ -340,17 +352,26 @@ async def transfer_gold(context, amount, target):
                 f"{character_cache[result['source']].get_name()} (<@{source_user}>) sent {amount} gold. Their new total is {result['source_gold']} gold. {character_cache[result['target']].get_name()} (<@{target_user}>) received {amount} gold. Their new total is {result['target_gold']} gold."
             )
         elif result["message"] == "NotEnoughGold":
-                await context.send(
-                    f"{character_cache[result['source']].get_name()} (<@{source_user}>) doesn't have enough gold for that. They currently have {result['source_gold']} gold."
-                )
+            logger.info(
+                f"{server}: User {source_user} (Character {result['source'].get_name()}) does not have enough {result['source_gold']}"
+            )
+            await context.send(
+                f"{character_cache[result['source']].get_name()} (<@{source_user}>) doesn't have enough gold for that. They currently have {result['source_gold']} gold."
+            )
         elif result["message"] == "NoCharacters":
             if not result["source"] and not result["target"]:
+                logger.info(
+                    f"{server}: Both {source_user} and {target_user} don't have any characters."
+                )
                 await context.send(f"Neither users have any characters.")
             elif not result["source"]:
+                logger.info(f"{server}: {source_user} has no characters.")
                 await context.send(f"<@{source_user}> doesn't have any characters")
             elif not result["target"]:
+                logger.info(f"{server}: {target_user} has no characters.")
                 await context.send(f"<@{target_user}> doesn't have any characters")
     else:
+        logger.info(f"{server} couldn't find character ID for {target_user}")
         await context.send(
             f"Either you forgot to enter an amount or <@{target_user}> doesn't exist."
         )
@@ -380,6 +401,7 @@ async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
             query += advantage_or_disadvantage[0]
         await context.invoke(client.get_command("roll"), query)
     elif current:
+        logger.info(f"{server}: Invalid stat {stat} for character {current}.")
         await context.send(
             f"Hey <@{context.author.id}>, that doesn't seem like a valid stat."
         )
@@ -411,11 +433,11 @@ async def change_stat(context, user, stat, value):
             payload = character_cache[current].export_stats()
             query = {"character_id": current}
             database.set_details(query, payload, "characters", db)
-
             await context.send(
                 f"Successfully changed the stat for {character_name}(<@{user}>) from {old_value} to {value}!"
             )
         elif current:
+            logger.info(f"{server}: Invalid stat {stat} for character {current}.")
             await context.send(
                 f"Hey <@{context.author.id}>, that doesn't seem like a valid stat."
             )
