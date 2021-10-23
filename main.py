@@ -165,14 +165,15 @@ async def cow(context):
 @client.command(name="rick", aliases=["rickroll"])
 async def rickroll(context):
     selection = random.choice(RICK_ROLL_LYRICS)
-    await context.send("```"+ '\n'.join(selection) + "```")
+    await context.send("```" + "\n".join(selection) + "```")
 
 
 @client.command(name="oracle")
-async def oracle(context,):
+async def oracle(context):
     author = f"<@{context.author.id}>"
     message = context.message.content[8:]
     await context.send(f"{author}: {message}\nAnswer: {random.choice(ORACLE_ANSWERS)}")
+
 
 @client.command(name="report", aliases=["report_lan"])
 async def report(context):
@@ -285,6 +286,74 @@ async def change_gold(context, user, amount):
     else:
         logger.info(f"{server}: couldn't find user: {user}")
         await context.send(f"<@{user}> doesn't exist.")
+
+
+def transfer_gold_between_players(server, source_user, target_user, amount):
+    db = database.connect_to_db(DB_TOKEN)
+    query = {"server": server, "user": source_user}
+    source = database.get_details(query, "users", db).get("active")
+    query = {"server": server, "user": target_user}
+    target = database.get_details(query, "users", db).get("active")
+    if source and target:
+        # Write Changes to Local Copy
+        source_status, source_gold = character_cache[source].change_gold(-1 * amount)
+        # If a valid transaction
+        if source_status:
+            target_status, target_gold = character_cache[target].change_gold(amount)
+            # Write changes to DB
+            payload = character_cache[source].export_stats()
+            query = {"character_id": source}
+            database.set_details(query, payload, "characters", db)
+            payload = character_cache[target].export_stats()
+            query = {"character_id": target}
+            database.set_details(query, payload, "characters", db)
+            return True, {
+                "message": "Success",
+                "source_gold": source_gold,
+                "target_gold": target_gold,
+                "source": source,
+                "target": target,
+            }
+        else:
+            return False, {
+                "message": "NotEnoughGold",
+                "source_gold": source_gold,
+                "source": source,
+                "target": target,
+            }
+    else:
+        return False, {"message": "NoCharacters", "source": source, "target": target}
+
+
+@client.command(name="transfer_gold", aliases=["transfer"])
+async def transfer_gold(context, amount, target):
+    server = str(context.guild.id)
+    source_user = context.author.id
+    target_user = gen_utils.discord_name_to_id(target)
+    amount = int(amount)
+    status, result = transfer_gold_between_players(
+        server, source_user, target_user, amount
+    )
+    if target_user:
+        if status:
+            await context.send(
+                f"{character_cache[result['source']].get_name()} (<@{source_user}>) sent {amount} gold. Their new total is {result['source_gold']} gold. {character_cache[result['target']].get_name()} (<@{target_user}>) received {amount} gold. Their new total is {result['target_gold']} gold."
+            )
+        elif result["message"] == "NotEnoughGold":
+                await context.send(
+                    f"{character_cache[result['source']].get_name()} (<@{source_user}>) doesn't have enough gold for that. They currently have {result['source_gold']} gold."
+                )
+        elif result["message"] == "NoCharacters":
+            if not result["source"] and not result["target"]:
+                await context.send(f"Neither users have any characters.")
+            elif not result["source"]:
+                await context.send(f"<@{source_user}> doesn't have any characters")
+            elif not result["target"]:
+                await context.send(f"<@{target_user}> doesn't have any characters")
+    else:
+        await context.send(
+            f"Either you forgot to enter an amount or <@{target_user}> doesn't exist."
+        )
 
 
 @client.command(name="saving_throw", aliases=["st"])
