@@ -6,12 +6,7 @@ sys.path.append("../")
 from utils.logging_util import logger
 from utils import gen_utils
 from dice import dice
-
-TOO_HIGH = (
-    "One or more of your rolls are absurdly high. I'm not rolling that <@{author_id}>."
-)
-WRONG = "That's not how you do it <@{author_id}>. Your roll should be of the format (roll)(operation)(modifier)(special), where rolls should be of the format XdN (X = Number of Dice; N = Number of Die Faces). Operation is either + or - and modifier is your modifier. Special indicates advantage or disadvantage. Just append your roll with an a or d. Examples: `?r 1d20+2` or `?r 1d20+1d4-2` or `?r 1d20a`."
-
+from config import *
 
 def normally(roll, author_id):
     roll = dice.roll(roll)
