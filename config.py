@@ -110,8 +110,4 @@ WISE_QUOTES = [
     "It does not matter how slowly you go as long as you do not stop. - Confucius",
     "The best preparation for tomorrow is doing your best today. - H. Jackson Brown, Jr.",
     "It is never too late to be what you might have been. - George Eliot"
-
-
-
-
 ]
