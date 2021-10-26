@@ -169,6 +169,10 @@ async def rickroll(context):
     selection = random.choice(RICK_ROLL_LYRICS)
     await context.send("```" + "\n".join(selection) + "```")
 
+@client.command(name="fighting_words", aliases=["insult", "banter", "trash_talk"])
+async def fighting_words(context):
+    selection = random.choice(FIGHTING_WORDS)
+    await context.send(selection)
 
 @client.command(name="oracle")
 async def oracle(context):

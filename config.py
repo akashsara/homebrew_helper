@@ -87,3 +87,28 @@ ORACLE_ANSWERS = [
     "My sources say no.",
     "Don't try to play the fool with me Nikesh.",
 ]
+
+# Fighting Words Command
+FIGHTING_WORDS = [
+    "I'm surprised you manage to remember to brush your teeth in the morning.",
+    "I came here to kick butt and chew bubblegum, and I'm all out of gum.",
+    "You fight like a dairy farmer!",
+    "I once owned a dog that was smarter than you.",
+    "You bark like a dog. If I throw a stick, will you leave?",
+    "Have you stopped wearing diapers yet?",
+    "I've got a lesson for you to learn today.",
+    "Would you like to be buried or cremated?",
+    "There's one person too many in this room, and that's you.",
+    "Your mother was a hamster and your father smelt of elderberries.",
+    "To call you stupid would be an insult to stupid people!",
+    "I've known sheep that could outwit you.",
+    "You are one bit short of a byte.",
+    "People clap when they see you. They clap their hands over their eyes.",
+    "Your inferiority complex is fully justified.",
+    "You have delusions of adequacy.",
+    "It is impossible to underestimate you.",
+    "I'm jealous of the people who haven't met you.",
+    "You are more disappointing than an unsalted pretzel.",
+    "You remind me to take out the trash.",
+    "You have miles to go before you reach mediocre."
+]
