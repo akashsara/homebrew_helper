@@ -87,3 +87,31 @@ ORACLE_ANSWERS = [
     "My sources say no.",
     "Don't try to play the fool with me Nikesh.",
 ]
+
+# Wise Words Command
+WISE_QUOTES = [
+    "You only live once, but if you do it right, once is enough. ― Mae West",
+    "Between stimulus and response there is a space. In that space is our power to choose our response. In our response lies our growth and our freedom. - Viktor Frankl",
+    "Courage doesn't always roar. Sometimes courage is the little voice at the end of the day that says I'll try again tomorrow. - Mary Anne Radmacher",
+    "We are what we repeatedly do. Excellence, then, is not an act, but a habit. - Aristotle",
+    "The journey of a thousand miles begins with one step. - Lao Tzu",
+    "The only true wisdom is in knowing you know nothing. - Socrates",
+    "It's not what happens to you, but how you react to it that matters. - Epictetus",
+    "The woman who follows the crowd will usually go no further than the crowd. The woman who walks alone is likely to find herself in places no one has been before. - Albert Einstein",
+    "The man who asks a question is a fool for a minute, the man who does not ask is a fool for life. - Confucius",
+    "Happiness and freedom begin with one principle. Some things are within your control and some are not. - Epictetus",
+    "Life isn’t about finding yourself; it’s about creating yourself. So live the life you imagined. - Henry David Thoreau",
+    "Success is not final, failure is not fatal, it is the courage to continue that counts. - Winston Churchill",
+    "Don't judge each day by the harvest you reap but by the seeds that you plant. - Robert Louis Stevenson",
+    "You have brains in your head. You have feet in your shoes. You can steer yourself any direction you choose. - Dr. Seuss",
+    "In three words I can sum up everything I've learned about life: it goes on. - Robert Frost",
+    "The only person you are destined to become is the person you decide to be. - Ralph Waldo Emerson",
+    "Whether you think you can or you think you can't, you're right. - Henry Ford",
+    "It does not matter how slowly you go as long as you do not stop. - Confucius",
+    "The best preparation for tomorrow is doing your best today. - H. Jackson Brown, Jr.",
+    "It is never too late to be what you might have been. - George Eliot"
+
+
+
+
+]
