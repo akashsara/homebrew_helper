@@ -191,7 +191,8 @@ async def report(context):
 
 @client.command(name="wise_words")
 async def wise_words(context):
-    await context.send({random.choice(WISE_QUOTES)})
+    quote = random.choice(WISE_QUOTES)
+    await context.send(quote)
 
 
 ################################################################################
