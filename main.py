@@ -105,8 +105,7 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
                 user = gen_utils.discord_name_to_id(str(reaction_user.id))
                 # Get active character
                 query = {"server": server, "user": user}
-                current = database.get_details(
-                    query, "users", db).get("active")
+                current = database.get_details(query, "users", db).get("active")
                 if current:
                     character_name = character_cache[current].get_name()
                     players_to_roll_for.add(str(character_name))
@@ -189,7 +188,6 @@ async def report(context):
         await message.edit(content=f"Thank you for reporting {random.choice(REPORTABLE_PEOPLE)}, {author}!")
     else:
         await message.edit(content=f"Thank you for reporting {ALWAYS_REPORT}, {author}!")
-
 
 @client.command(name="wise_words")
 async def wise_words(context):
@@ -314,12 +312,10 @@ def transfer_gold_between_players(server, source_user, target_user, amount):
     target = database.get_details(query, "users", db).get("active")
     if source and target:
         # Write Changes to Local Copy
-        source_status, source_gold = character_cache[source].change_gold(
-            -1 * amount)
+        source_status, source_gold = character_cache[source].change_gold(-1 * amount)
         # If a valid transaction
         if source_status:
-            target_status, target_gold = character_cache[target].change_gold(
-                amount)
+            target_status, target_gold = character_cache[target].change_gold(amount)
             # Write changes to DB
             payload = character_cache[source].export_stats()
             query = {"character_id": source}
@@ -445,8 +441,7 @@ async def change_stat(context, user, stat, value):
                 f"Successfully changed the stat for {character_name}(<@{user}>) from {old_value} to {value}!"
             )
         elif current:
-            logger.info(
-                f"{server}: Invalid stat {stat} for character {current}.")
+            logger.info(f"{server}: Invalid stat {stat} for character {current}.")
             await context.send(
                 f"Hey <@{context.author.id}>, that doesn't seem like a valid stat."
             )
