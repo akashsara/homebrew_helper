@@ -170,7 +170,7 @@ async def rickroll(context):
     await context.send("```" + "\n".join(selection) + "```")
 
 @client.command(name="fighting_words", aliases=["insult", "banter", "trash_talk"])
-async def rickroll(context):
+async def fighting_words(context):
     selection = random.choice(FIGHTING_WORDS)
     await context.send(selection)
 
