@@ -119,9 +119,7 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
                         f"Only <@{context.author.id}> can start the roll"
                     )
         except asyncio.TimeoutError:
-            await context.send(
-                f"Look, a minute's gone by and I'm not waiting anymore."
-            )
+            await context.send(f"Look, a minute's gone by and I'm not waiting anymore.")
 
     if len(players_to_roll_for) != 0:
         roll_list = []
@@ -169,10 +167,18 @@ async def rickroll(context):
     selection = random.choice(RICK_ROLL_LYRICS)
     await context.send("```" + "\n".join(selection) + "```")
 
+
 @client.command(name="fighting_words", aliases=["insult", "banter", "trash_talk"])
 async def fighting_words(context):
     selection = random.choice(FIGHTING_WORDS)
     await context.send(selection)
+
+
+@client.command(name="wise_words", aliases=["wise", "wisdom"])
+async def wise_words(context):
+    quote = random.choice(WISE_QUOTES)
+    await context.send(quote)
+
 
 @client.command(name="oracle")
 async def oracle(context):
@@ -189,14 +195,13 @@ async def report(context):
     await message.edit(content="Report Prepared.")
     await asyncio.sleep(2)
     if random.randint(0, 100) == 69:
-        await message.edit(content=f"Thank you for reporting {random.choice(REPORTABLE_PEOPLE)}, {author}!")
+        await message.edit(
+            content=f"Thank you for reporting {random.choice(REPORTABLE_PEOPLE)}, {author}!"
+        )
     else:
-        await message.edit(content=f"Thank you for reporting {ALWAYS_REPORT}, {author}!")
-
-@client.command(name="wise_words")
-async def wise_words(context):
-    quote = random.choice(WISE_QUOTES)
-    await context.send(quote)
+        await message.edit(
+            content=f"Thank you for reporting {ALWAYS_REPORT}, {author}!"
+        )
 
 
 ################################################################################
