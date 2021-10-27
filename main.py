@@ -193,6 +193,11 @@ async def report(context):
     else:
         await message.edit(content=f"Thank you for reporting {ALWAYS_REPORT}, {author}!")
 
+@client.command(name="wise_words")
+async def wise_words(context):
+    quote = random.choice(WISE_QUOTES)
+    await context.send(quote)
+
 
 ################################################################################
 # Functions that use/need a PlayerCharacter
