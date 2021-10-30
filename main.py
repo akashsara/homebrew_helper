@@ -69,11 +69,11 @@ async def roll(context, *roll):
 @client.command(name="roll_initiative", aliases=["initiative", "ri", "RI", "rolli"])
 async def roll_initiative(context, npc_count=None, npc_name_template=None):
     roll_initiative_message = await context.send(
-        f"React with,\n👍 to add to the initiative order (or)\n🎖️ to add to the initiative order with advantage (or)\n🚫 to add to the initiative order with disadvantage (or)\n 🛑 to start rolling"
+        f"React with,\n⚔️ to add to the initiative order (or)\n👍 to add to the initiative order with advantage (or) 👎 to add to the initiative order with disadvantage\nand 🛑 to start rolling"
     )
+    await roll_initiative_message.add_reaction("⚔️")
     await roll_initiative_message.add_reaction("👍")
-    await roll_initiative_message.add_reaction("🎖️")
-    await roll_initiative_message.add_reaction("🚫")
+    await roll_initiative_message.add_reaction("👎")
     await roll_initiative_message.add_reaction("🛑")
 
     def check(reaction, user):
@@ -115,11 +115,11 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
             for items in players_to_roll_for:
                 if items[0] == display_name:
                     multi_input_flag = True
-            if str(reaction.emoji) == "👍" and not multi_input_flag:
+            if str(reaction.emoji) == "⚔️" and not multi_input_flag:
                 players_to_roll_for.append([display_name, ""])
-            elif str(reaction.emoji) == "🎖️" and not multi_input_flag:
+            elif str(reaction.emoji) == "👍" and not multi_input_flag:
                 players_to_roll_for.append([display_name, "a"])
-            elif str(reaction.emoji) == "🚫" and not multi_input_flag:
+            elif str(reaction.emoji) == "👎" and not multi_input_flag:
                 players_to_roll_for.append([display_name, "d"])
             elif str(reaction.emoji) == "🛑":
                 if reaction_user == context.author:
