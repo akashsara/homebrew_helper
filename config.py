@@ -109,7 +109,15 @@ WISE_QUOTES = [
     "Whether you think you can or you think you can't, you're right. - Henry Ford",
     "It does not matter how slowly you go as long as you do not stop. - Confucius",
     "The best preparation for tomorrow is doing your best today. - H. Jackson Brown, Jr.",
-    "It is never too late to be what you might have been. - George Eliot"
+    "It is never too late to be what you might have been. - George Eliot",
+    "If you're not getting better you're getting worse - Joe Paterno",
+    "Do or do not. There is no try -  Yoda",
+    "Appear weak when you are strong, and strong when you are weak - Sun Tsu",
+    "It's okay to lose to opponent. It's never okay to lose to fear - Mr. Miyagi",
+    "Anything is possible when you have inner peace - Master Shifu",
+    "All we have to decide is what to do with the time that is given to us - Gandalf the Grey",
+    "Respect your efforts, respect yourself. Self-respect leads to self-discipline. When you have both firmly under your belt, that’s real power – Clint Eastwood",
+    "You either die a hero, or live long enough to see yourself become the villain - Harvey Dent"
 ]
   
 # Fighting Words Command
@@ -134,5 +142,13 @@ FIGHTING_WORDS = [
     "I'm jealous of the people who haven't met you.",
     "You are more disappointing than an unsalted pretzel.",
     "You remind me to take out the trash.",
-    "You have miles to go before you reach mediocre."
+    "You have miles to go before you reach mediocre.",
+    "You're as useful as wet toilet paper.",
+    "Zombies eat brains. You’re safe.",
+    "Mirrors can’t talk, lucky for you they can’t laugh either.",
+    "I don’t believe in plastic surgery, But in your case, Go ahead.",
+    "You look like something I’d draw with my left hand.",
+    "The best part about me, is I’m not you.",
+    "I would like to confirm that I do not care.",
+    "You are a sad strange little man, and you have my pity."
 ]
