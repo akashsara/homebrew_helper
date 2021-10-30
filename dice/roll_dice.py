@@ -18,7 +18,7 @@ def normally(roll, author_id):
         return f"<@{author_id}>'s Roll:\n```fix\nYou rolled a {roll['user_roll']}.\nYou got: \n{gen_utils.format_rolls(roll['rolls'])}\nYour modifier is: {str(roll['modifier'])}```Your total roll is: **{str(roll['total'])}**"
 
 
-def with_advantage_or_disadvantage(roll, advantage_or_disadvantage, author_id):
+def with_advantage_or_disadvantage(roll, advantage_or_disadvantage, author_id, raw_flag=False):
     first_roll = dice.roll(roll)
     # Cover these cases in the 1st roll since we'll get the same for the 2nd
     if first_roll == "too high":
@@ -28,15 +28,21 @@ def with_advantage_or_disadvantage(roll, advantage_or_disadvantage, author_id):
     second_roll = dice.roll(roll)
     base_string = f"<@{author_id}>:\n Attempt 1:\n```fix\nYou rolled a {first_roll['user_roll']}.\nYou got: \n{gen_utils.format_rolls(first_roll['rolls'])}\nYour modifier is: {str(first_roll['modifier'])}\nYour total roll is: {str(first_roll['total'])}```Attempt 2:\n```fix\nYou rolled a {second_roll['user_roll']}.\nYou got: \n{gen_utils.format_rolls(second_roll['rolls'])}\nYour modifier is: {str(second_roll['modifier'])}\nYour total roll is: {str(second_roll['total'])}```"
     if advantage_or_disadvantage == "a":
-        return (
-            base_string
-            + f"Your final roll is: **{max(first_roll['total'], second_roll['total'])}**."
-        )
+        if raw_flag:
+            return [max(first_roll['total'], second_roll['total']), [first_roll['total'],second_roll['total']]]
+        else:
+            return (
+                base_string
+                + f"Your final roll is: **{max(first_roll['total'], second_roll['total'])}**."
+            )
     else:
-        return (
-            base_string
-            + f"Your final roll is: **{min(first_roll['total'], second_roll['total'])}**."
-        )
+        if raw_flag:
+            return [min(first_roll['total'], second_roll['total']), [first_roll['total'],second_roll['total']]]
+        else:
+            return (
+                base_string
+                + f"Your final roll is: **{min(first_roll['total'], second_roll['total'])}**."
+            )
 
 
 def and_repeat(roll, num_repeats, author_id):
