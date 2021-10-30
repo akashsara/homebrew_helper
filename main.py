@@ -69,16 +69,18 @@ async def roll(context, *roll):
 @client.command(name="roll_initiative", aliases=["initiative", "ri", "RI", "rolli"])
 async def roll_initiative(context, npc_count=None, npc_name_template=None):
     roll_initiative_message = await context.send(
-        f"React with 👍 to add to the initiative order or 🛑 to start rolling"
+        f"React with,\n👍 to add to the initiative order (or)\n🎖️ to add to the initiative order with advantage (or)\n🚫 to add to the initiative order with disadvantage (or)\n 🛑 to start rolling"
     )
     await roll_initiative_message.add_reaction("👍")
+    await roll_initiative_message.add_reaction("🎖️")
+    await roll_initiative_message.add_reaction("🚫")
     await roll_initiative_message.add_reaction("🛑")
 
     def check(reaction, user):
         return user != client.user
 
     count = 0
-    players_to_roll_for = set()
+    players_to_roll_for = list()
     server = str(context.guild.id)
     if npc_count:
         npc_character_count = int(npc_count)
@@ -93,7 +95,7 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
                 f"Um...if you have more than {INITIATIVE_MAX_NPCS} NPCs in combat, please don't. I'm considering only {INITIATIVE_MAX_NPCS}."
             )
         for i in range(npc_character_count):
-            players_to_roll_for.add(f"{npc_character_name} {i+1}")
+            players_to_roll_for.append([f"{npc_character_name} {i+1}", ""])
 
     db = database.connect_to_db(DB_TOKEN)
     while count < 2:
@@ -101,16 +103,24 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
             reaction, reaction_user = await client.wait_for(
                 "reaction_add", timeout=60, check=check
             )
-            if str(reaction.emoji) == "👍":
-                user = gen_utils.discord_name_to_id(str(reaction_user.id))
-                # Get active character
-                query = {"server": server, "user": user}
-                current = database.get_details(query, "users", db).get("active")
-                if current:
-                    character_name = character_cache[current].get_name()
-                    players_to_roll_for.add(str(character_name))
-                else:
-                    players_to_roll_for.add(str(reaction_user.name))
+            user = gen_utils.discord_name_to_id(str(reaction_user.id))
+            # Get active character
+            query = {"server": server, "user": user}
+            current = database.get_details(query, "users", db).get("active")
+            if current:
+                display_name = character_cache[current].get_name()
+            else:
+                display_name = str(reaction_user.name)
+            multi_input_flag = False
+            for items in players_to_roll_for:
+                if items[0] == display_name:
+                    multi_input_flag = True
+            if str(reaction.emoji) == "👍" and not multi_input_flag:
+                players_to_roll_for.append([display_name, ""])
+            elif str(reaction.emoji) == "🎖️" and not multi_input_flag:
+                players_to_roll_for.append([display_name, "a"])
+            elif str(reaction.emoji) == "🚫" and not multi_input_flag:
+                players_to_roll_for.append([display_name, "d"])
             elif str(reaction.emoji) == "🛑":
                 if reaction_user == context.author:
                     count = 10
@@ -123,23 +133,36 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
 
     if len(players_to_roll_for) != 0:
         roll_list = []
-        display_output = "Roll Order:\n```\n+------+----------------------------------+\n| Roll | Player Name                      |\n+------+----------------------------------+"
+        display_output = "Roll Order:\n```\n+--------------+--------------------------------------+\n| Roll         | Player Name                          |\n+--------------+--------------------------------------+"
         for x in players_to_roll_for:
-            result = {"player": x, "roll": dice.roll("1d20")["total"]}
+            if x[1] == "":
+                result = {"player": x[0], "roll": dice.roll("1d20")["total"], "outcome": None}
+            else:
+                outcome = roll_dice.with_advantage_or_disadvantage("1d20", x[1], x[0], raw_flag=True)
+                result = {"player": x[0]+" ("+x[1].upper()+")", "roll": outcome[0], "outcome": outcome[1]}
             roll_list.append(result)
         for player_roll in sorted(roll_list, key=lambda x: x["roll"], reverse=True):
             roll = player_roll["roll"]
+            outcome = player_roll["outcome"]
             player_name = player_roll["player"]
             if len(str(roll)) == 1:
                 roll = f" {roll}"
-            if len(player_name) < 32:
-                for i in range(32 - len(player_name)):
+            if type(outcome) == list and len(str(outcome[0])) == 1:
+                outcome[0] = f" {outcome[0]}"
+            if type(outcome) == list and len(str(outcome[1])) == 1:
+                outcome[1] = f" {outcome[1]}"
+            if len(player_name) < 36:
+                for i in range(36 - len(player_name)):
                     player_name += " "
-            if len(player_name) > 32:
-                player_name = player_name[:32]
-            display_output += f"\n|  {roll}  | {player_name} |"
+            if len(player_name) > 36:
+                player_name = player_name[:36]
+            if type(outcome) == list:
+                outcome = f"({outcome[0]},{outcome[1]})"
+            else:
+                outcome = "       "
+            display_output += f"\n| {roll} {outcome}   | {player_name} |"
         await context.send(
-            display_output + "\n+------+----------------------------------+```"
+            display_output + "\n+--------------+--------------------------------------+```"
         )
     else:
         await context.send("Thank you for wasting my time :)")
