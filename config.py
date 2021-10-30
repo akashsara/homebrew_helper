@@ -118,6 +118,7 @@ WISE_QUOTES = [
     "All we have to decide is what to do with the time that is given to us - Gandalf the Grey",
     "Respect your efforts, respect yourself. Self-respect leads to self-discipline. When you have both firmly under your belt, that’s real power – Clint Eastwood",
     "You either die a hero, or live long enough to see yourself become the villain - Harvey Dent"
+    "Never take your eyes off your opponent...  Even when you're bowing! - Bruce Lee"
 ]
   
 # Fighting Words Command
