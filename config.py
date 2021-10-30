@@ -145,5 +145,10 @@ FIGHTING_WORDS = [
     "You have miles to go before you reach mediocre.",
     "You're as useful as wet toilet paper.",
     "Zombies eat brains. You’re safe.",
-    "Mirrors can’t talk, lucky for you they can’t laugh either."
+    "Mirrors can’t talk, lucky for you they can’t laugh either.",
+    "I don’t believe in plastic surgery, But in your case, Go ahead.",
+    "You look like something I’d draw with my left hand.",
+    "The best part about me, is I’m not you.",
+    "I would like to confirm that I do not care.",
+    "You are a sad strange little man, and you have my pity."
 ]
