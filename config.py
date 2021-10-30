@@ -86,6 +86,7 @@ ORACLE_ANSWERS = [
     "Don't count on it.",
     "My sources say no.",
     "Don't try to play the fool with me Nikesh.",
+    "I wouldn't mind"
 ]
 
 # Wise Words Command
@@ -117,7 +118,9 @@ WISE_QUOTES = [
     "Anything is possible when you have inner peace - Master Shifu",
     "All we have to decide is what to do with the time that is given to us - Gandalf the Grey",
     "Respect your efforts, respect yourself. Self-respect leads to self-discipline. When you have both firmly under your belt, that’s real power – Clint Eastwood",
-    "You either die a hero, or live long enough to see yourself become the villain - Harvey Dent"
+    "You either die a hero, or live long enough to see yourself become the villain - Harvey Dent",
+    "It's the possibility of having a dream come true that makes life interesting. - Paulo Ceolho, The Alchemist",
+    "The only way to learn is to live. - Matt Haig, The Midnight Library
 ]
   
 # Fighting Words Command
