@@ -151,5 +151,9 @@ FIGHTING_WORDS = [
     "You look like something I’d draw with my left hand.",
     "The best part about me, is I’m not you.",
     "I would like to confirm that I do not care.",
-    "You are a sad strange little man, and you have my pity."
+    "You are a sad strange little man, and you have my pity.",
+    "Every heros have the right to bleed.",
+    "Fight off your demons.",
+    "Float like a butterfly, Sting like a bee."
+    "Rest in Peace."
 ]
