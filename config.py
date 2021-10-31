@@ -152,8 +152,9 @@ FIGHTING_WORDS = [
     "The best part about me, is I’m not you.",
     "I would like to confirm that I do not care.",
     "You are a sad strange little man, and you have my pity.",
-    "Every heros have the right to bleed.",
-    "Fight off your demons.",
-    "Float like a butterfly, Sting like a bee."
-    "Rest in Peace."
+    "Say hello to my little friend.",
+    "Adios mothaf**ka!!",
+    "I have a hand. You have a throat. Pray the two never have to meet.",
+    "Rest in Peace.",
+    "I have eaten better fighters than you."
 ]
