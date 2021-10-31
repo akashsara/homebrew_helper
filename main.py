@@ -6,7 +6,7 @@ from collections import Counter
 
 import discord
 from discord.ext import commands
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, DefaultHelpCommand
 
 import database
 from dice import dice, roll_dice
@@ -17,7 +17,8 @@ from utils.logging_util import logger
 from utils.player_character import PlayerCharacter
 from config import *
 
-client = Bot(command_prefix=BOT_PREFIX)
+help_command = DefaultHelpCommand(no_category = 'Commands')
+client = Bot(command_prefix=BOT_PREFIX, help_command = help_command)
 
 
 @client.command(
