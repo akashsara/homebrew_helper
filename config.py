@@ -127,7 +127,6 @@ WISE_QUOTES = [
     "You must be the change you wish to see in the world. - Mahatma Gandhi",
     "Let us always meet each other with a smile, for the smile is the beginning of love. - Mother Teresa",
     "A dream is not that which you see while sleeping, it is something that does not let you sleep. - Dr APJ Abdul Kalam",
-    "You either die a hero, or live long enough to see yourself become the villain - Harvey Dent",
     "Never take your eyes off your opponent...  Even when you're bowing! - Bruce Lee"
 ]
   
