@@ -266,7 +266,7 @@ async def oracle(context):
     name="report",
     aliases=["report_lan"],
     help="Do I need to explain?",
-    brief="Just report LAN!!!",
+    brief="Report people for reportable activities.",
 )
 async def report(context, target=None):
     author = f"<@{context.author.id}>"
@@ -284,6 +284,26 @@ async def report(context, target=None):
         await message.edit(
             content=f"Thank you for reporting {ALWAYS_REPORT}, {author}!"
         )
+
+
+@client.command(
+    name="slap",
+    help="Slap someone.",
+    brief="Slap someone .-.",
+)
+async def slap(context, target):
+    author = f"<@{context.author.id}>"
+    await context.send(f"{author} _slaps_ {target}")
+
+
+@client.command(
+    name="bonk",
+    help="Bonk someone.",
+    brief="Bonk someone for...reasons",
+)
+async def bonk(context, target):
+    author = f"<@{context.author.id}>"
+    await context.send(f"Doge: _bonks_ {target}. Off to jail.")
 
 
 ################################################################################
