@@ -17,15 +17,15 @@ from utils.logging_util import logger
 from utils.player_character import PlayerCharacter
 from config import *
 
-help_command = DefaultHelpCommand(no_category = 'Commands')
-client = Bot(command_prefix=BOT_PREFIX, help_command = help_command)
+help_command = DefaultHelpCommand(no_category="Commands")
+client = Bot(command_prefix=BOT_PREFIX, help_command=help_command)
 
 
 @client.command(
-    name="coin_toss", 
+    name="coin_toss",
     aliases=["cointoss", "toss", "flip", "cointoin"],
     help="Tosses a coin and returns the outcome heards or tails.",
-    brief="To toss one or many coin(s)."
+    brief="To toss one or many coin(s).",
 )
 async def coin_toss(context, *num_tosses):
     num_tosses = "".join(num_tosses)
@@ -51,10 +51,10 @@ async def coin_toss(context, *num_tosses):
 
 
 @client.command(
-    name="roll_dice", 
+    name="roll_dice",
     aliases=["roll", "r", "R", "ROLL", "Roll"],
     help="Rolls the dice and returns the outcome.",
-    brief="To roll one or many dice(s)."
+    brief="To roll one or many dice(s).",
 )
 async def roll(context, *roll):
     roll = "".join(roll).lower().replace(" ", "")
@@ -78,10 +78,10 @@ async def roll(context, *roll):
 
 
 @client.command(
-    name="roll_initiative", 
+    name="roll_initiative",
     aliases=["initiative", "ri", "RI", "rolli"],
     help="Gets the order in which the players will make their move in battle.",
-    brief="To get the roll initiative."
+    brief="To get the roll initiative.",
 )
 async def roll_initiative(context, npc_count=None, npc_name_template=None):
     roll_initiative_message = await context.send(
@@ -152,10 +152,20 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
         display_output = "Roll Order:\n```\n+--------------+--------------------------------------+\n| Roll         | Player Name                          |\n+--------------+--------------------------------------+"
         for x in players_to_roll_for:
             if x[1] == "":
-                result = {"player": x[0], "roll": dice.roll("1d20")["total"], "outcome": None}
+                result = {
+                    "player": x[0],
+                    "roll": dice.roll("1d20")["total"],
+                    "outcome": None,
+                }
             else:
-                outcome = roll_dice.with_advantage_or_disadvantage("1d20", x[1], x[0], raw_flag=True)
-                result = {"player": x[0]+" ("+x[1].upper()+")", "roll": outcome[0], "outcome": outcome[1]}
+                outcome = roll_dice.with_advantage_or_disadvantage(
+                    "1d20", x[1], x[0], raw_flag=True
+                )
+                result = {
+                    "player": x[0] + " (" + x[1].upper() + ")",
+                    "roll": outcome[0],
+                    "outcome": outcome[1],
+                }
             roll_list.append(result)
         for player_roll in sorted(roll_list, key=lambda x: x["roll"], reverse=True):
             roll = player_roll["roll"]
@@ -178,7 +188,8 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
                 outcome = "       "
             display_output += f"\n| {roll} {outcome}   | {player_name} |"
         await context.send(
-            display_output + "\n+--------------+--------------------------------------+```"
+            display_output
+            + "\n+--------------+--------------------------------------+```"
         )
     else:
         await context.send("Thank you for wasting my time :)")
@@ -190,10 +201,10 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
 
 
 @client.command(
-    name="bungee_gum", 
+    name="bungee_gum",
     aliases=["bg", "bungee", "gum", "bungeegum"],
     help="Boomer.",
-    brief="Hisoka's pleasure toys."
+    brief="Hisoka's pleasure toys.",
 )
 async def bungee_gum(context):
     await context.send(
@@ -202,20 +213,20 @@ async def bungee_gum(context):
 
 
 @client.command(
-    name="cow", 
+    name="cow",
     aliases=["moo"],
     help="The cow goes..........",
-    brief="What does the cow say?"
+    brief="What does the cow say?",
 )
 async def cow(context):
     await context.send(f"MOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.")
 
 
 @client.command(
-    name="rick", 
+    name="rick",
     aliases=["rickroll"],
     help="Never gonna.............",
-    brief="Not Rick Ross."
+    brief="Not Rick Ross.",
 )
 async def rickroll(context):
     selection = random.choice(RICK_ROLL_LYRICS)
@@ -223,10 +234,10 @@ async def rickroll(context):
 
 
 @client.command(
-    name="fighting_words", 
+    name="fighting_words",
     aliases=["insult", "banter", "trash_talk"],
     help="Essential battle crys.",
-    brief="Need a hand?"
+    brief="Need a hand?",
 )
 async def fighting_words(context):
     selection = random.choice(FIGHTING_WORDS)
@@ -234,21 +245,17 @@ async def fighting_words(context):
 
 
 @client.command(
-    name="wise_words", 
+    name="wise_words",
     aliases=["wise", "wisdom"],
     help="Pen is mightier than the sword.",
-    brief="A wise man once said...."
+    brief="A wise man once said....",
 )
 async def wise_words(context):
     quote = random.choice(WISE_QUOTES)
     await context.send(quote)
 
 
-@client.command(
-    name="oracle",
-    help="Filler words.",
-    brief="Say something...."
-)
+@client.command(name="oracle", help="Filler words.", brief="Say something....")
 async def oracle(context):
     author = f"<@{context.author.id}>"
     message = context.message.content[8:]
@@ -256,12 +263,12 @@ async def oracle(context):
 
 
 @client.command(
-    name="report", 
+    name="report",
     aliases=["report_lan"],
     help="Do I need to explain?",
-    brief="Just report LAN!!!"
+    brief="Just report LAN!!!",
 )
-async def report(context):
+async def report(context, target=None):
     author = f"<@{context.author.id}>"
     message = await context.send(f"{author}: Please wait...preparing report.")
     await asyncio.sleep(2)
@@ -271,6 +278,8 @@ async def report(context):
         await message.edit(
             content=f"Thank you for reporting {random.choice(REPORTABLE_PEOPLE)}, {author}!"
         )
+    elif target:
+        await message.edit(content=f"Thank you for reporting {target}, {author}!")
     else:
         await message.edit(
             content=f"Thank you for reporting {ALWAYS_REPORT}, {author}!"
@@ -283,10 +292,10 @@ async def report(context):
 
 
 @client.command(
-    name="create_character", 
+    name="create_character",
     aliases=["create_char", "cc"],
     help="Coming soon.",
-    brief="To create a character."
+    brief="To create a character.",
 )
 @commands.has_permissions(administrator=True)
 async def create_character(context, user, name, level, gold, *stats):
@@ -334,11 +343,7 @@ async def create_character(context, user, name, level, gold, *stats):
         await context.send(f"<@{user}> doesn't exist.")
 
 
-@client.command(
-    name="info",
-    help="Coming soon.",
-    brief="To get character info."
-)
+@client.command(name="info", help="Coming soon.", brief="To get character info.")
 async def character_info(context, user=None):
     server = str(context.guild.id)
     if user:
@@ -361,10 +366,10 @@ async def character_info(context, user=None):
 
 
 @client.command(
-    name="change_gold", 
+    name="change_gold",
     aliases=["gold"],
     help="Coming soon.",
-    brief="To add or remove gold."
+    brief="To add or remove gold.",
 )
 @commands.has_permissions(administrator=True)
 async def change_gold(context, user, amount):
@@ -439,10 +444,10 @@ def transfer_gold_between_players(server, source_user, target_user, amount):
 
 
 @client.command(
-    name="transfer_gold", 
+    name="transfer_gold",
     aliases=["transfer"],
     help="Coming soon.",
-    brief="To transfer gold between characters."
+    brief="To transfer gold between characters.",
 )
 async def transfer_gold(context, amount, target):
     server = str(context.guild.id)
@@ -484,10 +489,10 @@ async def transfer_gold(context, amount, target):
 
 
 @client.command(
-    name="saving_throw", 
+    name="saving_throw",
     aliases=["st"],
     help="Coming soon.",
-    brief="To roll a death saving die."
+    brief="To roll a death saving die.",
 )
 async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
     server = str(context.guild.id)
@@ -524,10 +529,10 @@ async def saving_throw(context, stat=None, advantage_or_disadvantage=""):
 
 
 @client.command(
-    name="change_stat", 
+    name="change_stat",
     aliases=["stat_change"],
     help="Coming soon.",
-    brief="To modify character stats."
+    brief="To modify character stats.",
 )
 @commands.has_permissions(administrator=True)
 async def change_stat(context, user, stat, value):
@@ -568,10 +573,10 @@ async def change_stat(context, user, stat, value):
 
 
 @client.command(
-    name="add_alias", 
+    name="add_alias",
     aliases=["add_alt", "aa"],
     help="Coming soon.",
-    brief="To add nickname."
+    brief="To add nickname.",
 )
 @commands.has_permissions(administrator=True)
 async def add_alias(context, user1, user2):
