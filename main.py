@@ -488,10 +488,10 @@ async def transfer_gold(context, amount, target):
             )
         elif result["message"] == "NotEnoughGold":
             logger.info(
-                f"{server}: User {source_user} (Character {character_cache[result['source']].get_name()}) does not have enough {character_cache[result['source_gold']]}"
+                f"{server}: User {source_user} (Character {character_cache[result['source']].get_name()}) does not have enough {result['source_gold']}"
             )
             await context.send(
-                f"{character_cache[result['source']].get_name()} (<@{source_user}>) doesn't have enough gold for that. They currently have {character_cache[result['source_gold']]} gold."
+                f"{character_cache[result['source']].get_name()} (<@{source_user}>) doesn't have enough gold for that. They currently have {result['source_gold']} gold."
             )
         elif result["message"] == "NoCharacters":
             if not result["source"] and not result["target"]:
