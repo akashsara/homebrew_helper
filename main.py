@@ -481,7 +481,7 @@ async def transfer_gold(context, amount, target):
         await context.send(
             f"<@{source_user}>, Nice try. That doesn't work anymore. Punk."
         )
-    if target_user:
+    elif target_user:
         if status:
             await context.send(
                 f"{character_cache[result['source']].get_name()} (<@{source_user}>) sent {amount} gold. Their new total is {result['source_gold']} gold. {character_cache[result['target']].get_name()} (<@{target_user}>) received {amount} gold. Their new total is {result['target_gold']} gold."
