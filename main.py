@@ -477,6 +477,10 @@ async def transfer_gold(context, amount, target):
     status, result = transfer_gold_between_players(
         server, source_user, target_user, amount
     )
+    if amount <= 0:
+        await context.send(
+            f"<@{source_user}>, Nice try. That doesn't work anymore. Punk."
+        )
     if target_user:
         if status:
             await context.send(
