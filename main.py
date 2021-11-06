@@ -481,6 +481,10 @@ async def transfer_gold(context, amount, target):
         await context.send(
             f"<@{source_user}>, Nice try. That doesn't work anymore. Punk."
         )
+    elif source_user == target_user:
+        await context.send(
+            f"<@{source_user}>, I can't believe you've done this."
+        )
     elif target_user:
         if status:
             await context.send(
