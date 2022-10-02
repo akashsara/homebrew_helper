@@ -256,11 +256,17 @@ async def wise_words(context):
     await context.send(quote)
 
 
-@client.command(name="oracle", help="Need to make a decision? Ask the oracle!", brief="Ask me a question!")
+@client.command(
+    name="oracle",
+    help="Need to make a decision? Ask the oracle!",
+    brief="Ask me a question!",
+)
 async def oracle(context):
     author = f"<@{context.author.id}>"
     message = context.message.content[8:]
-    await context.send(f"{author}: {message}\nAnswer: {random.choice(templates.ORACLE_ANSWERS)}")
+    await context.send(
+        f"{author}: {message}\nAnswer: {random.choice(templates.ORACLE_ANSWERS)}"
+    )
 
 
 @client.command(
@@ -306,6 +312,7 @@ async def bonk(context, target):
     author = f"<@{context.author.id}>"
     await context.send(f"Doge: _bonks_ {target}. Off to jail.")
 
+
 @client.command(
     name="niceone",
     aliases=["nice", "n1", "nice_one"],
@@ -315,6 +322,7 @@ async def bonk(context, target):
 async def niceone(context, target):
     quote = random.choice(templates.NICE_ONE_OPTIONS)
     await context.send(f"{quote} {target}!")
+
 
 @client.command(
     name="wow",
@@ -501,9 +509,7 @@ async def transfer_gold(context, amount, target):
             f"<@{source_user}>, Nice try. That doesn't work anymore. Punk."
         )
     elif source_user == target_user:
-        await context.send(
-            f"<@{source_user}>, I can't believe you've done this."
-        )
+        await context.send(f"<@{source_user}>, I can't believe you've done this.")
     elif target_user:
         if status:
             await context.send(
