@@ -305,6 +305,17 @@ async def bonk(context, target):
     author = f"<@{context.author.id}>"
     await context.send(f"Doge: _bonks_ {target}. Off to jail.")
 
+@client.command(
+    name="niceone",
+    aliases=["nice", "n1", "nice_one"],
+    help="When you want to praise someone.",
+    brief="Praise someone!",
+)
+async def niceone(context, target):
+    author = f"<@{context.author.id}>"
+    quote = random.choice(NICE_ONE_OPTIONS)
+    await context.send(f"{quote} {target}!")
+
 
 ################################################################################
 # Functions that use/need a PlayerCharacter

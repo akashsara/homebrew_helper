@@ -40,6 +40,18 @@ WRONG = "That's not how you do it <@{author_id}>. Your roll should be of the for
 REPORTABLE_PEOPLE = ["Songs", "rtzGod"]
 ALWAYS_REPORT = "Lan"
 
+# Nice One Command
+NICE_ONE_OPTIONS = [
+    "Nice one",
+    "NICE one",
+    "nice ONE",
+    "nIcE oNe",
+    "NICE ONE",
+    "That was really nice",
+    "My humblest congratulations for a particularly pleasant action",
+    "Woah, that was a nice one",
+]
+
 # Rick Roll Command
 RICK_ROLL_LYRICS = [
     [
@@ -86,7 +98,6 @@ ORACLE_ANSWERS = [
     "Don't count on it.",
     "My sources say no.",
     "Don't try to play the fool with me Nikesh.",
-    
 ]
 
 # Wise Words Command
@@ -127,9 +138,9 @@ WISE_QUOTES = [
     "You must be the change you wish to see in the world. - Mahatma Gandhi",
     "Let us always meet each other with a smile, for the smile is the beginning of love. - Mother Teresa",
     "A dream is not that which you see while sleeping, it is something that does not let you sleep. - Dr APJ Abdul Kalam",
-    "Never take your eyes off your opponent...  Even when you're bowing! - Bruce Lee"
+    "Never take your eyes off your opponent...  Even when you're bowing! - Bruce Lee",
 ]
-  
+
 # Fighting Words Command
 FIGHTING_WORDS = [
     "I'm surprised you manage to remember to brush your teeth in the morning.",
@@ -165,5 +176,5 @@ FIGHTING_WORDS = [
     "Adios mothaf**ka!!",
     "I have a hand. You have a throat. Pray the two never have to meet.",
     "Rest in Peace.",
-    "I have eaten better fighters than you."
+    "I have eaten better fighters than you.",
 ]
