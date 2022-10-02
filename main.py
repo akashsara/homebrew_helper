@@ -16,6 +16,7 @@ from utils.item import Item
 from utils.logging_util import logger
 from utils.player_character import PlayerCharacter
 from config import *
+import templates
 
 help_command = DefaultHelpCommand(no_category="Commands")
 client = Bot(command_prefix=BOT_PREFIX, help_command=help_command)
@@ -229,7 +230,7 @@ async def cow(context):
     brief="Try it out!",
 )
 async def rickroll(context):
-    selection = random.choice(RICK_ROLL_LYRICS)
+    selection = random.choice(templates.RICK_ROLL_LYRICS)
     await context.send("```" + "\n".join(selection) + "```")
 
 
@@ -240,7 +241,7 @@ async def rickroll(context):
     brief="Insulting, bantery or trash talk-y phrases.",
 )
 async def fighting_words(context):
-    selection = random.choice(FIGHTING_WORDS)
+    selection = random.choice(templates.FIGHTING_WORDS)
     await context.send(selection)
 
 
@@ -251,15 +252,21 @@ async def fighting_words(context):
     brief="Wise or inspirational quotes.",
 )
 async def wise_words(context):
-    quote = random.choice(WISE_QUOTES)
+    quote = random.choice(templates.WISE_QUOTES)
     await context.send(quote)
 
 
-@client.command(name="oracle", help="Need to make a decision? Ask the oracle!", brief="Ask me a question!")
+@client.command(
+    name="oracle",
+    help="Need to make a decision? Ask the oracle!",
+    brief="Ask me a question!",
+)
 async def oracle(context):
     author = f"<@{context.author.id}>"
     message = context.message.content[8:]
-    await context.send(f"{author}: {message}\nAnswer: {random.choice(ORACLE_ANSWERS)}")
+    await context.send(
+        f"{author}: {message}\nAnswer: {random.choice(templates.ORACLE_ANSWERS)}"
+    )
 
 
 @client.command(
@@ -276,13 +283,13 @@ async def report(context, target=None):
     await asyncio.sleep(2)
     if random.randint(0, 100) == 69:
         await message.edit(
-            content=f"Thank you for reporting {random.choice(REPORTABLE_PEOPLE)}, {author}!"
+            content=f"Thank you for reporting {random.choice(templates.REPORTABLE_PEOPLE)}, {author}!"
         )
     elif target:
         await message.edit(content=f"Thank you for reporting {target}, {author}!")
     else:
         await message.edit(
-            content=f"Thank you for reporting {ALWAYS_REPORT}, {author}!"
+            content=f"Thank you for reporting {templates.ALWAYS_REPORT}, {author}!"
         )
 
 
@@ -304,6 +311,55 @@ async def slap(context, target):
 async def bonk(context, target):
     author = f"<@{context.author.id}>"
     await context.send(f"Doge: _bonks_ {target}. Off to jail.")
+
+
+@client.command(
+    name="niceone",
+    aliases=["nice", "n1", "nice_one"],
+    help="When you want to praise someone.",
+    brief="Praise someone!",
+)
+async def niceone(context, target):
+    quote = random.choice(templates.NICE_ONE_OPTIONS)
+    await context.send(f"{quote} {target}!")
+
+
+@client.command(
+    name="wow",
+    help="When you're amazed by someone.",
+    brief="Express your amazement!",
+)
+async def wow(context, target):
+    await context.send(f"W{'O' * random.randint(1, 20)}W {target}!")
+
+
+@client.command(
+    name="getrekt",
+    aliases=["rekt", "get_rekt", "wrecked"],
+    help="When someone has gotten 'rekt'.",
+    brief="A good reaction to some banter.",
+)
+async def getrekt(context, target):
+    await context.send(f"Get rekt {target}!")
+
+
+@client.command(
+    name="nikesh",
+    help="Use this whenever someone tries to play the fool with you.",
+    brief="If you know Nikesh.",
+)
+async def nikesh(context, target):
+    await context.send(f"Don't try to play the fool with me Nikesh ({target})!")
+
+@client.command(
+    name="niceflame",
+    aliases=["nice_flame"],
+    help="When you want to mock or appreciate some trash talk.",
+    brief="Appreciate some banter!",
+)
+async def niceflame(context, target):
+    quote = random.choice(templates.NICE_FLAME_OPTIONS)
+    await context.send(quote.format(target))
 
 
 ################################################################################
@@ -482,9 +538,7 @@ async def transfer_gold(context, amount, target):
             f"<@{source_user}>, Nice try. That doesn't work anymore. Punk."
         )
     elif source_user == target_user:
-        await context.send(
-            f"<@{source_user}>, I can't believe you've done this."
-        )
+        await context.send(f"<@{source_user}>, I can't believe you've done this.")
     elif target_user:
         if status:
             await context.send(
