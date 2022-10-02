@@ -1,10 +1,17 @@
-
 ######################################################################
 ############# Used Specifically For Certain Bot Commands #############
 ######################################################################
 # Report Command
 REPORTABLE_PEOPLE = ["Songs", "rtzGod"]
 ALWAYS_REPORT = "Lan"
+
+# Nice Flame Command
+NICE_FLAME_OPTIONS = [
+    "Nice flame {}!",
+    "Woah! Calm down he has a family, {}!",
+    "Someone call a firetruck for {}!",
+    "Is it getting hot in here or what, {}?",
+]
 
 # Nice One Command
 NICE_ONE_OPTIONS = [

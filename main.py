@@ -351,6 +351,16 @@ async def getrekt(context, target):
 async def nikesh(context, target):
     await context.send(f"Don't try to play the fool with me Nikesh ({target})!")
 
+@client.command(
+    name="niceflame",
+    aliases=["nice_flame"],
+    help="When you want to mock or appreciate some trash talk.",
+    brief="Appreciate some banter!",
+)
+async def niceflame(context, target):
+    quote = random.choice(templates.NICE_FLAME_OPTIONS)
+    await context.send(quote.format(target))
+
 
 ################################################################################
 # Functions that use/need a PlayerCharacter
