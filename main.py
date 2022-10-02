@@ -333,6 +333,25 @@ async def wow(context, target):
     await context.send(f"W{'O' * random.randint(1, 20)}W {target}!")
 
 
+@client.command(
+    name="getrekt",
+    aliases=["rekt", "get_rekt", "wrecked"],
+    help="When someone has gotten 'rekt'.",
+    brief="A good reaction to some banter.",
+)
+async def getrekt(context, target):
+    await context.send(f"Get rekt {target}!")
+
+
+@client.command(
+    name="nikesh",
+    help="Use this whenever someone tries to play the fool with you.",
+    brief="If you know Nikesh.",
+)
+async def nikesh(context, target):
+    await context.send(f"Don't try to play the fool with me Nikesh ({target})!")
+
+
 ################################################################################
 # Functions that use/need a PlayerCharacter
 ################################################################################
