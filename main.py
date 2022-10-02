@@ -316,6 +316,14 @@ async def niceone(context, target):
     quote = random.choice(templates.NICE_ONE_OPTIONS)
     await context.send(f"{quote} {target}!")
 
+@client.command(
+    name="wow",
+    help="When you're amazed by someone.",
+    brief="Express your amazement!",
+)
+async def wow(context, target):
+    await context.send(f"W{'O' * random.randint(1, 20)}W {target}!")
+
 
 ################################################################################
 # Functions that use/need a PlayerCharacter
