@@ -11,7 +11,7 @@ discord.py==1.7.1
 dnspython==1.16.0
 idna==2.9
 isort==4.3.21
-joblib==0.16.0
+joblib==1.2.0
 lazy-object-proxy==1.4.3
 mccabe==0.6.1
 multidict==4.7.5
