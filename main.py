@@ -16,6 +16,7 @@ from utils.item import Item
 from utils.logging_util import logger
 from utils.player_character import PlayerCharacter
 from config import *
+import templates
 
 help_command = DefaultHelpCommand(no_category="Commands")
 client = Bot(command_prefix=BOT_PREFIX, help_command=help_command)
@@ -229,7 +230,7 @@ async def cow(context):
     brief="Try it out!",
 )
 async def rickroll(context):
-    selection = random.choice(RICK_ROLL_LYRICS)
+    selection = random.choice(templates.RICK_ROLL_LYRICS)
     await context.send("```" + "\n".join(selection) + "```")
 
 
@@ -240,7 +241,7 @@ async def rickroll(context):
     brief="Insulting, bantery or trash talk-y phrases.",
 )
 async def fighting_words(context):
-    selection = random.choice(FIGHTING_WORDS)
+    selection = random.choice(templates.FIGHTING_WORDS)
     await context.send(selection)
 
 
@@ -251,7 +252,7 @@ async def fighting_words(context):
     brief="Wise or inspirational quotes.",
 )
 async def wise_words(context):
-    quote = random.choice(WISE_QUOTES)
+    quote = random.choice(templates.WISE_QUOTES)
     await context.send(quote)
 
 
@@ -259,7 +260,7 @@ async def wise_words(context):
 async def oracle(context):
     author = f"<@{context.author.id}>"
     message = context.message.content[8:]
-    await context.send(f"{author}: {message}\nAnswer: {random.choice(ORACLE_ANSWERS)}")
+    await context.send(f"{author}: {message}\nAnswer: {random.choice(templates.ORACLE_ANSWERS)}")
 
 
 @client.command(
@@ -276,13 +277,13 @@ async def report(context, target=None):
     await asyncio.sleep(2)
     if random.randint(0, 100) == 69:
         await message.edit(
-            content=f"Thank you for reporting {random.choice(REPORTABLE_PEOPLE)}, {author}!"
+            content=f"Thank you for reporting {random.choice(templates.REPORTABLE_PEOPLE)}, {author}!"
         )
     elif target:
         await message.edit(content=f"Thank you for reporting {target}, {author}!")
     else:
         await message.edit(
-            content=f"Thank you for reporting {ALWAYS_REPORT}, {author}!"
+            content=f"Thank you for reporting {templates.ALWAYS_REPORT}, {author}!"
         )
 
 
@@ -312,8 +313,7 @@ async def bonk(context, target):
     brief="Praise someone!",
 )
 async def niceone(context, target):
-    author = f"<@{context.author.id}>"
-    quote = random.choice(NICE_ONE_OPTIONS)
+    quote = random.choice(templates.NICE_ONE_OPTIONS)
     await context.send(f"{quote} {target}!")
 
 
