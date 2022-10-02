@@ -203,8 +203,8 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
 @client.command(
     name="bungee_gum",
     aliases=["bg", "bungee", "gum", "bungeegum"],
-    help="Boomer.",
-    brief="Hisoka's pleasure toys.",
+    help="When you really want to know about Bungee Gum.",
+    brief="Hisoka's favorite food.",
 )
 async def bungee_gum(context):
     await context.send(
@@ -215,7 +215,7 @@ async def bungee_gum(context):
 @client.command(
     name="cow",
     aliases=["moo"],
-    help="The cow goes..........",
+    help="What does the cow say?",
     brief="What does the cow say?",
 )
 async def cow(context):
@@ -225,8 +225,8 @@ async def cow(context):
 @client.command(
     name="rick",
     aliases=["rickroll"],
-    help="Never gonna.............",
-    brief="Not Rick Ross.",
+    help="I wonder what this does?",
+    brief="Try it out!",
 )
 async def rickroll(context):
     selection = random.choice(RICK_ROLL_LYRICS)
@@ -236,8 +236,8 @@ async def rickroll(context):
 @client.command(
     name="fighting_words",
     aliases=["insult", "banter", "trash_talk"],
-    help="Essential battle crys.",
-    brief="Need a hand?",
+    help="For when you really want to banter but have nothing to say.",
+    brief="Insulting, bantery or trash talk-y phrases.",
 )
 async def fighting_words(context):
     selection = random.choice(FIGHTING_WORDS)
@@ -247,15 +247,15 @@ async def fighting_words(context):
 @client.command(
     name="wise_words",
     aliases=["wise", "wisdom"],
-    help="Pen is mightier than the sword.",
-    brief="A wise man once said....",
+    help="When you need some inspirational or wise quotes.",
+    brief="Wise or inspirational quotes.",
 )
 async def wise_words(context):
     quote = random.choice(WISE_QUOTES)
     await context.send(quote)
 
 
-@client.command(name="oracle", help="Filler words.", brief="Say something....")
+@client.command(name="oracle", help="Need to make a decision? Ask the oracle!", brief="Ask me a question!")
 async def oracle(context):
     author = f"<@{context.author.id}>"
     message = context.message.content[8:]
@@ -265,7 +265,7 @@ async def oracle(context):
 @client.command(
     name="report",
     aliases=["report_lan"],
-    help="Do I need to explain?",
+    help="When you want to 'report' someone.",
     brief="Report people for reportable activities.",
 )
 async def report(context, target=None):
