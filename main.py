@@ -18,9 +18,21 @@ from utils.player_character import PlayerCharacter
 from config import *
 import templates
 
+# Creates a shared cooldown between commands
+# Ref: https://stackoverflow.com/questions/57639529/make-the-same-cooldown-for-multiple-discord-py-bot-commands
+def shared_cooldown(rate, per, type=commands.BucketType.default):
+    cooldown = commands.Cooldown(rate, per, type=type)
+    def decorator(func):
+        if isinstance(func, commands.Command):
+            func._buckets = commands.CooldownMapping(cooldown)
+        else:
+            func.__commands_cooldown__ = cooldown
+        return func
+    return decorator
+
 help_command = DefaultHelpCommand(no_category="Commands")
 client = Bot(command_prefix=BOT_PREFIX, help_command=help_command)
-
+fun_stuff_cooldown = shared_cooldown(3, 10, commands.BucketType.user)
 
 @client.command(
     name="coin_toss",
@@ -207,6 +219,7 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
     help="When you really want to know about Bungee Gum.",
     brief="Hisoka's favorite food.",
 )
+@fun_stuff_cooldown
 async def bungee_gum(context):
     await context.send(
         f"<@{context.author.id}>, bungee gum possesses the properties of both rubber and gum."
@@ -219,6 +232,7 @@ async def bungee_gum(context):
     help="What does the cow say?",
     brief="What does the cow say?",
 )
+@fun_stuff_cooldown
 async def cow(context):
     await context.send(f"MOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.")
 
@@ -229,6 +243,7 @@ async def cow(context):
     help="I wonder what this does?",
     brief="Try it out!",
 )
+@fun_stuff_cooldown
 async def rickroll(context):
     selection = random.choice(templates.RICK_ROLL_LYRICS)
     await context.send("```" + "\n".join(selection) + "```")
@@ -240,6 +255,7 @@ async def rickroll(context):
     help="For when you really want to banter but have nothing to say.",
     brief="Insulting, bantery or trash talk-y phrases.",
 )
+@fun_stuff_cooldown
 async def fighting_words(context):
     selection = random.choice(templates.FIGHTING_WORDS)
     await context.send(selection)
@@ -251,6 +267,7 @@ async def fighting_words(context):
     help="When you need some inspirational or wise quotes.",
     brief="Wise or inspirational quotes.",
 )
+@fun_stuff_cooldown
 async def wise_words(context):
     quote = random.choice(templates.WISE_QUOTES)
     await context.send(quote)
@@ -261,6 +278,7 @@ async def wise_words(context):
     help="Need to make a decision? Ask the oracle!",
     brief="Ask me a question!",
 )
+@fun_stuff_cooldown
 async def oracle(context):
     author = f"<@{context.author.id}>"
     message = context.message.content[8:]
@@ -275,6 +293,7 @@ async def oracle(context):
     help="When you want to 'report' someone.",
     brief="Report people for reportable activities.",
 )
+@fun_stuff_cooldown
 async def report(context, target=None):
     author = f"<@{context.author.id}>"
     message = await context.send(f"{author}: Please wait...preparing report.")
@@ -298,6 +317,7 @@ async def report(context, target=None):
     help="Slap someone.",
     brief="Slap someone .-.",
 )
+@fun_stuff_cooldown
 async def slap(context, target):
     author = f"<@{context.author.id}>"
     await context.send(f"{author} _slaps_ {target}")
@@ -308,6 +328,7 @@ async def slap(context, target):
     help="Bonk someone.",
     brief="Bonk someone for...reasons",
 )
+@fun_stuff_cooldown
 async def bonk(context, target):
     author = f"<@{context.author.id}>"
     await context.send(f"Doge: _bonks_ {target}. Off to jail.")
@@ -319,6 +340,7 @@ async def bonk(context, target):
     help="When you want to praise someone.",
     brief="Praise someone!",
 )
+@fun_stuff_cooldown
 async def niceone(context, target):
     quote = random.choice(templates.NICE_ONE_OPTIONS)
     await context.send(f"{quote} {target}!")
@@ -329,6 +351,7 @@ async def niceone(context, target):
     help="When you're amazed by someone.",
     brief="Express your amazement!",
 )
+@fun_stuff_cooldown
 async def wow(context, target):
     await context.send(f"W{'O' * random.randint(1, 20)}W {target}!")
 
@@ -339,6 +362,7 @@ async def wow(context, target):
     help="When someone has gotten 'rekt'.",
     brief="A good reaction to some banter.",
 )
+@fun_stuff_cooldown
 async def getrekt(context, target):
     await context.send(f"Get rekt {target}!")
 
@@ -348,6 +372,7 @@ async def getrekt(context, target):
     help="Use this whenever someone tries to play the fool with you.",
     brief="If you know Nikesh.",
 )
+@fun_stuff_cooldown
 async def nikesh(context, target):
     await context.send(f"Don't try to play the fool with me Nikesh ({target})!")
 
@@ -357,6 +382,7 @@ async def nikesh(context, target):
     help="When you want to mock or appreciate some trash talk.",
     brief="Appreciate some banter!",
 )
+@fun_stuff_cooldown
 async def niceflame(context, target):
     quote = random.choice(templates.NICE_FLAME_OPTIONS)
     await context.send(quote.format(target))
