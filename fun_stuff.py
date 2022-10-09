@@ -17,7 +17,7 @@ class FunStuff(commands.Cog):
         if retry_after:
             # You're rate limited, send message here
             await context.send(
-                f"Please wait {round(retry_after, 2)} seconds to use this command."
+                f"<@{context.author.id}>: Stop spamming! Please wait {round(retry_after, 2)} seconds to use the command."
             )
             return False
         return True
