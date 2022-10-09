@@ -16,23 +16,11 @@ from utils.item import Item
 from utils.logging_util import logger
 from utils.player_character import PlayerCharacter
 from config import *
-import templates
-
-# Creates a shared cooldown between commands
-# Ref: https://stackoverflow.com/questions/57639529/make-the-same-cooldown-for-multiple-discord-py-bot-commands
-def shared_cooldown(rate, per, type=commands.BucketType.default):
-    cooldown = commands.Cooldown(rate, per, type=type)
-    def decorator(func):
-        if isinstance(func, commands.Command):
-            func._buckets = commands.CooldownMapping(cooldown)
-        else:
-            func.__commands_cooldown__ = cooldown
-        return func
-    return decorator
+from fun_stuff import FunStuff
 
 help_command = DefaultHelpCommand(no_category="Commands")
 client = Bot(command_prefix=BOT_PREFIX, help_command=help_command)
-fun_stuff_cooldown = shared_cooldown(3, 10, commands.BucketType.user)
+
 
 @client.command(
     name="coin_toss",
@@ -206,186 +194,6 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
         )
     else:
         await context.send("Thank you for wasting my time :)")
-
-
-################################################################################
-# Fun Commands - No Dependencies
-################################################################################
-
-
-@client.command(
-    name="bungee_gum",
-    aliases=["bg", "bungee", "gum", "bungeegum"],
-    help="When you really want to know about Bungee Gum.",
-    brief="Hisoka's favorite food.",
-)
-@fun_stuff_cooldown
-async def bungee_gum(context):
-    await context.send(
-        f"<@{context.author.id}>, bungee gum possesses the properties of both rubber and gum."
-    )
-
-
-@client.command(
-    name="cow",
-    aliases=["moo"],
-    help="What does the cow say?",
-    brief="What does the cow say?",
-)
-@fun_stuff_cooldown
-async def cow(context):
-    await context.send(f"MOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.")
-
-
-@client.command(
-    name="rick",
-    aliases=["rickroll"],
-    help="I wonder what this does?",
-    brief="Try it out!",
-)
-@fun_stuff_cooldown
-async def rickroll(context):
-    selection = random.choice(templates.RICK_ROLL_LYRICS)
-    await context.send("```" + "\n".join(selection) + "```")
-
-
-@client.command(
-    name="fighting_words",
-    aliases=["insult", "banter", "trash_talk"],
-    help="For when you really want to banter but have nothing to say.",
-    brief="Insulting, bantery or trash talk-y phrases.",
-)
-@fun_stuff_cooldown
-async def fighting_words(context):
-    selection = random.choice(templates.FIGHTING_WORDS)
-    await context.send(selection)
-
-
-@client.command(
-    name="wise_words",
-    aliases=["wise", "wisdom"],
-    help="When you need some inspirational or wise quotes.",
-    brief="Wise or inspirational quotes.",
-)
-@fun_stuff_cooldown
-async def wise_words(context):
-    quote = random.choice(templates.WISE_QUOTES)
-    await context.send(quote)
-
-
-@client.command(
-    name="oracle",
-    help="Need to make a decision? Ask the oracle!",
-    brief="Ask me a question!",
-)
-@fun_stuff_cooldown
-async def oracle(context):
-    author = f"<@{context.author.id}>"
-    message = context.message.content[8:]
-    await context.send(
-        f"{author}: {message}\nAnswer: {random.choice(templates.ORACLE_ANSWERS)}"
-    )
-
-
-@client.command(
-    name="report",
-    aliases=["report_lan"],
-    help="When you want to 'report' someone.",
-    brief="Report people for reportable activities.",
-)
-@fun_stuff_cooldown
-async def report(context, target=None):
-    author = f"<@{context.author.id}>"
-    message = await context.send(f"{author}: Please wait...preparing report.")
-    await asyncio.sleep(2)
-    await message.edit(content="Report Prepared.")
-    await asyncio.sleep(2)
-    if random.randint(0, 100) == 69:
-        await message.edit(
-            content=f"Thank you for reporting {random.choice(templates.REPORTABLE_PEOPLE)}, {author}!"
-        )
-    elif target:
-        await message.edit(content=f"Thank you for reporting {target}, {author}!")
-    else:
-        await message.edit(
-            content=f"Thank you for reporting {templates.ALWAYS_REPORT}, {author}!"
-        )
-
-
-@client.command(
-    name="slap",
-    help="Slap someone.",
-    brief="Slap someone .-.",
-)
-@fun_stuff_cooldown
-async def slap(context, target):
-    author = f"<@{context.author.id}>"
-    await context.send(f"{author} _slaps_ {target}")
-
-
-@client.command(
-    name="bonk",
-    help="Bonk someone.",
-    brief="Bonk someone for...reasons",
-)
-@fun_stuff_cooldown
-async def bonk(context, target):
-    author = f"<@{context.author.id}>"
-    await context.send(f"Doge: _bonks_ {target}. Off to jail.")
-
-
-@client.command(
-    name="niceone",
-    aliases=["nice", "n1", "nice_one"],
-    help="When you want to praise someone.",
-    brief="Praise someone!",
-)
-@fun_stuff_cooldown
-async def niceone(context, target):
-    quote = random.choice(templates.NICE_ONE_OPTIONS)
-    await context.send(f"{quote} {target}!")
-
-
-@client.command(
-    name="wow",
-    help="When you're amazed by someone.",
-    brief="Express your amazement!",
-)
-@fun_stuff_cooldown
-async def wow(context, target):
-    await context.send(f"W{'O' * random.randint(1, 20)}W {target}!")
-
-
-@client.command(
-    name="getrekt",
-    aliases=["rekt", "get_rekt", "wrecked"],
-    help="When someone has gotten 'rekt'.",
-    brief="A good reaction to some banter.",
-)
-@fun_stuff_cooldown
-async def getrekt(context, target):
-    await context.send(f"Get rekt {target}!")
-
-
-@client.command(
-    name="nikesh",
-    help="Use this whenever someone tries to play the fool with you.",
-    brief="If you know Nikesh.",
-)
-@fun_stuff_cooldown
-async def nikesh(context, target):
-    await context.send(f"Don't try to play the fool with me Nikesh ({target})!")
-
-@client.command(
-    name="niceflame",
-    aliases=["nice_flame"],
-    help="When you want to mock or appreciate some trash talk.",
-    brief="Appreciate some banter!",
-)
-@fun_stuff_cooldown
-async def niceflame(context, target):
-    quote = random.choice(templates.NICE_FLAME_OPTIONS)
-    await context.send(quote.format(target))
 
 
 ################################################################################
@@ -749,6 +557,7 @@ def load_all_characters():
 
 
 if __name__ == "__main__":
+    client.add_cog(FunStuff(client))
     logger.info("Loading DnData..")
     character_cache = load_all_characters()
     logger.info("Booting up client..")
