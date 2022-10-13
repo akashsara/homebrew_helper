@@ -5,7 +5,7 @@ import random
 
 # Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands
 class FunStuff(commands.Cog):
-    def __init__(self, bot, n_messages=5, cooldown=10):
+    def __init__(self, bot, n_messages=3, cooldown=10):
         self.bot = bot
         self.cooldown = commands.CooldownMapping.from_cooldown(
             n_messages, cooldown, commands.BucketType.user
@@ -177,3 +177,27 @@ class FunStuff(commands.Cog):
     async def niceflame(self, context, target):
         quote = random.choice(templates.NICE_FLAME_OPTIONS)
         await context.send(quote.format(target))
+
+    @commands.command(
+        name="dis",
+        help="When you want to identify someone.",
+        brief="Not a diss.",
+    )
+    async def dis(self, context, target):
+        await context.send(f"{random.choice(templates.DIS_OPTIONS)} {target}")
+
+    @commands.command(
+        name="pdp",
+        help="When you're unsure about things and want to leave it to the future.",
+        brief="We'll see.",
+    )
+    async def pdp(self, context):
+        await context.send("Paakalaam da paakalaam.")
+
+    @commands.command(
+        name="mmdm",
+        help="When you know someone is mocking you.",
+        brief="Please stop mocking me.",
+    )
+    async def mmdm(self, context):
+        await context.send("Mock me da mock me.")

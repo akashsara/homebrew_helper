@@ -5,6 +5,16 @@
 REPORTABLE_PEOPLE = ["Songs", "rtzGod"]
 ALWAYS_REPORT = "Lan"
 
+# Dis Command
+DIS_OPTIONS = [
+    "This {}...",
+    "Dis {}",
+    "This {}",
+    "Dis {} no",
+    "OMG dis {}",
+    "omg this {}",
+]
+
 # Nice Flame Command
 NICE_FLAME_OPTIONS = [
     "Nice flame {}!",
@@ -23,6 +33,8 @@ NICE_ONE_OPTIONS = [
     "That was really nice",
     "My humblest congratulations for a particularly pleasant action",
     "Woah, that was a nice one",
+    "Niiiiiiiiiiiiiiiiiice one",
+    "Niiiiiiiiiiiiice one"
 ]
 
 # Rick Roll Command
