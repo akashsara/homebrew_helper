@@ -177,3 +177,11 @@ class FunStuff(commands.Cog):
     async def niceflame(self, context, target):
         quote = random.choice(templates.NICE_FLAME_OPTIONS)
         await context.send(quote.format(target))
+
+    @commands.command(
+        name="dis",
+        help="When you want to identify someone.",
+        brief="Not a diss.",
+    )
+    async def dis(self, context, target):
+        await context.send(f"{random.choice(templates.DIS_OPTIONS)} {target}")
