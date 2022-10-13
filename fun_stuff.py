@@ -185,3 +185,19 @@ class FunStuff(commands.Cog):
     )
     async def dis(self, context, target):
         await context.send(f"{random.choice(templates.DIS_OPTIONS)} {target}")
+
+    @commands.command(
+        name="pdp",
+        help="When you're unsure about things and want to leave it to the future.",
+        brief="We'll see.",
+    )
+    async def pdp(self, context):
+        await context.send("Paakalaam da paakalaam.")
+
+    @commands.command(
+        name="mmdm",
+        help="When you know someone is mocking you.",
+        brief="Please stop mocking me.",
+    )
+    async def mmdm(self, context):
+        await context.send("Mock me da mock me.")
