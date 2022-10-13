@@ -12,6 +12,9 @@ class FunStuff(commands.Cog):
         )
 
     async def cog_check(self, context):
+        # Don't use a cooldown with the help command.
+        if context.invoked_with == "help":
+            return True
         bucket = self.cooldown.get_bucket(context.message)
         retry_after = bucket.update_rate_limit()
         if retry_after:
@@ -184,7 +187,8 @@ class FunStuff(commands.Cog):
         brief="Not a diss.",
     )
     async def dis(self, context, target):
-        await context.send(f"{random.choice(templates.DIS_OPTIONS)} {target}")
+        quote = random.choice(templates.DIS_OPTIONS)
+        await context.send(quote.format(target))
 
     @commands.command(
         name="pdp",
