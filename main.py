@@ -23,6 +23,15 @@ client = Bot(command_prefix=BOT_PREFIX, help_command=help_command)
 
 
 @client.command(
+    name="git",
+    help="Check out my Github repository! Feel free to contribute!",
+    brief="Github repository link.",
+)
+async def git(context):
+    await context.send("https://github.com/akashsara/homebrew_helper")
+
+
+@client.command(
     name="coin_toss",
     aliases=["cointoss", "toss", "flip", "cointoin"],
     help="Tosses a coin and returns the outcome heards or tails.",
