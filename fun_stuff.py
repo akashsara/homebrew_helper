@@ -199,9 +199,9 @@ class FunStuff(commands.Cog):
         await context.send("Paakalaam da paakalaam.")
 
     @commands.command(
-        name="mmdm",
+        name="mmdmm",
         help="When you know someone is mocking you.",
         brief="Please stop mocking me.",
     )
-    async def mmdm(self, context):
+    async def mmdmm(self, context):
         await context.send("Mock me da mock me.")
