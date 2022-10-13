@@ -184,7 +184,8 @@ class FunStuff(commands.Cog):
         brief="Not a diss.",
     )
     async def dis(self, context, target):
-        await context.send(f"{random.choice(templates.DIS_OPTIONS)} {target}")
+        quote = random.choice(templates.DIS_OPTIONS)
+        await context.send(quote.format(target))
 
     @commands.command(
         name="pdp",
