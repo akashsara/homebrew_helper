@@ -5,7 +5,7 @@ import random
 
 # Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands
 class FunStuff(commands.Cog):
-    def __init__(self, bot, n_messages=5, cooldown=10):
+    def __init__(self, bot, n_messages=3, cooldown=10):
         self.bot = bot
         self.cooldown = commands.CooldownMapping.from_cooldown(
             n_messages, cooldown, commands.BucketType.user
