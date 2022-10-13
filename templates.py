@@ -33,6 +33,8 @@ NICE_ONE_OPTIONS = [
     "That was really nice",
     "My humblest congratulations for a particularly pleasant action",
     "Woah, that was a nice one",
+    "Niiiiiiiiiiiiiiiiiice one",
+    "Niiiiiiiiiiiiice one"
 ]
 
 # Rick Roll Command
