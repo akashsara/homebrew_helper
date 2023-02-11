@@ -3,6 +3,9 @@ kill_signal = "SIGINT"
 kill_timeout = 5
 processes = []
 
+[build]
+  builder = "paketobuildpacks/builder:base"
+
 [env]
   PORT = "8080"
 
