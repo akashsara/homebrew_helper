@@ -1,6 +1,5 @@
 from typing import Dict, List
 
-import dns
 import pymongo
 
 from utils.logging_util import logger
