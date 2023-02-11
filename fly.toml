@@ -1,0 +1,52 @@
+{
+    "env": {
+        "PORT": "8080"
+    },
+    "experimental": {
+        "auto_rollback": true,
+        "private_network": true
+    },
+    "kill_signal": "SIGINT",
+    "kill_timeout": 5,
+    "processes": [],
+    "services": [
+        {
+            "concurrency": {
+                "hard_limit": 25,
+                "soft_limit": 20,
+                "type": "connections"
+            },
+            "http_checks": [],
+            "internal_port": 8080,
+            "ports": [
+                {
+                    "force_https": true,
+                    "handlers": [
+                        "http"
+                    ],
+                    "port": 80
+                },
+                {
+                    "handlers": [
+                        "tls",
+                        "http"
+                    ],
+                    "port": 443
+                }
+            ],
+            "processes": [
+                "app"
+            ],
+            "protocol": "tcp",
+            "script_checks": [],
+            "tcp_checks": [
+                {
+                    "grace_period": "1s",
+                    "interval": "15s",
+                    "restart_limit": 0,
+                    "timeout": "2s"
+                }
+            ]
+        }
+    ]
+}
