@@ -2,3 +2,4 @@ black==19.10b0
 discord.py==1.7.1
 joblib==1.2.0
 pymongo==3.11.3
+dnspython==2.3.0
