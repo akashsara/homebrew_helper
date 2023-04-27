@@ -73,8 +73,9 @@ async def roll(context, *roll):
     advantage_or_disadvantage = roll[-1] in ["a", "d"]
     repeat_roll = len(roll.split("r")) > 1
     if advantage_or_disadvantage:
+        use_advantage = True if roll[-1] == "a" else False
         result = roll_dice.with_advantage_or_disadvantage(
-            roll[:-1], roll[-1], author.id
+            roll[:-1], use_advantage, author.id
         )
     elif repeat_roll:
         roll, repeats = roll.split("r")
@@ -160,21 +161,22 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
     if len(players_to_roll_for) != 0:
         roll_list = []
         display_output = "Roll Order:\n```\n+--------------+--------------------------------------+\n| Roll         | Player Name                          |\n+--------------+--------------------------------------+"
-        for x in players_to_roll_for:
-            if x[1] == "":
+        for (display_name, advantage_or_disadvantage) in players_to_roll_for:
+            if advantage_or_disadvantage == "":
                 result = {
-                    "player": x[0],
+                    "player": display_name,
                     "roll": dice.roll("1d20")["total"],
                     "outcome": None,
                 }
             else:
-                outcome = roll_dice.with_advantage_or_disadvantage(
-                    "1d20", x[1], x[0], raw_flag=True
+                is_advantage = True if advantage_or_disadvantage == "a" else False
+                result, rolls = roll_dice.with_advantage_or_disadvantage(
+                    "1d20", is_advantage, display_name, return_rolls_as_list=True
                 )
                 result = {
-                    "player": x[0] + " (" + x[1].upper() + ")",
-                    "roll": outcome[0],
-                    "outcome": outcome[1],
+                    "player": display_name + " (" + advantage_or_disadvantage.upper() + ")",
+                    "roll": result,
+                    "outcome": rolls,
                 }
             roll_list.append(result)
         for player_roll in sorted(roll_list, key=lambda x: x["roll"], reverse=True):
