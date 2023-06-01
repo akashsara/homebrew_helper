@@ -29,7 +29,7 @@ DICE_ROLL_MOST_REPEATS = 10
 DISCORD_ID_REGEX = "(<@!\d+>)"
 
 TOO_HIGH = (
-    "One or more of your rolls are absurdly high. I'm not rolling that <@{author_id}>. Max is {largest_die}d{max_dice}."
+    "One or more of your rolls are absurdly high. I'm not rolling that <@{author_id}>. Max is {max_dice}d{largest_die}."
 )
 TOO_MANY = (
     "I'm not gonna roll that many dice <@{author_id}>. Max is {most_rolls}."
