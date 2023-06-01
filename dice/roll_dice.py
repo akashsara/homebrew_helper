@@ -45,8 +45,8 @@ def with_advantage_or_disadvantage(roll, use_advantage, author_id, return_rolls_
 
 def and_repeat(roll, num_repeats, author_id):
     # Ensure we don't have too many repeats
-    if num_repeats > DICE_ROLL_MOST_REPEATS:
-        return TOO_MANY.format(author_id=author_id, most_repeats=DICE_ROLL_MOST_REPEATS)
+    if int(roll.split("d")[0]) * num_repeats > DICE_ROLL_MAX_DICE:
+        return TOO_MANY.format(author_id=author_id, max_dice=DICE_ROLL_MAX_DICE)
     # Validate only once because the other rolls are the same
     valid, outcome = validate_and_roll(roll, author_id)
     if not valid:
