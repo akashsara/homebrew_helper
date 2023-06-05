@@ -12,9 +12,6 @@ class FunStuff(commands.Cog):
         )
 
     async def cog_check(self, context):
-        # Don't use a cooldown with the help command.
-        if context.invoked_with == "help":
-            return True
         bucket = self.cooldown.get_bucket(context.message)
         retry_after = bucket.update_rate_limit()
         if retry_after:
