@@ -16,10 +16,43 @@ from utils.item import Item
 from utils.logging_util import logger
 from utils.player_character import PlayerCharacter
 from config import *
-from fun_stuff import FunStuff
+from typing import List, Optional, Dict
 
+class HomebrewHelper(Bot):
+    def __init__(self, *args, initial_extensions: List[str], character_cache: Dict, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.initial_extensions = initial_extensions
+        self.character_cache = character_cache
+
+    async def setup_hook(self) -> None:
+        logger.info("Loading extensions.")
+        for extension in self.initial_extensions:
+            logger.info(f"Loading Extension: {extension}")
+            await self.load_extension(extension)
+
+def load_all_characters() -> Dict:
+    db = database.connect_to_db(DB_TOKEN)
+    character_information = database.load_all_characters(db)
+    characters = {}
+    for character_id, character_data in character_information.items():
+        character = PlayerCharacter()
+        character.import_stats(character_data)
+        characters[character_id] = character
+    return characters
+
+# Load and cache character DB
+# WARNING: This is not built to scale
+logger.info("Loading DnData.")
+character_cache = load_all_characters()
+# List of cogs we use
+initial_extensions = ["cogs.fun"]
+# Create help command
 help_command = DefaultHelpCommand(no_category="Commands")
-client = Bot(command_prefix=BOT_PREFIX, help_command=help_command)
+# Set intents
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+client = HomebrewHelper(command_prefix=BOT_PREFIX, help_command=help_command, intents=intents, initial_extensions=initial_extensions, character_cache=character_cache)
 
 
 @client.command(
@@ -556,20 +589,7 @@ async def on_command_error(context, error):
         raise error
 
 
-def load_all_characters():
-    db = database.connect_to_db(DB_TOKEN)
-    character_information = database.load_all_characters(db)
-    characters = {}
-    for character_id, character_data in character_information.items():
-        character = PlayerCharacter()
-        character.import_stats(character_data)
-        characters[character_id] = character
-    return characters
-
 
 if __name__ == "__main__":
-    client.add_cog(FunStuff(client))
-    logger.info("Loading DnData..")
-    character_cache = load_all_characters()
-    logger.info("Booting up client..")
+    logger.info("Running client..")
     client.run(TOKEN)
