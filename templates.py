@@ -1,6 +1,14 @@
-######################################################################
-############# Used Specifically For Certain Bot Commands #############
-######################################################################
+# This file contains all templates used by the bot in a single file.
+
+# Dice Command
+NORMAL_ROLL = "<@{author_id}>'s Roll:\n```fix\nYou rolled a {user_roll}.\nYou got: \n{result}\nYour modifier is: {modifier}```Your total roll is: **{total}**"
+
+ROLL_WITH_ADV_DISADV = "<@{author_id}>:\n Attempt 1:\n```fix\nYou rolled a {user_first_roll}.\nYou got: \n{first_result}\nYour modifier is: {first_modifier}\nYour total roll is: {first_total}```Attempt 2:\n```fix\nYou rolled a {user_second_roll}.\nYou got: \n{second_result}\nYour modifier is: {second_modifier}\nYour total roll is: {second_total}```Your final roll is: **{final_result}**."
+
+ROLL_WITH_REPEATS = "<@{author_id}>'s Roll:\n```fix\nYou rolled {roll}."
+
+ROLL_WITH_REPEAT_INVALID_DIGIT = "<@{author}>, if you want to roll multiple times, do`?r <roll>r<num_times>` Note that <num_times> is an integer."
+
 # Report Command
 REPORTABLE_PEOPLE = ["Songs", "rtzGod"]
 ALWAYS_REPORT = "Lan"
@@ -34,7 +42,7 @@ NICE_ONE_OPTIONS = [
     "My humblest congratulations for a particularly pleasant action",
     "Woah, that was a nice one",
     "Niiiiiiiiiiiiiiiiiice one",
-    "Niiiiiiiiiiiiice one"
+    "Niiiiiiiiiiiiice one",
 ]
 
 # Rick Roll Command
