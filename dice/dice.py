@@ -246,5 +246,4 @@ def roll_wrapper(
         "raw": results,
         "final_result": final_result,
     }
-    logger.info(output_dict)
     return output_dict
