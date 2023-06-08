@@ -205,3 +205,6 @@ class FunStuff(commands.Cog):
     )
     async def mmdmm(self, context):
         await context.send("Mock me da mock me.")
+
+async def setup(bot):
+    await bot.add_cog(FunStuff(bot))
