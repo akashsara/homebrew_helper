@@ -2,7 +2,9 @@ from typing import Dict, List
 
 import pymongo
 
-from utils.logging_util import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 COLLECTION_MAP = {
     "characters": "characters",

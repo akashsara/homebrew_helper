@@ -13,10 +13,12 @@ from dice import dice
 from utils import gen_utils
 from utils.ability import Ability
 from utils.item import Item
-from utils.logging_util import logger
+
 from utils.player_character import PlayerCharacter
 from config import *
 from typing import List, Optional, Dict
+
+import logging
 
 
 class HomebrewHelper(Bot):
@@ -44,6 +46,14 @@ def load_all_characters() -> Dict:
         characters[character_id] = character
     return characters
 
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setFormatter(
+    logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+)
+logger.addHandler(handler)
 
 # Load and cache character DB
 # WARNING: This is not built to scale
@@ -589,16 +599,20 @@ async def on_ready():
 @client.event
 async def on_command_error(context, error):
     if isinstance(error, commands.MissingRequiredArgument):
+        logger.info(f"MissingRequiredArgument: {error}")
         await context.send(
             f"<@{context.author.id}>, doesn't seem like you gave enough information for that command!"
         )
     elif isinstance(error, commands.MissingPermissions):
+        logger.info(f"MissingPermissions: {error}")
         await context.send(f"You have no power here, <@{context.author.id}> the Grey.")
     elif isinstance(error, commands.CommandInvokeError):
+        logger.info(f"CommandInvokeError: {error}")
         await context.send(
             f"You messed up with the command there, <@{context.author.id}>. Try again."
         )
     elif isinstance(error, commands.CommandNotFound):
+        logger.info(f"CommandNotFound: {error}")
         await context.send(f"<@{context.author.id}> that isn't even a command bro.")
     else:
         raise error
