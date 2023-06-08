@@ -585,6 +585,10 @@ async def on_command_error(context, error):
         )
     elif isinstance(error, commands.MissingPermissions):
         await context.send(f"You have no power here, <@{context.author.id}> the Grey.")
+    elif isinstance(error, commands.CommandInvokeError):
+        await context.send(f"You messed up with the command there, <@{context.author.id}>. Try again.")
+    elif isinstance(error, commands.CommandNotFound):
+        await context.send(f"<@{context.author.id}> that isn't even a command bro.")
     else:
         raise error
 
