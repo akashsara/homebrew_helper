@@ -8,7 +8,9 @@ from functools import partial
 import joblib
 
 sys.path.append("../")
-from utils.logging_util import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def generate_id():
@@ -58,8 +60,7 @@ def format_rolls(rolls):
 
 
 def format_repeated_rolls(rolls):
-    full_text = []
-    ending = []
+    all_text = []
     for item in rolls:
         roll = item["user_roll"]
         all_in_one = []
@@ -67,7 +68,5 @@ def format_repeated_rolls(rolls):
             all_in_one.extend(y)
         modifier = pad(str(item["modifier"]), 2, "left")
         total = pad(str(item["total"]), 5, "left")
-        ending.append(item["total"])
-        full_text.append(f"{roll} : {total} :: {modifier} + {all_in_one}")
-    ending = f"Final Rolls: **{ending}**"
-    return full_text, ending
+        all_text.append(f"{roll} : {total} :: {modifier} + {all_in_one}")
+    return "\n".join(all_text)

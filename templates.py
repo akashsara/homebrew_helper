@@ -5,7 +5,8 @@ NORMAL_ROLL = "<@{author_id}>'s Roll:\n```fix\nYou rolled a {user_roll}.\nYou go
 
 ROLL_WITH_ADV_DISADV = "<@{author_id}>:\n Attempt 1:\n```fix\nYou rolled a {user_first_roll}.\nYou got: \n{first_result}\nYour modifier is: {first_modifier}\nYour total roll is: {first_total}```Attempt 2:\n```fix\nYou rolled a {user_second_roll}.\nYou got: \n{second_result}\nYour modifier is: {second_modifier}\nYour total roll is: {second_total}```Your final roll is: **{final_result}**."
 
-ROLL_WITH_REPEATS = "<@{author_id}>'s Roll:\n```fix\nYou rolled {roll}."
+ROLL_WITH_REPEATS_STARTING_STRING = "<@{author_id}>'s Roll:\n```fix\nYou rolled {roll}."
+ROLL_WITH_REPEATS_ENDING_STRING = "```Final Rolls: **{final_rolls}**"
 
 ROLL_WITH_REPEAT_INVALID_DIGIT = "<@{author}>, if you want to roll multiple times, do`?r <roll>r<num_times>` Note that <num_times> is an integer."
 
