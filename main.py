@@ -9,17 +9,71 @@ from discord.ext import commands
 from discord.ext.commands import Bot, DefaultHelpCommand
 
 import database
-from dice import dice, roll_dice
+from dice import dice
 from utils import gen_utils
 from utils.ability import Ability
 from utils.item import Item
-from utils.logging_util import logger
+
 from utils.player_character import PlayerCharacter
 from config import *
-from fun_stuff import FunStuff
+from typing import List, Optional, Dict
 
+import logging
+
+
+class HomebrewHelper(Bot):
+    def __init__(
+        self, *args, initial_extensions: List[str], character_cache: Dict, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.initial_extensions = initial_extensions
+        self.character_cache = character_cache
+
+    async def setup_hook(self) -> None:
+        logger.info("Loading extensions.")
+        for extension in self.initial_extensions:
+            logger.info(f"Loading Extension: {extension}")
+            await self.load_extension(extension)
+
+
+def load_all_characters() -> Dict:
+    db = database.connect_to_db(DB_TOKEN)
+    character_information = database.load_all_characters(db)
+    characters = {}
+    for character_id, character_data in character_information.items():
+        character = PlayerCharacter()
+        character.import_stats(character_data)
+        characters[character_id] = character
+    return characters
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setFormatter(
+    logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+)
+logger.addHandler(handler)
+
+# Load and cache character DB
+# WARNING: This is not built to scale
+logger.info("Loading DnData.")
+character_cache = load_all_characters()
+# List of cogs we use
+initial_extensions = ["cogs.fun"]
+# Create help command
 help_command = DefaultHelpCommand(no_category="Commands")
-client = Bot(command_prefix=BOT_PREFIX, help_command=help_command)
+# Set intents
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+client = HomebrewHelper(
+    command_prefix=BOT_PREFIX,
+    help_command=help_command,
+    intents=intents,
+    initial_extensions=initial_extensions,
+    character_cache=character_cache,
+)
 
 
 @client.command(
@@ -71,21 +125,18 @@ async def roll(context, *roll):
     author = context.author
     logger.info(f"Roll: {author.name + '#' + author.discriminator} :: {roll}")
     advantage_or_disadvantage = roll[-1] in ["a", "d"]
-    repeat_roll = len(roll.split("r")) > 1
+    repeat_roll = "r" in roll
     if advantage_or_disadvantage:
-        use_advantage = True if roll[-1] == "a" else False
-        result = roll_dice.with_advantage_or_disadvantage(
-            roll[:-1], use_advantage, author.id
+        is_advantage = roll[-1] == "a"
+        result = dice.roll_wrapper(
+            roll[:-1], author.id, "adv_disadv", is_advantage=is_advantage
         )
     elif repeat_roll:
-        roll, repeats = roll.split("r")
-        if repeats.isdigit():
-            result = roll_dice.and_repeat(roll, int(repeats), author.id)
-        else:
-            result = f"<@{author.id}>, if you want to roll multiple times, do`?r <roll>r<num_times>`."
+        roll, n_repeats = roll.split("r")
+        result = dice.roll_wrapper(roll, author.id, "repeat", n_repeats=n_repeats)
     else:
-        result = roll_dice.normally(roll, author.id)
-    await context.send(result)
+        result = dice.roll_wrapper(roll, author.id, "normal")
+    await context.send(result["message"])
 
 
 @client.command(
@@ -122,7 +173,7 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
                 f"Um...if you have more than {INITIATIVE_MAX_NPCS} NPCs in combat, please don't. I'm considering only {INITIATIVE_MAX_NPCS}."
             )
         for i in range(npc_character_count):
-            players_to_roll_for.append([f"{npc_character_name} {i+1}", ""])
+            players_to_roll_for.append([f"{npc_character_name} {i+1}", False, False])
 
     db = database.connect_to_db(DB_TOKEN)
     while count < 2:
@@ -143,11 +194,11 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
                 if items[0] == display_name:
                     multi_input_flag = True
             if str(reaction.emoji) == "⚔️" and not multi_input_flag:
-                players_to_roll_for.append([display_name, ""])
+                players_to_roll_for.append([display_name, False, False])
             elif str(reaction.emoji) == "👍" and not multi_input_flag:
-                players_to_roll_for.append([display_name, "a"])
+                players_to_roll_for.append([display_name, True, True])
             elif str(reaction.emoji) == "👎" and not multi_input_flag:
-                players_to_roll_for.append([display_name, "d"])
+                players_to_roll_for.append([display_name, True, False])
             elif str(reaction.emoji) == "🛑":
                 if reaction_user == context.author:
                     count = 10
@@ -161,22 +212,23 @@ async def roll_initiative(context, npc_count=None, npc_name_template=None):
     if len(players_to_roll_for) != 0:
         roll_list = []
         display_output = "Roll Order:\n```\n+--------------+--------------------------------------+\n| Roll         | Player Name                          |\n+--------------+--------------------------------------+"
-        for (display_name, advantage_or_disadvantage) in players_to_roll_for:
-            if advantage_or_disadvantage == "":
-                result = {
-                    "player": display_name,
-                    "roll": dice.roll("1d20")["total"],
-                    "outcome": None,
-                }
-            else:
-                is_advantage = True if advantage_or_disadvantage == "a" else False
-                result, rolls = roll_dice.with_advantage_or_disadvantage(
-                    "1d20", is_advantage, display_name, return_rolls_as_list=True
+        for author_id, use_advantage, is_advantage in players_to_roll_for:
+            if use_advantage:
+                outcome = dice.roll_wrapper(
+                    "1d20", author_id, "adv_disadv", is_advantage=is_advantage
                 )
                 result = {
-                    "player": display_name + " (" + advantage_or_disadvantage.upper() + ")",
-                    "roll": result,
-                    "outcome": rolls,
+                    "player": f"{author_id} ({'A' if is_advantage else 'D'})",
+                    "roll": outcome["final_result"][0],
+                    "outcome": [x["total"] for x in outcome["raw"]],
+                }
+            else:
+                result = {
+                    "player": author_id,
+                    "roll": dice.roll_wrapper("1d20", author_id, "normal")[
+                        "final_result"
+                    ][0],
+                    "outcome": None,
                 }
             roll_list.append(result)
         for player_roll in sorted(roll_list, key=lambda x: x["roll"], reverse=True):
@@ -547,29 +599,25 @@ async def on_ready():
 @client.event
 async def on_command_error(context, error):
     if isinstance(error, commands.MissingRequiredArgument):
+        logger.info(f"MissingRequiredArgument: {error}")
         await context.send(
             f"<@{context.author.id}>, doesn't seem like you gave enough information for that command!"
         )
     elif isinstance(error, commands.MissingPermissions):
+        logger.info(f"MissingPermissions: {error}")
         await context.send(f"You have no power here, <@{context.author.id}> the Grey.")
+    elif isinstance(error, commands.CommandInvokeError):
+        logger.info(f"CommandInvokeError: {error}")
+        await context.send(
+            f"You messed up with the command there, <@{context.author.id}>. Try again."
+        )
+    elif isinstance(error, commands.CommandNotFound):
+        logger.info(f"CommandNotFound: {error}")
+        await context.send(f"<@{context.author.id}> that isn't even a command bro.")
     else:
         raise error
 
 
-def load_all_characters():
-    db = database.connect_to_db(DB_TOKEN)
-    character_information = database.load_all_characters(db)
-    characters = {}
-    for character_id, character_data in character_information.items():
-        character = PlayerCharacter()
-        character.import_stats(character_data)
-        characters[character_id] = character
-    return characters
-
-
 if __name__ == "__main__":
-    client.add_cog(FunStuff(client))
-    logger.info("Loading DnData..")
-    character_cache = load_all_characters()
-    logger.info("Booting up client..")
+    logger.info("Running client..")
     client.run(TOKEN)
