@@ -13,6 +13,8 @@ from dice import dice
 from utils import gen_utils
 from utils.ability import Ability
 from utils.item import Item
+import templates
+import error_messages
 
 from utils.player_character import PlayerCharacter
 from config import *
@@ -151,7 +153,7 @@ async def roll_initiative(context, npc_count=0, npc_name_template="NPC"):
     try:
         npc_count = int(npc_count)
     except ValueError:
-        await context.send(f"That isn't a valid number of NPCs!")
+        await context.send(error_messages.ROLL_INITIATIVE_INVALID_NPCS)
         return
     # We take only up to 30 characters to preserve table formatting.
     npc_name = npc_name_template[:30]
@@ -159,16 +161,16 @@ async def roll_initiative(context, npc_count=0, npc_name_template="NPC"):
     if npc_count > INITIATIVE_MAX_NPCS:
         npc_count = INITIATIVE_MAX_NPCS
         await context.send(
-            f"Um...if you have more than {INITIATIVE_MAX_NPCS} NPCs in combat, please don't. I'm considering only {INITIATIVE_MAX_NPCS}."
+            error_messages.ROLL_INITIATIVE_TOO_MANY_NPCS.format(
+                max_npcs=INITIATIVE_MAX_NPCS
+            )
         )
     # Include the NPCs in the list of players we roll for.
     players_to_roll_for = [
         [f"{npc_name} {i+1}", False, False] for i in range(npc_count)
     ]
     # Send instruction messages to the channel
-    roll_initiative_message = await context.send(
-        f"React with,\n⚔️ to add to the initiative order (or)\n👍 to add to the initiative order with advantage (or) 👎 to add to the initiative order with disadvantage\nand 🛑 to start rolling"
-    )
+    roll_initiative_message = await context.send(templates.ROLL_INITIATIVE_INSTRUCTIONS)
     reactions = ["⚔️", "👍", "👎", "🛑"]
     for reaction in reactions:
         await roll_initiative_message.add_reaction(reaction)
@@ -211,11 +213,13 @@ async def roll_initiative(context, npc_count=0, npc_name_template="NPC"):
                     count = 10
                 else:
                     await context.send(
-                        f"Only <@{context.author.id}> can start the roll"
+                        error_messages.ROLL_INITIATIVE_WRONG_USER.format(
+                            user=context.author.id
+                        )
                     )
 
         except asyncio.TimeoutError:
-            await context.send(f"Look, a minute's gone by and I'm not waiting anymore.")
+            await context.send(error_messages.ROLL_INITIATIVE_TIMEOUT)
 
     # Basic check to ensure we actually have players to roll for
     if len(players_to_roll_for) != 0:
@@ -260,14 +264,13 @@ async def roll_initiative(context, npc_count=0, npc_name_template="NPC"):
                 player_name = player_name[:36]
             output_string += f"\n| {result} {all_rolls}   | {player_name} |"
 
-        initiative_start_string = "Roll Order:\n```\n+--------------+--------------------------------------+\n| Roll         | Player Name                          |\n+--------------+--------------------------------------+"
         await context.send(
-            initiative_start_string
+            templates.ROLL_INITIATIVE_START_STRING
             + output_string
-            + "\n+--------------+--------------------------------------+```"
+            + templates.ROLL_INITIATIVE_END_STRING
         )
     else:
-        await context.send("Thank you for wasting my time :)")
+        await context.send(error_messages.ROLL_INITIATIVE_NOT_ENOUGH_PLAYERS)
 
 
 ################################################################################

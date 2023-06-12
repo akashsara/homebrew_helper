@@ -168,7 +168,7 @@ def roll_wrapper(
     if not isinstance(n_repeats, int) or n_repeats < 1:
         return {
             "error": True,
-            "message": error_messages.ROLL_WITH_REPEAT_INVALID_DIGIT.format(
+            "message": error_messages.ROLL_WRAPPER_ROLL_WITH_REPEAT_INVALID_DIGIT.format(
                 author_id=author_id
             ),
         }
@@ -176,7 +176,7 @@ def roll_wrapper(
     elif (n_dice * n_repeats) > config.DICE_ROLL_MAX_DICE:
         return {
             "error": True,
-            "message": error_messages.TOO_MANY_DICE.format(
+            "message": error_messages.ROLL_WRAPPER_TOO_MANY_DICE.format(
                 author_id=author_id, max_dice=config.DICE_ROLL_MAX_DICE
             ),
         }
@@ -184,7 +184,7 @@ def roll_wrapper(
     elif roll_type not in ["normal", "adv_disadv", "repeat"]:
         return {
             "error": True,
-            "message": error_messages.INVALID_ROLL_TYPE.format(author_id=author_id),
+            "message": error_messages.ROLL_WRAPPER_INVALID_ROLL_TYPE.format(author_id=author_id),
         }
 
     # Roll dice
@@ -220,7 +220,7 @@ def roll_wrapper(
     if status == "too high":
         return {
             "error": True,
-            "message": error_messages.DICE_TOO_HIGH.format(
+            "message": error_messages.ROLL_WRAPPER_DICE_TOO_HIGH.format(
                 author_id=author_id,
                 largest_die=config.DICE_ROLL_LARGEST_DIE,
                 max_dice=config.DICE_ROLL_MAX_DICE,
@@ -230,11 +230,11 @@ def roll_wrapper(
     elif status == "wrong":
         return {
             "error": True,
-            "message": error_messages.WRONG_DICE_COMMAND.format(author_id=author_id),
+            "message": error_messages.ROLL_WRAPPER_WRONG_DICE_COMMAND.format(author_id=author_id),
         }
     # All other errors
     elif status != "OK":
-        return {"error": True, "message": error_messages.UNKNOWN_ERROR}
+        return {"error": True, "message": error_messages.ROLL_WRAPPER_UNKNOWN_ERROR}
 
     # Format output and return
     output_string = dice_roll_formatter(
