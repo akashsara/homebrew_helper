@@ -166,60 +166,80 @@ async def roll_initiative(context, npc_count=0, npc_name_template="NPC"):
             )
         )
     # Include the NPCs in the list of players we roll for.
-    players_to_roll_for = [
-        [f"{npc_name} {i+1}", False, False] for i in range(npc_count)
-    ]
+    players_to_roll_for = {
+        f"{npc_name} {i+1}": [False, False] for i in range(npc_count)
+    }
+    # Store the actual reactions separately for easier management
+    player_reactions = {
+        f"{npc_name} {i+1}": INITIATIVE_REACTIONS["normal_roll"]
+        for i in range(npc_count)
+    }
+
     # Send instruction messages to the channel
     roll_initiative_message = await context.send(templates.ROLL_INITIATIVE_INSTRUCTIONS)
-    reactions = ["⚔️", "👍", "👎", "🛑"]
-    for reaction in reactions:
+
+    # Add emoji to the message for people to click on
+    for reaction in INITIATIVE_REACTIONS.values():
         await roll_initiative_message.add_reaction(reaction)
 
     def check(reaction, user):
         return user != client.user
 
     db = database.connect_to_db(DB_TOKEN)
-    count = 0
-    while count < 2:
-        try:
-            # TODO: Better loop - why count?
-            # TODO: Better way of handling multiple user inputs
+
+    try:
+        while True:
             reaction, reaction_user = await client.wait_for(
                 "reaction_add", timeout=60, check=check
             )
+            emoji = str(reaction.emoji)
             user = gen_utils.discord_name_to_id(str(reaction_user.id))
             # Get active character if it exists
             query = {"server": server, "user": user}
             current = database.get_details(query, "users", db).get("active")
-            display_name = (
+            author_id = (
                 character_cache[current].get_name()
                 if current
                 else str(reaction_user.name)
             )
             # Test if user input has already happened
-            multi_input_flag = any(
-                [items[0] == display_name for items in players_to_roll_for]
-            )
-            emoji = str(reaction.emoji)
+            # if it has, erase the previous input
+            # Only if this isn't a stop_roll reaction though
+            if (
+                author_id in players_to_roll_for
+                and emoji != INITIATIVE_REACTIONS["stop_roll"]
+            ):
+                current_reaction = player_reactions[author_id]
+                await roll_initiative_message.remove_reaction(
+                    current_reaction, reaction_user
+                )
+                del players_to_roll_for[author_id]
+                del player_reactions[author_id]
 
-            if emoji == "⚔️" and not multi_input_flag:
-                players_to_roll_for.append([display_name, False, False])
-            elif emoji == "👍" and not multi_input_flag:
-                players_to_roll_for.append([display_name, True, True])
-            elif emoji == "👎" and not multi_input_flag:
-                players_to_roll_for.append([display_name, True, False])
-            elif emoji == "🛑":
-                if reaction_user == context.author:
-                    count = 10
-
-        except asyncio.TimeoutError:
-            await context.send(error_messages.ROLL_INITIATIVE_TIMEOUT)
+            # Identify reaction and track it
+            if emoji == INITIATIVE_REACTIONS["normal_roll"]:
+                players_to_roll_for[author_id] = [False, False]
+                player_reactions[author_id] = INITIATIVE_REACTIONS["normal_roll"]
+            elif emoji == INITIATIVE_REACTIONS["advantage_roll"]:
+                players_to_roll_for[author_id] = [True, True]
+                player_reactions[author_id] = INITIATIVE_REACTIONS["advantage_roll"]
+            elif emoji == INITIATIVE_REACTIONS["disadvantage_roll"]:
+                players_to_roll_for[author_id] = [True, False]
+                player_reactions[author_id] = INITIATIVE_REACTIONS["disadvantage_roll"]
+            # Stop if the creator used the stop_roll emoji
+            elif (
+                emoji == INITIATIVE_REACTIONS["stop_roll"]
+                and reaction_user == context.author
+            ):
+                break
+    except asyncio.TimeoutError:
+        await context.send(error_messages.ROLL_INITIATIVE_TIMEOUT)
 
     # Basic check to ensure we actually have players to roll for
     if len(players_to_roll_for) != 0:
         roll_list = []
         # Make rolls for each player and store
-        for author_id, use_advantage, is_advantage in players_to_roll_for:
+        for author_id, (use_advantage, is_advantage) in players_to_roll_for.items():
             if use_advantage:
                 outcome = dice.roll_wrapper(
                     "1d20", author_id, "adv_disadv", is_advantage=is_advantage
