@@ -159,7 +159,7 @@ def roll_wrapper(
     roll_type: str,
     n_repeats: str = "1",
     is_advantage: bool = False,
-) -> str:
+) -> Dict:
     # First pass of error checks - pre-roll
     n_dice = sum(int(x) for x in re.findall(r"(\d+)d", roll))
     n_repeats = int(n_repeats) if n_repeats.isdigit() else n_repeats
