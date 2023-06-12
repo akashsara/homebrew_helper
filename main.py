@@ -211,12 +211,6 @@ async def roll_initiative(context, npc_count=0, npc_name_template="NPC"):
             elif emoji == "🛑":
                 if reaction_user == context.author:
                     count = 10
-                else:
-                    await context.send(
-                        error_messages.ROLL_INITIATIVE_WRONG_USER.format(
-                            user=context.author.id
-                        )
-                    )
 
         except asyncio.TimeoutError:
             await context.send(error_messages.ROLL_INITIATIVE_TIMEOUT)
