@@ -71,6 +71,9 @@ You tossed the coin {num_tosses} time(s)! You got:
 COIN_TOSS_TOO_MANY_TOSSES = "<@{author_id}> that's way too many coins. Calm down. The maximum allowed is {max_tosses}."
 
 # Gold Related
+SET_GOLD_SUCCESS = (
+    "{name}'s (<@{user}>) total gold has been set to {amount} gold."
+)
 CHANGE_GOLD_SUCCESS = (
     "{name} (<@{user}>) received {amount} gold. Their new total is {new_gold} gold."
 )
