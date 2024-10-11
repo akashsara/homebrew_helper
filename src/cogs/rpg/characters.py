@@ -305,6 +305,41 @@ class RPGCommands(commands.Cog):
             await context.send(USER_NOT_FOUND.format(user=user))
 
     @commands.command(
+        name="set_gold",
+        aliases=["sg"],
+        help="Coming soon.",
+        brief="To set gold to a particular amount.",
+    )
+    @commands.has_permissions(administrator=True)
+    async def set_gold(self, context, user, amount):
+        server = str(context.guild.id)
+        user_id = gen_utils.discord_name_to_id(user)
+        amount = int(amount)
+        if user_id:
+            # Get active character
+            current = self.bot.get_current_chara(server, user_id)
+            if current:
+                # Accepted - write changes to DB
+                self.bot.character_cache[current].set_gold(amount)
+                payload = self.bot.character_cache[current].export_stats()
+                query = {"character_id": current}
+                with MongoClient(config.DB_TOKEN) as db:
+                    database.set_details(
+                        query, payload, "characters", db[config.DB_NAME]
+                    )
+                await context.send(
+                    SET_GOLD_SUCCESS.format(
+                        name=self.bot.character_cache[current].get_name(),
+                        user=user_id,
+                        amount=amount,
+                    )
+                )
+            else:
+                await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
+        else:
+            await context.send(USER_NOT_FOUND.format(user=user))
+
+    @commands.command(
         name="transfer_gold",
         aliases=["transfer"],
         help="Coming soon.",
