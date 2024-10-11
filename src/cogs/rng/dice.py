@@ -7,6 +7,7 @@ import src.config as config
 import src.templates as templates
 from discord.ext import commands
 from src.utils import database, dice, gen_utils
+import pymongo
 
 
 # Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands
@@ -110,7 +111,6 @@ class RNGCommands(commands.Cog):
             return user != self.bot.user
 
         server = str(context.guild.id)
-        db = database.connect_to_db(config.DB_TOKEN)
 
         try:
             while True:
@@ -120,8 +120,9 @@ class RNGCommands(commands.Cog):
                 emoji = str(reaction.emoji)
                 user = gen_utils.discord_name_to_id(str(reaction_user.id))
                 # Get active character if it exists
-                query = {"server": server, "user": user}
-                current = database.get_details(query, "users", db).get("active")
+                current = (
+                    self.bot.user_cache.get(server, {}).get(user, {}).get("active")
+                )
                 author_id = (
                     self.bot.character_cache[current].get_name()
                     if current

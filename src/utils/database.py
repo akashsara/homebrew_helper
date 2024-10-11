@@ -1,21 +1,9 @@
+import logging
 from typing import Dict
 
 import pymongo
 
-import logging
-
 logger = logging.getLogger(__name__)
-
-COLLECTION_MAP = {
-    "characters": "characters",
-    "aliases": "aliases",
-    "users": "users",
-}
-DB_NAME = "homebrew_helper"
-
-
-def connect_to_db(connection_string: str) -> pymongo.database.Database:
-    return pymongo.MongoClient(connection_string)[DB_NAME]
 
 
 def get_details(query: Dict, collection: str, db: pymongo.database.Database) -> Dict:
@@ -24,8 +12,7 @@ def get_details(query: Dict, collection: str, db: pymongo.database.Database) -> 
     collection: the table from our DB
     db: MongoDB database cursor
     """
-    collection = db[COLLECTION_MAP[collection]]
-    details = collection.find_one(query)
+    details = db[collection].find_one(query)
     if details:
         return details
     logger.info(f"Could not find information for query {query}")
@@ -42,8 +29,7 @@ def set_details(
     db: MongoDB database cursor
     """
     try:
-        collection = db[COLLECTION_MAP[collection]]
-        result = collection.replace_one(query, payload, upsert=True)
+        result = db[collection].replace_one(query, payload, upsert=True)
         if result.modified_count == 0 and not result.upserted_id:
             logger.info(f"Unknown error occured.\n{result.raw_result}")
         return True
@@ -58,6 +44,29 @@ def load_all_characters(db: pymongo.database.Database):
     """
     all_characters = db["characters"].find({})
     return {char["character_id"]: char for char in all_characters}
+
+
+def load_all_users(db: pymongo.database.Database):
+    """
+    db: MongoDB database cursor
+
+    Users:
+    {
+        "_id": "unique_id",
+        "server": "discord_server_id",
+        "user": "discord_user_id",
+        "active": "currently_active_character_id",
+        "characters": ["list", "of", "character_ids"]
+    }
+    """
+    result = db["users"].find({})
+    all_users = {}
+    for user in result:
+        if user["server"] in all_users:
+            all_users[user["server"]][user["user"]] = user
+        else:
+            all_users[user["server"]] = {user["user"]: user}
+    return all_users
 
 
 def transfer_characters(

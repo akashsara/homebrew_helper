@@ -3,6 +3,7 @@ import logging
 
 import src.config as config
 from discord.ext import commands
+from pymongo import MongoClient
 from src.templates import *
 from src.utils import database, gen_utils, player_character
 
@@ -58,25 +59,32 @@ class RPGCommands(commands.Cog):
                         try:
                             message = await self.bot.wait_for("message", timeout=60)
                             if message and message.content.lower()[0] == "y":
-                                self.bot.character_cache[uuid] = character
                                 # Write character to DB
-                                db = database.connect_to_db(config.DB_TOKEN)
-                                payload = character.export_stats()
-                                query = {"character_id": uuid}
-                                database.set_details(query, payload, "characters", db)
-                                # Update user information & set as active character
-                                query = {"server": server, "user": user}
-                                user_info = database.get_details(query, "users", db)
-                                if user_info:
-                                    user_info["characters"].append(uuid)
-                                else:
-                                    user_info = {
-                                        "server": server,
-                                        "user": user,
-                                        "characters": [uuid],
-                                    }
-                                user_info["active"] = uuid
-                                database.set_details(query, user_info, "users", db)
+                                with MongoClient(config.DB_TOKEN) as db:
+                                    db = db[config.DB_NAME]
+                                    payload = character.export_stats()
+                                    query = {"character_id": uuid}
+                                    database.set_details(
+                                        query, payload, "characters", db
+                                    )
+                                    # Update user information & set as active character
+                                    query = {"server": server, "user": user}
+                                    user_info = database.get_details(query, "users", db)
+                                    if user_info:
+                                        user_info["characters"].append(uuid)
+                                    else:
+                                        user_info = {
+                                            "server": server,
+                                            "user": user,
+                                            "characters": [uuid],
+                                        }
+                                    user_info["active"] = uuid
+                                    database.set_details(query, user_info, "users", db)
+                                # Update local caches
+                                self.bot.character_cache[uuid] = character
+                                if server not in self.bot.user_cache:
+                                    self.bot.user_cache[server] = {}
+                                self.bot.user_cache[server][user] = user_info
                                 await context.send(CREATE_CHARACTER_SUCCESS)
                             else:
                                 await context.send(CREATE_CHARACTER_CANCEL)
@@ -84,7 +92,7 @@ class RPGCommands(commands.Cog):
                             await context.send(CREATE_CHARACTER_CANCEL)
                         except Exception as e:
                             self.logger.warning("Failed to create character", e)
-                            await context.send("UNKNOWN ERROR")
+                            await context.send("UNKNOWN ERROR! Report & Contact Lan!!")
                     else:
                         await context.send(
                             CREATE_CHARACTER_INVALID_STATS.format(
@@ -105,12 +113,10 @@ class RPGCommands(commands.Cog):
         else:
             user = gen_utils.discord_name_to_id(str(context.author.id))
         if user:
-            # Get sever ID
+            # Get server ID
             server = str(context.guild.id)
             # Get active character
-            db = database.connect_to_db(config.DB_TOKEN)
-            query = {"server": server, "user": user}
-            current = database.get_details(query, "users", db).get("active")
+            current = self.bot.user_cache.get(server, {}).get(user, {}).get("active")
             if current:
                 await context.send(self.bot.character_cache[current].info())
             else:
@@ -132,9 +138,7 @@ class RPGCommands(commands.Cog):
                 f"Hey <@{context.author.id}>, to do a saving throw or ability check do `!st <stat> (a|d)`. You can also add an a or d to signify advantage or disadvantage."
             )
         # Get active character
-        db = database.connect_to_db(config.DB_TOKEN)
-        query = {"server": server, "user": user_id}
-        current = database.get_details(query, "users", db).get("active")
+        current = self.bot.user_cache.get(server, {}).get(user_id, {}).get("active")
         if current:
             stat_name = self.bot.character_cache[current].resolve_stat_name(stat)
             if stat_name:
@@ -166,9 +170,7 @@ class RPGCommands(commands.Cog):
         value = int(value)
         if user_id:
             # Get active character
-            db = database.connect_to_db(config.DB_TOKEN)
-            query = {"server": server, "user": user_id}
-            current = database.get_details(query, "users", db).get("active")
+            current = self.bot.user_cache.get(server, {}).get(user_id, {}).get("active")
             if current:
                 stat_name = self.bot.character_cache[current].resolve_stat_name(stat)
                 if stat_name:
@@ -177,7 +179,10 @@ class RPGCommands(commands.Cog):
                     # Write changes to DB
                     payload = self.bot.character_cache[current].export_stats()
                     query = {"character_id": current}
-                    database.set_details(query, payload, "characters", db)
+                    with MongoClient(config.DB_TOKEN) as db:
+                        database.set_details(
+                            query, payload, "characters", db[config.DB_NAME]
+                        )
                     await context.send(
                         STAT_CHANGE_SUCCESSFUL.format(
                             character_name=character_name,
@@ -205,13 +210,16 @@ class RPGCommands(commands.Cog):
         user1_id = gen_utils.discord_name_to_id(user1)
         user2_id = gen_utils.discord_name_to_id(user2)
         if user1_id and user2_id:
-            db = database.connect_to_db(config.DB_TOKEN)
-            # Change Alias
-            query = {"alias": user1_id}
-            payload = {"alias": user1_id, "original": user2_id}
-            database.set_details(query, payload, "aliases", db)
-            # Transfer characters
-            database.transfer_characters(server, user1_id, user2, db)
+            with MongoClient(config.DB_TOKEN) as db:
+                db = db[config.DB_NAME]
+                # Change Alias
+                query = {"alias": user1_id}
+                payload = {"alias": user1_id, "original": user2_id}
+                database.set_details(query, payload, "aliases", db)
+                # Transfer characters
+                database.transfer_characters(server, user1_id, user2, db)
+                # Recache the users from the database
+                self.bot.user_cache = database.load_all_users(db)
             await context.send(
                 ALIAS_CHANGE_SUCCESS.format(user1=user1_id, user2=user2_id)
             )
@@ -234,9 +242,7 @@ class RPGCommands(commands.Cog):
         user_id = gen_utils.discord_name_to_id(user)
         if user_id:
             # Get active character
-            db = database.connect_to_db(config.DB_TOKEN)
-            query = {"server": server, "user": user_id}
-            current = database.get_details(query, "users", db).get("active")
+            current = self.bot.user_cache.get(server, {}).get(user_id, {}).get("active")
             if current:
                 current_gold = self.bot.character_cache[current].get_gold()
                 await context.send(
@@ -264,9 +270,7 @@ class RPGCommands(commands.Cog):
         amount = int(amount)
         if user:
             # Get active character
-            db = database.connect_to_db(config.DB_TOKEN)
-            query = {"server": server, "user": user_id}
-            current = database.get_details(query, "users", db).get("active")
+            current = self.bot.user_cache.get(server, {}).get(user_id, {}).get("active")
             if current:
                 current_gold = self.bot.character_cache[current].get_gold()
                 new_gold = current_gold + amount
@@ -275,7 +279,10 @@ class RPGCommands(commands.Cog):
                     self.bot.character_cache[current].set_gold(new_gold)
                     payload = self.bot.character_cache[current].export_stats()
                     query = {"character_id": current}
-                    database.set_details(query, payload, "characters", db)
+                    with MongoClient(config.DB_TOKEN) as db:
+                        database.set_details(
+                            query, payload, "characters", db[config.DB_NAME]
+                        )
                     await context.send(
                         CHANGE_GOLD_SUCCESS.format(
                             name=self.bot.character_cache[current].get_name(),
@@ -319,11 +326,18 @@ class RPGCommands(commands.Cog):
         elif not target_user_id:
             await context.send(USER_NOT_FOUND.format(user=target))
         else:
-            db = database.connect_to_db(config.DB_TOKEN)
-            query = {"server": server, "user": source_user_id}
-            source = database.get_details(query, "users", db).get("active")
-            query = {"server": server, "user": target_user_id}
-            target = database.get_details(query, "users", db).get("active")
+            # Get active character for source
+            source = (
+                self.bot.user_cache.get(server, {})
+                .get(source_user_id, {})
+                .get("active")
+            )
+            # Get active character for target
+            target = (
+                self.bot.user_cache.get(server, {})
+                .get(target_user_id, {})
+                .get("active")
+            )
             if source and target:
                 source_gold = self.bot.character_cache[source].get_gold()
                 target_gold = self.bot.character_cache[target].get_gold()
@@ -333,12 +347,14 @@ class RPGCommands(commands.Cog):
                     self.bot.character_cache[source].set_gold(source_gold - amount)
                     self.bot.character_cache[target].set_gold(target_gold + amount)
                     # Write changes to DB
-                    payload = self.bot.character_cache[source].export_stats()
-                    query = {"character_id": source}
-                    database.set_details(query, payload, "characters", db)
-                    payload = self.bot.character_cache[target].export_stats()
-                    query = {"character_id": target}
-                    database.set_details(query, payload, "characters", db)
+                    with MongoClient(config.DB_TOKEN) as db:
+                        db = db[config.DB_NAME]
+                        payload = self.bot.character_cache[source].export_stats()
+                        query = {"character_id": source}
+                        database.set_details(query, payload, "characters", db)
+                        payload = self.bot.character_cache[target].export_stats()
+                        query = {"character_id": target}
+                        database.set_details(query, payload, "characters", db)
                     await context.send(
                         GOLD_TRANSFER_SUCCESS.format(
                             source_name=self.bot.character_cache[source].get_name(),
