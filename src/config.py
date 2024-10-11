@@ -2,6 +2,7 @@ import os
 
 TOKEN = os.environ.get("HOMEBREW_HELPER_TOKEN")
 DB_TOKEN = os.environ.get("DATABASE_TOKEN")
+DB_NAME = "homebrew_helper"
 BOT_PREFIX = ("?", "!")
 
 VALID_ROLL_CHARACTERS = set(str(x) for x in range(0, 10)).union(
