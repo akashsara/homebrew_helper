@@ -158,6 +158,26 @@ class RPGCommands(commands.Cog):
             await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
 
     @commands.command(
+        name="attack",
+        help="Coming soon.",
+        brief="To make an attack roll.",
+    )
+    async def attack(self, context, advantage_or_disadvantage=""):
+        server = str(context.guild.id)
+        user_id = gen_utils.discord_name_to_id(str(context.author.id))
+        # Get active character
+        current = self.bot.get_current_chara(server, user_id)
+        if current:
+            stat_bonus = self.bot.character_cache[current].get_attack()
+            sign = "+" if stat_bonus > 0 else ""
+            query = f"1d20{sign}{stat_bonus}"
+            if advantage_or_disadvantage:
+                query += advantage_or_disadvantage[0]
+            await context.invoke(self.bot.get_command("roll"), query)
+        else:
+            await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
+
+    @commands.command(
         name="change_stat",
         aliases=["stat_change"],
         help="Coming soon.",
