@@ -13,6 +13,8 @@ from dice import dice
 from utils import gen_utils
 from utils.ability import Ability
 from utils.item import Item
+import templates
+import error_messages
 
 from utils.player_character import PlayerCharacter
 from config import *
@@ -145,118 +147,144 @@ async def roll(context, *roll):
     help="Gets the order in which the players will make their move in battle.",
     brief="To get the roll initiative.",
 )
-async def roll_initiative(context, npc_count=None, npc_name_template=None):
-    roll_initiative_message = await context.send(
-        f"React with,\n⚔️ to add to the initiative order (or)\n👍 to add to the initiative order with advantage (or) 👎 to add to the initiative order with disadvantage\nand 🛑 to start rolling"
-    )
-    await roll_initiative_message.add_reaction("⚔️")
-    await roll_initiative_message.add_reaction("👍")
-    await roll_initiative_message.add_reaction("👎")
-    await roll_initiative_message.add_reaction("🛑")
+async def roll_initiative(context, npc_count=0, npc_name_template="NPC"):
+    # We first ensure that there's no errors with the number/names of NPCs
+    server = str(context.guild.id)
+    try:
+        npc_count = int(npc_count)
+    except ValueError:
+        await context.send(error_messages.ROLL_INITIATIVE_INVALID_NPCS)
+        return
+    # We take only up to 30 characters to preserve table formatting.
+    npc_name = npc_name_template[:30]
+    # We have a hard limit on the number of NPCs we roll for.
+    if npc_count > INITIATIVE_MAX_NPCS:
+        npc_count = INITIATIVE_MAX_NPCS
+        await context.send(
+            error_messages.ROLL_INITIATIVE_TOO_MANY_NPCS.format(
+                max_npcs=INITIATIVE_MAX_NPCS
+            )
+        )
+    # Include the NPCs in the list of players we roll for.
+    players_to_roll_for = {
+        f"{npc_name} {i+1}": [False, False] for i in range(npc_count)
+    }
+    # Store the actual reactions separately for easier management
+    player_reactions = {
+        f"{npc_name} {i+1}": INITIATIVE_REACTIONS["normal_roll"]
+        for i in range(npc_count)
+    }
+
+    # Send instruction messages to the channel
+    roll_initiative_message = await context.send(templates.ROLL_INITIATIVE_INSTRUCTIONS)
+
+    # Add emoji to the message for people to click on
+    for reaction in INITIATIVE_REACTIONS.values():
+        await roll_initiative_message.add_reaction(reaction)
 
     def check(reaction, user):
         return user != client.user
 
-    count = 0
-    players_to_roll_for = list()
-    server = str(context.guild.id)
-    if npc_count:
-        npc_character_count = int(npc_count)
-        npc_character_name = "NPC"
-        if npc_name_template:
-            npc_character_name = npc_name_template
-            if len(npc_character_name) > 29:
-                npc_character_name = npc_character_name[:30]
-        if npc_character_count > INITIATIVE_MAX_NPCS:
-            npc_character_count = INITIATIVE_MAX_NPCS
-            await context.send(
-                f"Um...if you have more than {INITIATIVE_MAX_NPCS} NPCs in combat, please don't. I'm considering only {INITIATIVE_MAX_NPCS}."
-            )
-        for i in range(npc_character_count):
-            players_to_roll_for.append([f"{npc_character_name} {i+1}", False, False])
-
     db = database.connect_to_db(DB_TOKEN)
-    while count < 2:
-        try:
+
+    try:
+        while True:
             reaction, reaction_user = await client.wait_for(
                 "reaction_add", timeout=60, check=check
             )
+            emoji = str(reaction.emoji)
             user = gen_utils.discord_name_to_id(str(reaction_user.id))
-            # Get active character
+            # Get active character if it exists
             query = {"server": server, "user": user}
             current = database.get_details(query, "users", db).get("active")
-            if current:
-                display_name = character_cache[current].get_name()
-            else:
-                display_name = str(reaction_user.name)
-            multi_input_flag = False
-            for items in players_to_roll_for:
-                if items[0] == display_name:
-                    multi_input_flag = True
-            if str(reaction.emoji) == "⚔️" and not multi_input_flag:
-                players_to_roll_for.append([display_name, False, False])
-            elif str(reaction.emoji) == "👍" and not multi_input_flag:
-                players_to_roll_for.append([display_name, True, True])
-            elif str(reaction.emoji) == "👎" and not multi_input_flag:
-                players_to_roll_for.append([display_name, True, False])
-            elif str(reaction.emoji) == "🛑":
-                if reaction_user == context.author:
-                    count = 10
-                else:
-                    await context.send(
-                        f"Only <@{context.author.id}> can start the roll"
-                    )
-        except asyncio.TimeoutError:
-            await context.send(f"Look, a minute's gone by and I'm not waiting anymore.")
+            author_id = (
+                character_cache[current].get_name()
+                if current
+                else str(reaction_user.name)
+            )
+            # Test if user input has already happened
+            # if it has, erase the previous input
+            # Only if this isn't a stop_roll reaction though
+            if (
+                author_id in players_to_roll_for
+                and emoji != INITIATIVE_REACTIONS["stop_roll"]
+            ):
+                current_reaction = player_reactions[author_id]
+                await roll_initiative_message.remove_reaction(
+                    current_reaction, reaction_user
+                )
+                del players_to_roll_for[author_id]
+                del player_reactions[author_id]
 
+            # Identify reaction and track it
+            if emoji == INITIATIVE_REACTIONS["normal_roll"]:
+                players_to_roll_for[author_id] = [False, False]
+                player_reactions[author_id] = INITIATIVE_REACTIONS["normal_roll"]
+            elif emoji == INITIATIVE_REACTIONS["advantage_roll"]:
+                players_to_roll_for[author_id] = [True, True]
+                player_reactions[author_id] = INITIATIVE_REACTIONS["advantage_roll"]
+            elif emoji == INITIATIVE_REACTIONS["disadvantage_roll"]:
+                players_to_roll_for[author_id] = [True, False]
+                player_reactions[author_id] = INITIATIVE_REACTIONS["disadvantage_roll"]
+            # Stop if the creator used the stop_roll emoji
+            elif (
+                emoji == INITIATIVE_REACTIONS["stop_roll"]
+                and reaction_user == context.author
+            ):
+                break
+    except asyncio.TimeoutError:
+        await context.send(error_messages.ROLL_INITIATIVE_TIMEOUT)
+
+    # Basic check to ensure we actually have players to roll for
     if len(players_to_roll_for) != 0:
         roll_list = []
-        display_output = "Roll Order:\n```\n+--------------+--------------------------------------+\n| Roll         | Player Name                          |\n+--------------+--------------------------------------+"
-        for author_id, use_advantage, is_advantage in players_to_roll_for:
+        # Make rolls for each player and store
+        for author_id, (use_advantage, is_advantage) in players_to_roll_for.items():
             if use_advantage:
                 outcome = dice.roll_wrapper(
                     "1d20", author_id, "adv_disadv", is_advantage=is_advantage
                 )
-                result = {
-                    "player": f"{author_id} ({'A' if is_advantage else 'D'})",
-                    "roll": outcome["final_result"][0],
-                    "outcome": [x["total"] for x in outcome["raw"]],
-                }
+                player_name = f"{author_id} ({'A' if is_advantage else 'D'})"
             else:
-                result = {
-                    "player": author_id,
-                    "roll": dice.roll_wrapper("1d20", author_id, "normal")[
-                        "final_result"
-                    ][0],
-                    "outcome": None,
-                }
+                outcome = dice.roll_wrapper("1d20", author_id, "normal")
+                player_name = author_id
+            result = {
+                "player": player_name,
+                "result": outcome["final_result"][0],
+                "all_rolls": [str(x["total"]) for x in outcome["raw"]],
+            }
             roll_list.append(result)
-        for player_roll in sorted(roll_list, key=lambda x: x["roll"], reverse=True):
-            roll = player_roll["roll"]
-            outcome = player_roll["outcome"]
+        # Sort the rolls and prepare output string
+        output_string = ""
+        for player_roll in sorted(roll_list, key=lambda x: x["result"], reverse=True):
+            result = player_roll["result"]
+            all_rolls = player_roll["all_rolls"]
             player_name = player_roll["player"]
-            if len(str(roll)) == 1:
-                roll = f" {roll}"
-            if type(outcome) == list and len(str(outcome[0])) == 1:
-                outcome[0] = f" {outcome[0]}"
-            if type(outcome) == list and len(str(outcome[1])) == 1:
-                outcome[1] = f" {outcome[1]}"
-            if len(player_name) < 36:
-                for i in range(36 - len(player_name)):
-                    player_name += " "
-            if len(player_name) > 36:
-                player_name = player_name[:36]
-            if type(outcome) == list:
-                outcome = f"({outcome[0]},{outcome[1]})"
+            # Formatting for the final result
+            result = str(result).rjust(2)
+            # Formatting for adv/disadv rolls
+            if len(all_rolls) == 2:
+                all_rolls[0] = all_rolls[0].rjust(2)
+                all_rolls[1] = all_rolls[1].rjust(2)
+                all_rolls = f"({all_rolls[0]},{all_rolls[1]})"
+            # Formatting for normal rolls (no numbers, only spaces)
             else:
-                outcome = "       "
-            display_output += f"\n| {roll} {outcome}   | {player_name} |"
+                # 2 brackets, a comma, 4 digits
+                all_rolls = " " * 7
+            # Formatting for player name
+            if len(player_name) < 36:
+                player_name = player_name.ljust(36)
+            elif len(player_name) > 36:
+                player_name = player_name[:36]
+            output_string += f"\n| {result} {all_rolls}   | {player_name} |"
+
         await context.send(
-            display_output
-            + "\n+--------------+--------------------------------------+```"
+            templates.ROLL_INITIATIVE_START_STRING
+            + output_string
+            + templates.ROLL_INITIATIVE_END_STRING
         )
     else:
-        await context.send("Thank you for wasting my time :)")
+        await context.send(error_messages.ROLL_INITIATIVE_NOT_ENOUGH_PLAYERS)
 
 
 ################################################################################

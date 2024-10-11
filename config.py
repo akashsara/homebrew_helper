@@ -26,3 +26,10 @@ INITIATIVE_MAX_NPCS = 20
 DICE_ROLL_MAX_DICE = 50
 DICE_ROLL_LARGEST_DIE = 100
 DISCORD_ID_REGEX = "(<@!\d+>)"
+
+INITIATIVE_REACTIONS = {
+    "normal_roll": "⚔️",
+    "advantage_roll": "👍",
+    "disadvantage_roll": "👎",
+    "stop_roll": "🛑",
+}
