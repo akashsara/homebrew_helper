@@ -26,6 +26,9 @@ class HomebrewHelper(Bot):
         self.user_cache = user_cache
         self.logger = gen_utils.create_logger("bot")
 
+    def get_current_chara(self, server_id, user_id):
+        return self.user_cache.get(server_id, {}).get(user_id, {}).get("active")
+
     async def setup_hook(self):
         self.logger.info("Loading extensions.")
         for extension in self.initial_extensions:

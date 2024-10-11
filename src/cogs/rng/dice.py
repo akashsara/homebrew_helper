@@ -120,9 +120,7 @@ class RNGCommands(commands.Cog):
                 emoji = str(reaction.emoji)
                 user = gen_utils.discord_name_to_id(str(reaction_user.id))
                 # Get active character if it exists
-                current = (
-                    self.bot.user_cache.get(server, {}).get(user, {}).get("active")
-                )
+                current = self.bot.get_current_chara(server, user)
                 author_id = (
                     self.bot.character_cache[current].get_name()
                     if current

@@ -35,10 +35,10 @@ class RPGCommands(commands.Cog):
                 May contain a nested dictionary.
         """
         server = str(context.guild.id)
-        user = gen_utils.discord_name_to_id(user)
+        user_id = gen_utils.discord_name_to_id(user)
         character_info = "".join(character_info)
         # Invalid or no user
-        if user:
+        if user_id:
             # Heuristic that ensures mimimum info is present
             if len(character_info) > 50:
                 # Load character info if possible
@@ -52,7 +52,7 @@ class RPGCommands(commands.Cog):
                             set(self.bot.character_cache.keys())
                         )
                         character = player_character.PlayerCharacter(
-                            user, uuid, character_info
+                            user_id, uuid, character_info
                         )
                         await context.send(CREATE_CHARACTER_CONFIRM_PROMPT)
                         await context.send(character.info())
@@ -68,14 +68,14 @@ class RPGCommands(commands.Cog):
                                         query, payload, "characters", db
                                     )
                                     # Update user information & set as active character
-                                    query = {"server": server, "user": user}
+                                    query = {"server": server, "user": user_id}
                                     user_info = database.get_details(query, "users", db)
                                     if user_info:
                                         user_info["characters"].append(uuid)
                                     else:
                                         user_info = {
                                             "server": server,
-                                            "user": user,
+                                            "user": user_id,
                                             "characters": [uuid],
                                         }
                                     user_info["active"] = uuid
@@ -84,7 +84,7 @@ class RPGCommands(commands.Cog):
                                 self.bot.character_cache[uuid] = character
                                 if server not in self.bot.user_cache:
                                     self.bot.user_cache[server] = {}
-                                self.bot.user_cache[server][user] = user_info
+                                self.bot.user_cache[server][user_id] = user_info
                                 await context.send(CREATE_CHARACTER_SUCCESS)
                             else:
                                 await context.send(CREATE_CHARACTER_CANCEL)
@@ -102,25 +102,25 @@ class RPGCommands(commands.Cog):
                 except json.decoder.JSONDecodeError:
                     await context.send(CREATE_CHARACTER_JSON_ERROR)
             else:
-                await context.send(CREATE_CHARACTER_NO_INFO.format(user=user))
+                await context.send(CREATE_CHARACTER_NO_INFO.format(user=user_id))
         else:
             await context.send(USER_NOT_FOUND.format(user=user))
 
     @commands.command(name="info", help="Coming soon.", brief="To get character info.")
     async def character_info(self, context, user=None):
         if user:
-            user = gen_utils.discord_name_to_id(user)
+            user_id = gen_utils.discord_name_to_id(user)
         else:
-            user = gen_utils.discord_name_to_id(str(context.author.id))
-        if user:
+            user_id = gen_utils.discord_name_to_id(str(context.author.id))
+        if user_id:
             # Get server ID
             server = str(context.guild.id)
             # Get active character
-            current = self.bot.user_cache.get(server, {}).get(user, {}).get("active")
+            current = self.bot.get_current_chara(server, user_id)
             if current:
                 await context.send(self.bot.character_cache[current].info())
             else:
-                await context.send(CHARACTER_NOT_FOUND.format(user=user))
+                await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
         else:
             await context.send(USER_NOT_FOUND.format(user=user))
 
@@ -138,7 +138,7 @@ class RPGCommands(commands.Cog):
                 f"Hey <@{context.author.id}>, to do a saving throw or ability check do `!st <stat> (a|d)`. You can also add an a or d to signify advantage or disadvantage."
             )
         # Get active character
-        current = self.bot.user_cache.get(server, {}).get(user_id, {}).get("active")
+        current = self.bot.get_current_chara(server, user_id)
         if current:
             stat_name = self.bot.character_cache[current].resolve_stat_name(stat)
             if stat_name:
@@ -170,7 +170,7 @@ class RPGCommands(commands.Cog):
         value = int(value)
         if user_id:
             # Get active character
-            current = self.bot.user_cache.get(server, {}).get(user_id, {}).get("active")
+            current = self.bot.get_current_chara(server, user_id)
             if current:
                 stat_name = self.bot.character_cache[current].resolve_stat_name(stat)
                 if stat_name:
@@ -242,7 +242,7 @@ class RPGCommands(commands.Cog):
         user_id = gen_utils.discord_name_to_id(user)
         if user_id:
             # Get active character
-            current = self.bot.user_cache.get(server, {}).get(user_id, {}).get("active")
+            current = self.bot.get_current_chara(server, user_id)
             if current:
                 current_gold = self.bot.character_cache[current].get_gold()
                 await context.send(
@@ -268,9 +268,9 @@ class RPGCommands(commands.Cog):
         server = str(context.guild.id)
         user_id = gen_utils.discord_name_to_id(user)
         amount = int(amount)
-        if user:
+        if user_id:
             # Get active character
-            current = self.bot.user_cache.get(server, {}).get(user_id, {}).get("active")
+            current = self.bot.get_current_chara(server, user_id)
             if current:
                 current_gold = self.bot.character_cache[current].get_gold()
                 new_gold = current_gold + amount
@@ -327,17 +327,9 @@ class RPGCommands(commands.Cog):
             await context.send(USER_NOT_FOUND.format(user=target))
         else:
             # Get active character for source
-            source = (
-                self.bot.user_cache.get(server, {})
-                .get(source_user_id, {})
-                .get("active")
-            )
+            source = self.bot.get_current_chara(server, source_user_id)
             # Get active character for target
-            target = (
-                self.bot.user_cache.get(server, {})
-                .get(target_user_id, {})
-                .get("active")
-            )
+            source = self.bot.get_current_chara(server, target_user_id)
             if source and target:
                 source_gold = self.bot.character_cache[source].get_gold()
                 target_gold = self.bot.character_cache[target].get_gold()
