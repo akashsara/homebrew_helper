@@ -164,5 +164,8 @@ class PlayerCharacter:
     def set_gold(self, amount: int):
         self.character_info["gold"] = amount
 
+    def get_attack(self) -> int:
+        return self.character_info["attack"]
+
     def get_name(self) -> str:
         return self.character_info["name"]
