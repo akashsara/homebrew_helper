@@ -1,23 +1,32 @@
 import re
-import sys
 import uuid
 from typing import Dict, List
-
-sys.path.append("../")
 import logging
 
-logger = logging.getLogger(__name__)
+
+# Create logger
+def create_logger(name: str, level: int = logging.INFO) -> logging.Logger:
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+    )
+    logger.addHandler(handler)
+    return logger
 
 
 def generate_id() -> str:
     return str(uuid.uuid4())
 
 
-def generate_unique_id(generated: set) -> str:
+def generate_unique_id(generated: set, max_retries=100) -> str:
     id_ = generate_id()
-    while id_ in generated:
+    for _ in range(max_retries):
+        if id_ not in generated:
+            return id_
         id_ = generate_id()
-    return id_
+    return RuntimeError("Unable to generate unique ID")
 
 
 def get_default_user() -> Dict:
@@ -25,10 +34,13 @@ def get_default_user() -> Dict:
 
 
 def discord_name_to_id(name: str) -> str:
-    search = re.findall("\d+", name)
-    logger.info(f"Found {search} from {name}.")
+    search = re.findall(r"\d+", name)
     if search:
         return str(search[0])
+
+
+def format_stat(name):
+    return name.replace("_", " ").title()
 
 
 def pad(text_to_pad: str, length_to_pad_to: int, direction: str) -> str:

@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict
 
 import pymongo
 
@@ -29,7 +29,7 @@ def get_details(query: Dict, collection: str, db: pymongo.database.Database) -> 
     if details:
         return details
     logger.info(f"Could not find information for query {query}")
-    return {"Error": "Couldn't find anything."}
+    return {}
 
 
 def set_details(
@@ -64,7 +64,7 @@ def transfer_characters(
     server_id: str, source_user: str, target_user: str, db: pymongo.database.Database
 ):
     """
-    server_id: Discord server function was called on 
+    server_id: Discord server function was called on
     source_user: User to transfer characters from
     target_user: User to transfer characters to
     db: MongoDB database cursor

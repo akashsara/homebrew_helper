@@ -1,12 +1,3 @@
-Abilities:
-{
-        "_id": "unique_id",
-        "server": "server_id",
-        "ability_name": "ability_name",
-        "ability_information": {}
-}
-GET query_format: {"server": "server_id", "ability_name": "ability_name"}
-===================================================
 Aliases:
 {
         "_id": "unique_id",
@@ -21,32 +12,21 @@ Characters:
         "character_id": "character_id",
         "user": "discord_user_id",
         "name": "character_name",
-        "stats": {
-                "max_hp": max_hp (int),
-                "current_hp": current_hp (int),
-                "attack": attack (int),
-                "defense": defense (int),
-                "speed": speed (int),
-                "dexterity": dexterity (int),
-                "charisma": charisma (int),
-                "knowledge": knowledge (int),
-                "wisdom": wisdom (int),
-                "strength": strength (int),
-                "constitution": constitution (int)
-        },
+        "hp": max_hp (int),
+        "attack": attack (int),
+        "armor_class": armor_class (int),
+        "speed": speed (int),
         "level": character_level (int),
-        "gold": character_gold (int)
+        "gold": character_gold (int),
+        "stats": {
+               "stat": stat_value (int),
+               "stat2": {
+                        "base": stat_value (int),
+                        "substat": substat_value (int)
+               }
+        }
 }
 GET query_format: {"character_id": "character_id"}
-===================================================
-Items:
-{
-        "_id": "unique_id",
-        "server": "server_id",
-        "item_name": item_name,
-        "item_information": {}
-}
-GET query_format: {"server": "server_id", "item_name": "item_name"}
 ===================================================
 Users:
 {

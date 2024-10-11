@@ -1,7 +1,8 @@
 from discord.ext import commands
-import templates
+import src.templates as templates
 import asyncio
 import random
+
 
 # Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands
 class FunStuff(commands.Cog):
@@ -32,6 +33,14 @@ class FunStuff(commands.Cog):
             pass
         else:
             print(error)
+
+    @commands.command(
+        name="git",
+        help="Check out my Github repository! Feel free to contribute!",
+        brief="Github repository link.",
+    )
+    async def git(self, context):
+        await context.send("Hello! Check out my source code here: https://github.com/akashsara/homebrew_helper")
 
     @commands.command(
         name="bungee_gum",
@@ -205,6 +214,7 @@ class FunStuff(commands.Cog):
     )
     async def mmdmm(self, context):
         await context.send("Mock me da mock me.")
+
 
 async def setup(bot):
     await bot.add_cog(FunStuff(bot))
