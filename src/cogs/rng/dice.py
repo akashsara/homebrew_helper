@@ -27,7 +27,7 @@ class RNGCommands(commands.Cog):
         num_tosses = 1 if not num_tosses.isdigit() else int(num_tosses)
         if num_tosses > config.COIN_TOSS_MAX_TOSSES:
             result = templates.COIN_TOSS_TOO_MANY_TOSSES.format(
-                author_id=context.author_id, max_tosses=config.COIN_TOSS_MAX_TOSSES
+                author_id=context.author.id, max_tosses=config.COIN_TOSS_MAX_TOSSES
             )
         else:
             tosses = random.choices(population=[True, False], k=num_tosses)
@@ -36,13 +36,13 @@ class RNGCommands(commands.Cog):
                 ["+ Heads" if toss else "- Tails" for toss in tosses]
             )
             result = templates.COIN_TOSS_RESULT.format(
-                author_id=context.author_id,
+                author_id=context.author.id,
                 num_tosses=num_tosses,
                 raw_output=raw_output,
                 num_heads=counts[True],
                 num_tails=counts[False],
             )
-        await context.send("\n".join(result))
+        await context.send(result)
 
     @commands.command(
         name="roll_dice",
