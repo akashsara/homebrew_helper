@@ -143,10 +143,9 @@ class RPGCommands(commands.Cog):
             stat_name, stat_path = self.bot.character_cache[current].resolve_stat_name(
                 stat
             )
-            print(stat_name, stat_path)
             if stat_name:
                 stat_bonus = self.bot.character_cache[current].get_stat(stat_path)
-                sign = "+" if stat_bonus > 0 else ""
+                sign = "+" if stat_bonus >= 0 else ""
                 query = f"1d20{sign}{stat_bonus}"
                 if advantage_or_disadvantage:
                     query += advantage_or_disadvantage[0]
