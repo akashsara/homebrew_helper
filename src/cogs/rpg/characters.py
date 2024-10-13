@@ -169,7 +169,7 @@ class RPGCommands(commands.Cog):
         current = self.bot.get_current_chara(server, user_id)
         if current:
             stat_bonus = self.bot.character_cache[current].get_attack()
-            sign = "+" if stat_bonus > 0 else ""
+            sign = "+" if stat_bonus >= 0 else ""
             query = f"1d20{sign}{stat_bonus}"
             if advantage_or_disadvantage:
                 query += advantage_or_disadvantage[0]
