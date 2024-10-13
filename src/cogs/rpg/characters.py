@@ -140,16 +140,16 @@ class RPGCommands(commands.Cog):
         # Get active character
         current = self.bot.get_current_chara(server, user_id)
         if current:
-            stat_name = self.bot.character_cache[current].resolve_stat_name(stat)
+            stat_name, stat_path = self.bot.character_cache[current].resolve_stat_name(
+                stat
+            )
+            print(stat_name, stat_path)
             if stat_name:
-                stat_bonus = self.bot.character_cache[current].get_stat(stat_name)
+                stat_bonus = self.bot.character_cache[current].get_stat(stat_path)
                 sign = "+" if stat_bonus > 0 else ""
                 query = f"1d20{sign}{stat_bonus}"
                 if advantage_or_disadvantage:
                     query += advantage_or_disadvantage[0]
-                if "__" in stat_name:
-                    key, subkey = stat_name.split("__")
-                    stat_name = key if subkey == "base" else subkey
                 await context.send(f"Rolling for {gen_utils.format_stat(stat_name)}.")
                 await context.invoke(self.bot.get_command("roll"), query)
             else:
@@ -192,9 +192,11 @@ class RPGCommands(commands.Cog):
             # Get active character
             current = self.bot.get_current_chara(server, user_id)
             if current:
-                stat_name = self.bot.character_cache[current].resolve_stat_name(stat)
+                stat_name, stat_path = self.bot.character_cache[
+                    current
+                ].resolve_stat_name(stat)
                 if stat_name:
-                    self.bot.character_cache[current].set_stat(stat_name, value)
+                    self.bot.character_cache[current].set_stat(stat_path, value)
                     character_name = self.bot.character_cache[current].get_name()
                     # Write changes to DB
                     payload = self.bot.character_cache[current].export_stats()

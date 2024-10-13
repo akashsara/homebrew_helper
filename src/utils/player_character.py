@@ -1,5 +1,6 @@
-from typing import Union, Dict, Any
+from typing import Union, Dict, Tuple
 from src.utils import gen_utils
+
 
 def validate_character(chara) -> Dict[str, str]:
     required = ["name", "attack", "armor_class", "speed", "level", "gold"]
@@ -69,6 +70,7 @@ class PlayerCharacter:
         self.user = user
         self.character_id = character_id
         self.character_info = character_info
+        self.build_stat_cache()
 
     def export_stats(self) -> dict:
         return {
@@ -81,6 +83,7 @@ class PlayerCharacter:
         self.user = character["user"]
         self.character_id = character["character_id"]
         self.character_info = character["character_info"]
+        self.build_stat_cache()
 
     def info(self) -> str:
         output = [
@@ -97,11 +100,15 @@ class PlayerCharacter:
         ]
         for stat, value in self.character_info["stats"].items():
             if isinstance(value, dict):
-                output.append(create_spaced_line(gen_utils.format_stat(stat), value["base"]))
+                output.append(
+                    create_spaced_line(gen_utils.format_stat(stat), value["base"])
+                )
                 for substat, subvalue in value.items():
                     if substat != "base":
                         output.append(
-                            create_spaced_line(gen_utils.format_stat(substat), subvalue, level=1)
+                            create_spaced_line(
+                                gen_utils.format_stat(substat), subvalue, level=1
+                            )
                         )
                 output.append("---" * 10)
             else:
@@ -112,51 +119,58 @@ class PlayerCharacter:
     def change_user(self, new_user: str):
         self.user = new_user
 
-    def resolve_stat_name(self, candidate: str) -> Union[str, bool]:
+    def build_stat_cache(self):
+        self.stat_cache = {}
+        for key, value in self.character_info.items():
+            if isinstance(value, dict):
+                for l1_key, l1_value in value.items():
+                    if isinstance(l1_value, dict):
+                        for l2_key, l2_value in l1_value.items():
+                            if l2_key == "base":
+                                self.stat_cache[f"{key}__{l1_key}__{l2_key}"] = l1_key
+                            else:
+                                self.stat_cache[f"{key}__{l1_key}__{l2_key}"] = l2_key
+                    else:
+                        self.stat_cache[f"{key}__{l1_key}"] = l1_key
+            else:
+                self.stat_cache[key] = key
+
+    def resolve_stat_name(self, candidate: str) -> Union[Tuple[str, str], bool]:
         """
         Checks if user input exact matches the stat.
         If not then it checks for a partial match.
         If there is exactly one partial match, it works with that.
         If there are none or more than one matches, return False.
         """
-        partial_matches = []
-        for stat_name, value in self.character_info["stats"].items():
-            # Go through subkeys if dict
-            if isinstance(value, dict):
-                if candidate == stat_name:
-                    # Exact match
-                    return f"{stat_name}__base"
-                elif stat_name.startswith(candidate):
-                    # Partial match
-                    partial_matches.append(f"{stat_name}__base")
-                for substat_name in value.keys():
-                    # Exact match
-                    if candidate == substat_name:
-                        return f"{stat_name}__{substat_name}"
-                    # Partial match
-                    elif substat_name.startswith(candidate):
-                        partial_matches.append(f"{stat_name}__{substat_name}")
-            # Exact match
-            elif candidate == stat_name:
-                return candidate
-            # Partial match
+        candidate = candidate.lower()
+        partial_matches = {}
+
+        def match_stat(stat_name, stat_path):
+            if candidate == stat_name:
+                return (stat_name, stat_path)
             elif stat_name.startswith(candidate):
-                partial_matches.append(stat_name)
+                partial_matches[stat_name] = stat_path
+
+        for path, stat in self.stat_cache.items():
+            if result := match_stat(stat, path):
+                return result
+
         if len(partial_matches) == 1:
-            return partial_matches[0]
+            return list(partial_matches.items())[0]
         return False
 
     def get_stat(self, stat: str) -> Union[str, bool]:
-        if "__" in stat:
-            key, subkey = stat.split("__")
-            return self.character_info["stats"][key][subkey]
-        return self.character_info["stats"][stat]
+        result = self.character_info
+        for key in stat.split("__"):
+            result = result[key]
+        return result
 
     def set_stat(self, stat: str, value: int) -> bool:
-        if "__" in stat:
-            key, subkey = stat.split("__")
-            self.character_info["stats"][key][subkey] = value
-        self.character_info["stats"][stat] = value
+        result = self.character_info
+        stats = stat.split("__")
+        for key in stats[:-1]:
+            result = result[key]
+        result[stats[-1]] = value
 
     def get_gold(self) -> int:
         return self.character_info["gold"]
