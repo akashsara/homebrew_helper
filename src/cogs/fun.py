@@ -40,7 +40,9 @@ class FunStuff(commands.Cog):
         brief="Github repository link.",
     )
     async def git(self, context):
-        await context.send("Hello! Check out my source code here: https://github.com/akashsara/homebrew_helper")
+        await context.send(
+            "Hello! Check out my source code here: https://github.com/akashsara/homebrew_helper"
+        )
 
     @commands.command(
         name="bungee_gum",

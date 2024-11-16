@@ -178,7 +178,9 @@ def roll_wrapper(
     elif roll_type not in ["normal", "adv_disadv", "repeat"]:
         return {
             "error": True,
-            "message": templates.ROLL_WRAPPER_INVALID_ROLL_TYPE.format(author_id=author_id),
+            "message": templates.ROLL_WRAPPER_INVALID_ROLL_TYPE.format(
+                author_id=author_id
+            ),
         }
 
     # Roll dice
@@ -224,7 +226,9 @@ def roll_wrapper(
     elif status == "wrong":
         return {
             "error": True,
-            "message": templates.ROLL_WRAPPER_WRONG_DICE_COMMAND.format(author_id=author_id),
+            "message": templates.ROLL_WRAPPER_WRONG_DICE_COMMAND.format(
+                author_id=author_id
+            ),
         }
     # All other errors
     elif status != "OK":
