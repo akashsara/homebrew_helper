@@ -130,13 +130,15 @@ class RPGCommands(commands.Cog):
         help="Coming soon.",
         brief="To roll a saving throw for your character.",
     )
-    async def saving_throw(self, context, stat=None, advantage_or_disadvantage=""):
+    async def saving_throw(self, context, stat=None, modifiers=""):
         server = str(context.guild.id)
         user_id = gen_utils.discord_name_to_id(str(context.author.id))
         if not stat:
             await context.send(
                 f"Hey <@{context.author.id}>, to do a saving throw or ability check do `!st <stat> (a|d)`. You can also add an a or d to signify advantage or disadvantage."
             )
+        # Parse out modifiers and advantage/disadvantage
+        modifiers, advantage_or_disadvantage = gen_utils.parse_modifiers(modifiers)
         # Get active character
         current = self.bot.get_current_chara(server, user_id)
         if current:
@@ -146,9 +148,7 @@ class RPGCommands(commands.Cog):
             if stat_name:
                 stat_bonus = self.bot.character_cache[current].get_stat(stat_path)
                 sign = "+" if stat_bonus >= 0 else ""
-                query = f"1d20{sign}{stat_bonus}"
-                if advantage_or_disadvantage:
-                    query += advantage_or_disadvantage[0]
+                query = f"1d20{sign}{stat_bonus}{modifiers}{advantage_or_disadvantage}"
                 await context.send(f"Rolling for {gen_utils.format_stat(stat_name)}.")
                 await context.invoke(self.bot.get_command("roll"), query)
             else:
@@ -161,17 +161,17 @@ class RPGCommands(commands.Cog):
         help="Coming soon.",
         brief="To make an attack roll.",
     )
-    async def attack(self, context, advantage_or_disadvantage=""):
+    async def attack(self, context, modifiers=""):
         server = str(context.guild.id)
         user_id = gen_utils.discord_name_to_id(str(context.author.id))
+        # Parse out modifiers and advantage/disadvantage
+        modifiers, advantage_or_disadvantage = gen_utils.parse_modifiers(modifiers)
         # Get active character
         current = self.bot.get_current_chara(server, user_id)
         if current:
             stat_bonus = self.bot.character_cache[current].get_attack()
             sign = "+" if stat_bonus >= 0 else ""
-            query = f"1d20{sign}{stat_bonus}"
-            if advantage_or_disadvantage:
-                query += advantage_or_disadvantage[0]
+            query = f"1d20{sign}{stat_bonus}{modifiers}{advantage_or_disadvantage}"
             await context.invoke(self.bot.get_command("roll"), query)
         else:
             await context.send(CHARACTER_NOT_FOUND.format(user=user_id))

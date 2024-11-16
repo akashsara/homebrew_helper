@@ -1,6 +1,6 @@
 import re
 import uuid
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import logging
 
 
@@ -72,3 +72,14 @@ def format_repeated_rolls(rolls: List[Dict]) -> str:
         total = pad(str(item["total"]), 5, "left")
         all_text.append(f"{roll} : {total} :: {modifier} + {all_in_one}")
     return "\n".join(all_text)
+
+
+def parse_modifiers(modifiers: str) -> Tuple[str, str]:
+    advantage_or_disadvantage = ""
+    if len(modifiers) > 0:
+        if modifiers[0] not in ["+", "-"]:
+            modifiers = "+" + modifiers
+        if modifiers[-1] in ["a", "d"]:
+            advantage_or_disadvantage = modifiers[-1]
+            modifiers = modifiers[:-1]
+    return modifiers, advantage_or_disadvantage
