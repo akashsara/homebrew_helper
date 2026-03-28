@@ -4,3 +4,4 @@ __pycache__/
 settings.json
 data/
 venv/
+.env
