@@ -3,10 +3,10 @@ import logging
 import random
 from collections import Counter
 
-import src.config as config
-import src.templates as templates
+import homebrew_helper.config as config
+import homebrew_helper.templates as templates
 from discord.ext import commands
-from src.utils import database, dice, gen_utils
+from homebrew_helper.utils import database, dice, gen_utils
 import pymongo
 
 

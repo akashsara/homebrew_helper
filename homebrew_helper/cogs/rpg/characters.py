@@ -1,11 +1,11 @@
 import json
 import logging
 
-import src.config as config
+import homebrew_helper.config as config
 from discord.ext import commands
 from pymongo import MongoClient
-from src.templates import *
-from src.utils import database, gen_utils, player_character
+from homebrew_helper.templates import *
+from homebrew_helper.utils import database, gen_utils, player_character
 
 
 # Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands

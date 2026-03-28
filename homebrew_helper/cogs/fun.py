@@ -1,5 +1,5 @@
 from discord.ext import commands
-import src.templates as templates
+import homebrew_helper.templates as templates
 import asyncio
 import random
 

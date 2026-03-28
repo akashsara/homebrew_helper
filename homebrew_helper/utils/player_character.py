@@ -1,5 +1,5 @@
 from typing import Union, Dict, Tuple
-from src.utils import gen_utils
+from homebrew_helper.utils import gen_utils
 
 
 def validate_character(chara) -> Dict[str, str]:

@@ -1,5 +1,0 @@
-black==24.3.0
-discord.py==2.4.0
-joblib==1.4.2
-pymongo==4.6.3
-dnspython==2.6.1

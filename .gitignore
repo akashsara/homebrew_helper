@@ -1,7 +1,9 @@
 env/
+dist/
 *.pyc
 __pycache__/
 settings.json
 data/
 venv/
+.vscode/
 .env

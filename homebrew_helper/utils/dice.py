@@ -2,9 +2,9 @@ import random
 import re
 from typing import Dict, Tuple, List
 
-import src.config as config
-import src.templates as templates
-from src.utils import gen_utils
+import homebrew_helper.config as config
+import homebrew_helper.templates as templates
+from homebrew_helper.utils import gen_utils
 
 logger = gen_utils.create_logger(__name__)
 

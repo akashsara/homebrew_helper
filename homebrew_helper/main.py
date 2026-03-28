@@ -1,14 +1,14 @@
 from typing import Dict, List, Union
 
 import discord
-import src.config as config
-import src.utils.database as database
+import homebrew_helper.config as config
+import homebrew_helper.utils.database as database
 from discord.ext import commands
 from discord.ext.commands import Bot, DefaultHelpCommand
 from pymongo import MongoClient
-from src.templates import *
-from src.utils import gen_utils
-from src.utils.player_character import PlayerCharacter
+from homebrew_helper.templates import *
+from homebrew_helper.utils import gen_utils
+from homebrew_helper.utils.player_character import PlayerCharacter
 
 
 class HomebrewHelper(Bot):
@@ -75,9 +75,9 @@ def run_bot():
 
     # List of cogs we use
     initial_extensions = [
-        "src.cogs.fun",
-        "src.cogs.rng.dice",
-        "src.cogs.rpg.characters",
+        "homebrew_helper.cogs.fun",
+        "homebrew_helper.cogs.rng.dice",
+        "homebrew_helper.cogs.rpg.characters",
     ]
 
     # Create help command
