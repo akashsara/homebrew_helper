@@ -6,7 +6,7 @@ import homebrew_helper.config as config
 import homebrew_helper.templates as templates
 from homebrew_helper.utils import gen_utils
 
-logger = gen_utils.create_logger(__name__)
+logger = gen_utils.get_logger(__name__)
 
 
 def roll_dice(num_dice: int, die_type: int) -> List[int]:
@@ -19,7 +19,7 @@ def resolve_operation(accumulator: int, operation: str, value: int) -> int:
     return accumulator - value
 
 
-def parse_roll(roll_string: str, operation: str) -> Tuple[List[int], int, int, str]:
+def parse_roll(roll_string: str, operation: str) -> Tuple[list, int, int, str]:
     dice_value = 0
     modifier = 0
     status = "OK"
@@ -32,10 +32,11 @@ def parse_roll(roll_string: str, operation: str) -> Tuple[List[int], int, int, s
             or die_type > config.DICE_ROLL_LARGEST_DIE
         ):
             status = "too high"
+            result = []
         else:
             all_rolls = roll_dice(num_dice, die_type)
             dice_value = resolve_operation(0, operation, sum(all_rolls))
-        result = [(roll_string, all_rolls)]
+            result = [(roll_string, all_rolls)]
     # if this is a modifier update operation
     else:
         modifier = resolve_operation(0, operation, int(roll_string))
@@ -97,11 +98,10 @@ def roll_handler(input_roll: str) -> Dict:
 
 
 def roll_and_repeat(roll: str, n_repeats: int) -> List[Dict]:
+    """Always returns a list of roll_handler result dicts (length 1 on first-roll failure)."""
     first_result = roll_handler(roll)
     if first_result.get("status") != "OK":
-        return first_result
-    # Repeat the roll n_repeats - 1 times.
-    # We don't check roll status again since we validated it already
+        return [first_result]
     list_of_rolls = [first_result] + [roll_handler(roll) for _ in range(n_repeats - 1)]
     return list_of_rolls
 
@@ -184,27 +184,13 @@ def roll_wrapper(
         }
 
     # Roll dice
-    # N repeats of a dice roll is the generalized function here
     if roll_type == "normal":
         results = roll_and_repeat(roll, n_repeats=1)
-        # Final result is just the total of the roll
-        final_result = [results[0]["total"]]
     elif roll_type == "adv_disadv":
         results = roll_and_repeat(roll, n_repeats=2)
-        # Final result is the max/min of the two rolls
-        final_result = [
-            (
-                max(results[0]["total"], results[1]["total"])
-                if is_advantage
-                else min(results[0]["total"], results[1]["total"])
-            )
-        ]
     elif roll_type == "repeat":
         results = roll_and_repeat(roll, n_repeats=n_repeats)
-        # Final result is a list of all rolls
-        final_result = [result["total"] for result in results]
 
-    # Ensure all rolls were successful
     status = "OK"
     for result in results:
         if result["status"] != "OK":
@@ -233,6 +219,19 @@ def roll_wrapper(
     # All other errors
     elif status != "OK":
         return {"error": True, "message": templates.ROLL_WRAPPER_UNKNOWN_ERROR}
+
+    if roll_type == "normal":
+        final_result = [results[0]["total"]]
+    elif roll_type == "adv_disadv":
+        final_result = [
+            (
+                max(results[0]["total"], results[1]["total"])
+                if is_advantage
+                else min(results[0]["total"], results[1]["total"])
+            )
+        ]
+    else:
+        final_result = [result["total"] for result in results]
 
     # Format output and return
     output_string = dice_roll_formatter(

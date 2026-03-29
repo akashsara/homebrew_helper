@@ -5,6 +5,10 @@ ERROR_MISSING_ARGUMENTS = "<@{user}>, you're missing some arguments for this com
 ERROR_MISSING_PERMISSIONS = "<@{user}>, you don't have permission to use this command!"
 ERROR_COMMAND_INVOKE = "<@{user}>, something went wrong with the command. Try again!"
 ERROR_COMMAND_NOT_FOUND = "<@{user}>, that command doesn't exist!"
+ERROR_COMMAND_ON_COOLDOWN = (
+    "<@{user}>, that command is on cooldown. Try again in {seconds:.1f}s."
+)
+ERROR_BAD_ARGUMENT = "<@{user}>, invalid argument: {detail}"
 
 # Generic Templates / One Template Functions
 CHARACTER_NOT_FOUND = "<@{user}> doesn't have any characters."

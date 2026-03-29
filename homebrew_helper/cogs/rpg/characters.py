@@ -1,10 +1,9 @@
+import asyncio
 import json
 import logging
 
-import homebrew_helper.config as config
 from discord.ext import commands
-from pymongo import MongoClient
-from homebrew_helper.templates import *
+import homebrew_helper.templates as templates
 from homebrew_helper.utils import database, gen_utils, player_character
 
 
@@ -54,57 +53,63 @@ class RPGCommands(commands.Cog):
                         character = player_character.PlayerCharacter(
                             user_id, uuid, character_info
                         )
-                        await context.send(CREATE_CHARACTER_CONFIRM_PROMPT)
+                        await context.send(templates.CREATE_CHARACTER_CONFIRM_PROMPT)
                         await context.send(character.info())
+                        def confirm_check(m):
+                            return (
+                                m.author == context.author
+                                and m.channel == context.channel
+                            )
+
                         try:
-                            message = await self.bot.wait_for("message", timeout=60)
-                            if message and message.content.lower()[0] == "y":
+                            message = await self.bot.wait_for(
+                                "message", timeout=60, check=confirm_check
+                            )
+                            if message and message.content.lower().strip().startswith(
+                                "y"
+                            ):
                                 # Write character to DB
-                                with MongoClient(config.DB_TOKEN) as db:
-                                    db = db[config.DB_NAME]
-                                    payload = character.export_stats()
-                                    query = {"character_id": uuid}
-                                    database.set_details(
-                                        query, payload, "characters", db
-                                    )
-                                    # Update user information & set as active character
-                                    query = {"server": server, "user": user_id}
-                                    user_info = database.get_details(query, "users", db)
-                                    if user_info:
-                                        user_info["characters"].append(uuid)
-                                    else:
-                                        user_info = {
-                                            "server": server,
-                                            "user": user_id,
-                                            "characters": [uuid],
-                                        }
-                                    user_info["active"] = uuid
-                                    database.set_details(query, user_info, "users", db)
+                                repo = self.bot.repo
+                                payload = character.export_stats()
+                                repo.save_character(uuid, payload)
+                                user_info = repo.get_user(server, user_id)
+                                if user_info:
+                                    user_info["characters"].append(uuid)
+                                else:
+                                    user_info = {
+                                        "server": server,
+                                        "user": user_id,
+                                        "characters": [uuid],
+                                    }
+                                user_info["active"] = uuid
+                                repo.save_user(server, user_id, user_info)
                                 # Update local caches
                                 self.bot.character_cache[uuid] = character
                                 if server not in self.bot.user_cache:
                                     self.bot.user_cache[server] = {}
                                 self.bot.user_cache[server][user_id] = user_info
-                                await context.send(CREATE_CHARACTER_SUCCESS)
+                                await context.send(templates.CREATE_CHARACTER_SUCCESS)
                             else:
-                                await context.send(CREATE_CHARACTER_CANCEL)
-                        except TimeoutError:
-                            await context.send(CREATE_CHARACTER_CANCEL)
+                                await context.send(templates.CREATE_CHARACTER_CANCEL)
+                        except asyncio.TimeoutError:
+                            await context.send(templates.CREATE_CHARACTER_CANCEL)
                         except Exception as e:
-                            self.logger.warning("Failed to create character", e)
+                            self.logger.warning(
+                                "Failed to create character: %s", e, exc_info=True
+                            )
                             await context.send("UNKNOWN ERROR! Report & Contact Lan!!")
                     else:
                         await context.send(
-                            CREATE_CHARACTER_INVALID_STATS.format(
+                            templates.CREATE_CHARACTER_INVALID_STATS.format(
                                 user=context.author.id, error=result["error"]
                             )
                         )
                 except json.decoder.JSONDecodeError:
-                    await context.send(CREATE_CHARACTER_JSON_ERROR)
+                    await context.send(templates.CREATE_CHARACTER_JSON_ERROR)
             else:
-                await context.send(CREATE_CHARACTER_NO_INFO.format(user=user_id))
+                await context.send(templates.CREATE_CHARACTER_NO_INFO.format(user=user_id))
         else:
-            await context.send(USER_NOT_FOUND.format(user=user))
+            await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(name="info", help="Coming soon.", brief="To get character info.")
     async def character_info(self, context, user=None):
@@ -120,9 +125,9 @@ class RPGCommands(commands.Cog):
             if current:
                 await context.send(self.bot.character_cache[current].info())
             else:
-                await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
+                await context.send(templates.CHARACTER_NOT_FOUND.format(user=user_id))
         else:
-            await context.send(USER_NOT_FOUND.format(user=user))
+            await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(
         name="saving_throw",
@@ -137,6 +142,7 @@ class RPGCommands(commands.Cog):
             await context.send(
                 f"Hey <@{context.author.id}>, to do a saving throw or ability check do `!st <stat> (a|d)`. You can also add an a or d to signify advantage or disadvantage."
             )
+            return
         # Parse out modifiers and advantage/disadvantage
         modifiers, advantage_or_disadvantage = gen_utils.parse_modifiers(modifiers)
         # Get active character
@@ -152,9 +158,9 @@ class RPGCommands(commands.Cog):
                 await context.send(f"Rolling for {gen_utils.format_stat(stat_name)}.")
                 await context.invoke(self.bot.get_command("roll"), query)
             else:
-                await context.send(INVALID_STAT.format(user=user_id))
+                await context.send(templates.INVALID_STAT.format(user=user_id))
         else:
-            await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
+            await context.send(templates.CHARACTER_NOT_FOUND.format(user=user_id))
 
     @commands.command(
         name="attack",
@@ -174,7 +180,7 @@ class RPGCommands(commands.Cog):
             query = f"1d20{sign}{stat_bonus}{modifiers}{advantage_or_disadvantage}"
             await context.invoke(self.bot.get_command("roll"), query)
         else:
-            await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
+            await context.send(templates.CHARACTER_NOT_FOUND.format(user=user_id))
 
     @commands.command(
         name="change_stat",
@@ -197,15 +203,10 @@ class RPGCommands(commands.Cog):
                 if stat_name:
                     self.bot.character_cache[current].set_stat(stat_path, value)
                     character_name = self.bot.character_cache[current].get_name()
-                    # Write changes to DB
                     payload = self.bot.character_cache[current].export_stats()
-                    query = {"character_id": current}
-                    with MongoClient(config.DB_TOKEN) as db:
-                        database.set_details(
-                            query, payload, "characters", db[config.DB_NAME]
-                        )
+                    self.bot.repo.save_character(current, payload)
                     await context.send(
-                        STAT_CHANGE_SUCCESSFUL.format(
+                        templates.STAT_CHANGE_SUCCESSFUL.format(
                             character_name=character_name,
                             stat_name=gen_utils.format_stat(stat_name),
                             user=user_id,
@@ -213,11 +214,11 @@ class RPGCommands(commands.Cog):
                         )
                     )
                 else:
-                    await context.send(INVALID_STAT.format(user=user_id))
+                    await context.send(templates.INVALID_STAT.format(user=user_id))
             else:
-                await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
+                await context.send(templates.CHARACTER_NOT_FOUND.format(user=user_id))
         else:
-            await context.send(USER_NOT_FOUND.format(user=user))
+            await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(
         name="add_alias",
@@ -231,24 +232,19 @@ class RPGCommands(commands.Cog):
         user1_id = gen_utils.discord_name_to_id(user1)
         user2_id = gen_utils.discord_name_to_id(user2)
         if user1_id and user2_id:
-            with MongoClient(config.DB_TOKEN) as db:
-                db = db[config.DB_NAME]
-                # Change Alias
-                query = {"alias": user1_id}
-                payload = {"alias": user1_id, "original": user2_id}
-                database.set_details(query, payload, "aliases", db)
-                # Transfer characters
-                database.transfer_characters(server, user1_id, user2, db)
-                # Recache the users from the database
-                self.bot.user_cache = database.load_all_users(db)
+            repo = self.bot.repo
+            repo.set_alias(user1_id, user2_id)
+            repo.transfer_user_characters(server, user1_id, user2_id)
+            self.bot.user_cache = database.load_all_users(repo.raw_db)
+            self.bot.character_cache = database.hydrate_character_models(repo.raw_db)
             await context.send(
-                ALIAS_CHANGE_SUCCESS.format(user1=user1_id, user2=user2_id)
+                templates.ALIAS_CHANGE_SUCCESS.format(user1=user1_id, user2=user2_id)
             )
         else:
-            if user1:
-                await context.send(USER_NOT_FOUND(user=user2))
-            if user2:
-                await context.send(USER_NOT_FOUND(user=user1))
+            if not user1_id:
+                await context.send(templates.USER_NOT_FOUND.format(user=user1))
+            if not user2_id:
+                await context.send(templates.USER_NOT_FOUND.format(user=user2))
 
     @commands.command(
         name="get_current_gold",
@@ -267,16 +263,16 @@ class RPGCommands(commands.Cog):
             if current:
                 current_gold = self.bot.character_cache[current].get_gold()
                 await context.send(
-                    GET_CURRENT_GOLD.format(
+                    templates.GET_CURRENT_GOLD.format(
                         name=self.bot.character_cache[current].get_name(),
                         user=user_id,
                         gold=current_gold,
                     )
                 )
             else:
-                await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
+                await context.send(templates.CHARACTER_NOT_FOUND.format(user=user_id))
         else:
-            await context.send(USER_NOT_FOUND.format(user=user))
+            await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(
         name="change_gold",
@@ -299,13 +295,9 @@ class RPGCommands(commands.Cog):
                     # Accepted - write changes to DB
                     self.bot.character_cache[current].set_gold(new_gold)
                     payload = self.bot.character_cache[current].export_stats()
-                    query = {"character_id": current}
-                    with MongoClient(config.DB_TOKEN) as db:
-                        database.set_details(
-                            query, payload, "characters", db[config.DB_NAME]
-                        )
+                    self.bot.repo.save_character(current, payload)
                     await context.send(
-                        CHANGE_GOLD_SUCCESS.format(
+                        templates.CHANGE_GOLD_SUCCESS.format(
                             name=self.bot.character_cache[current].get_name(),
                             user=user_id,
                             amount=amount,
@@ -314,16 +306,16 @@ class RPGCommands(commands.Cog):
                     )
                 else:
                     await context.send(
-                        NOT_ENOUGH_GOLD.format(
+                        templates.NOT_ENOUGH_GOLD.format(
                             name=self.bot.character_cache[current].get_name(),
                             user=user_id,
                             gold=current_gold,
                         )
                     )
             else:
-                await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
+                await context.send(templates.CHARACTER_NOT_FOUND.format(user=user_id))
         else:
-            await context.send(USER_NOT_FOUND.format(user=user))
+            await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(
         name="set_gold",
@@ -343,22 +335,18 @@ class RPGCommands(commands.Cog):
                 # Accepted - write changes to DB
                 self.bot.character_cache[current].set_gold(amount)
                 payload = self.bot.character_cache[current].export_stats()
-                query = {"character_id": current}
-                with MongoClient(config.DB_TOKEN) as db:
-                    database.set_details(
-                        query, payload, "characters", db[config.DB_NAME]
-                    )
+                self.bot.repo.save_character(current, payload)
                 await context.send(
-                    SET_GOLD_SUCCESS.format(
+                    templates.SET_GOLD_SUCCESS.format(
                         name=self.bot.character_cache[current].get_name(),
                         user=user_id,
                         amount=amount,
                     )
                 )
             else:
-                await context.send(CHARACTER_NOT_FOUND.format(user=user_id))
+                await context.send(templates.CHARACTER_NOT_FOUND.format(user=user_id))
         else:
-            await context.send(USER_NOT_FOUND.format(user=user))
+            await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(
         name="transfer_gold",
@@ -373,38 +361,35 @@ class RPGCommands(commands.Cog):
         amount = int(amount)
         if amount <= 0:
             await context.send(
-                GOLD_TRANSFER_AMOUNT_LESS_THAN_ZERO.format(source_user=source_user_id)
+                templates.GOLD_TRANSFER_AMOUNT_LESS_THAN_ZERO.format(source_user=source_user_id)
             )
         elif source_user_id == target_user_id:
             await context.send(
-                GOLD_TRANSFER_SOURCE_AND_TARGET_SAME.format(source_user=source_user_id)
+                templates.GOLD_TRANSFER_SOURCE_AND_TARGET_SAME.format(source_user=source_user_id)
             )
         elif not target_user_id:
-            await context.send(USER_NOT_FOUND.format(user=target))
+            await context.send(templates.USER_NOT_FOUND.format(user=target))
         else:
-            # Get active character for source
             source = self.bot.get_current_chara(server, source_user_id)
-            # Get active character for target
-            source = self.bot.get_current_chara(server, target_user_id)
+            target = self.bot.get_current_chara(server, target_user_id)
             if source and target:
                 source_gold = self.bot.character_cache[source].get_gold()
                 target_gold = self.bot.character_cache[target].get_gold()
-                # If a valid transaction
-                if source_gold - amount >= 0:
-                    # Make changes locally
+                if source_gold - amount < 0:
+                    await context.send(
+                        templates.NOT_ENOUGH_GOLD.format(
+                            name=self.bot.character_cache[source].get_name(),
+                            user=source_user_id,
+                            gold=source_gold,
+                        )
+                    )
+                elif self.bot.repo.transfer_gold_between_characters(
+                    source, target, amount
+                ):
                     self.bot.character_cache[source].set_gold(source_gold - amount)
                     self.bot.character_cache[target].set_gold(target_gold + amount)
-                    # Write changes to DB
-                    with MongoClient(config.DB_TOKEN) as db:
-                        db = db[config.DB_NAME]
-                        payload = self.bot.character_cache[source].export_stats()
-                        query = {"character_id": source}
-                        database.set_details(query, payload, "characters", db)
-                        payload = self.bot.character_cache[target].export_stats()
-                        query = {"character_id": target}
-                        database.set_details(query, payload, "characters", db)
                     await context.send(
-                        GOLD_TRANSFER_SUCCESS.format(
+                        templates.GOLD_TRANSFER_SUCCESS.format(
                             source_name=self.bot.character_cache[source].get_name(),
                             target_name=self.bot.character_cache[target].get_name(),
                             source_user=source_user_id,
@@ -416,17 +401,14 @@ class RPGCommands(commands.Cog):
                     )
                 else:
                     await context.send(
-                        NOT_ENOUGH_GOLD.format(
-                            name=self.bot.character_cache[source].get_name(),
-                            user=source_user_id,
-                            gold=source_gold,
-                        )
+                        "Gold transfer failed (database rejected the update). "
+                        "Try again or contact an admin."
                     )
             else:
                 if not source:
-                    await context.send(CHARACTER_NOT_FOUND.format(user=source_user_id))
+                    await context.send(templates.CHARACTER_NOT_FOUND.format(user=source_user_id))
                 if not target:
-                    await context.send(CHARACTER_NOT_FOUND.format(user=target_user_id))
+                    await context.send(templates.CHARACTER_NOT_FOUND.format(user=target_user_id))
 
 
 async def setup(bot):

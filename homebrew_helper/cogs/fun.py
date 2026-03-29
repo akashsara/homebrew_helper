@@ -1,7 +1,8 @@
-from discord.ext import commands
-import homebrew_helper.templates as templates
 import asyncio
 import random
+
+import homebrew_helper.templates as templates
+from discord.ext import commands
 
 
 # Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands
@@ -25,14 +26,6 @@ class FunStuff(commands.Cog):
             )
             return False
         return True
-
-    @commands.Cog.listener()
-    async def on_command_error(self, context, error):
-        # Empty error handler so we don't get the error from the `cog_check` func in the terminal
-        if isinstance(error, commands.CheckFailure):
-            pass
-        else:
-            print(error)
 
     @commands.command(
         name="git",

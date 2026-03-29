@@ -1,19 +1,29 @@
+"""Shared helpers. Logging: call ``configure_logging`` once at process entry (e.g. ``run_bot``);
+elsewhere use ``get_logger(__name__)`` and never attach handlers to library loggers."""
+
+import logging
 import re
 import uuid
-from typing import Dict, List, Tuple
-import logging
+from typing import Dict, List, Optional, Tuple
+
+_LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s: %(message)s"
 
 
-# Create logger
-def create_logger(name: str, level: int = logging.INFO) -> logging.Logger:
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-    handler = logging.StreamHandler()
-    handler.setFormatter(
-        logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
-    )
-    logger.addHandler(handler)
-    return logger
+def configure_logging(level: int = logging.INFO) -> None:
+    """
+    Initialize root logging once. Idempotent: if handlers already exist (e.g. tests), only
+    updates the root level so re-imports do not stack duplicate handlers.
+    """
+    root = logging.getLogger()
+    if root.handlers:
+        root.setLevel(level)
+        return
+    logging.basicConfig(level=level, format=_LOG_FORMAT)
+
+
+def get_logger(name: str) -> logging.Logger:
+    """Return a module-scoped logger; do not add handlers here (root owns output)."""
+    return logging.getLogger(name)
 
 
 def generate_id() -> str:
@@ -26,17 +36,18 @@ def generate_unique_id(generated: set, max_retries=100) -> str:
         if id_ not in generated:
             return id_
         id_ = generate_id()
-    return RuntimeError("Unable to generate unique ID")
+    raise RuntimeError("Unable to generate unique ID")
 
 
 def get_default_user() -> Dict:
     return {"active": None, "characters": []}
 
 
-def discord_name_to_id(name: str) -> str:
+def discord_name_to_id(name: str) -> Optional[str]:
     search = re.findall(r"\d+", name)
     if search:
         return str(search[0])
+    return None
 
 
 def format_stat(name):

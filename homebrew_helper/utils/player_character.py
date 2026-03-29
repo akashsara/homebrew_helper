@@ -1,29 +1,23 @@
-from typing import Union, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
+
 from homebrew_helper.utils import gen_utils
+
+_DEFAULT_CHARACTER_INFO: Dict[str, Any] = {
+    "name": "",
+    "hp": 0,
+    "attack": 0,
+    "armor_class": 0,
+    "speed": 0,
+    "level": 0,
+    "gold": 0,
+    "stats": {},
+}
 
 
 def validate_character(chara) -> Dict[str, str]:
-    required = ["name", "attack", "armor_class", "speed", "level", "gold"]
-    for req in required:
-        if req not in chara.keys():
-            return {"status": False, "error": f"{req} is missing from character."}
-        else:
-            if req == "name":
-                if not isinstance(chara["name"], str):
-                    return {"status": False, "error": "name is not a string."}
-            else:
-                if not isinstance(chara[req], int):
-                    return {"status": False, "error": f"{req} is not an integer."}
-    if not isinstance(chara["stats"], dict):
-        return {"status": False, "error": f"Stats is not a dictionary."}
-    for stat in chara["stats"]:
-        if isinstance(chara["stats"][stat], dict):
-            for key in chara["stats"][stat].keys():
-                if not isinstance(chara["stats"][stat][key], int):
-                    return {"status": False, "error": f"{stat} is not an integer."}
-        elif not isinstance(chara["stats"][stat], int):
-            return {"status": False, "error": f"{stat} is not an integer."}
-    return {"status": True, "error": "None"}
+    from homebrew_helper.utils.character_schema import validate_character_payload
+
+    return validate_character_payload(chara)
 
 
 def create_spaced_line(stat, value, value_at=25, level=0):
@@ -36,16 +30,7 @@ class PlayerCharacter:
         self,
         user: str = "",
         character_id: str = "",
-        character_info: dict = {
-            "name": "",
-            "hp": 0,
-            "attack": 0,
-            "armor_class": 0,
-            "speed": 0,
-            "level": 0,
-            "gold": 0,
-            "stats": {},
-        },
+        character_info: Optional[dict] = None,
     ):
         """
         character_info must be a dict with the keys specified by the default.
@@ -60,13 +45,16 @@ class PlayerCharacter:
         }
         Base refers to the actual modifier for Charisma above.
         """
-        # Everything below this is stored in a DB
+        if character_info is None:
+            character_info = dict(_DEFAULT_CHARACTER_INFO)
+        else:
+            character_info = dict(character_info)
         if "name" not in character_info:
-            return ValueError("No name found in character information.")
-        elif "stats" not in character_info:
-            return ValueError("No stats found in character information.")
-        elif "gold" not in character_info:
-            return ValueError("No gold found in character information.")
+            raise ValueError("No name found in character information.")
+        if "stats" not in character_info:
+            raise ValueError("No stats found in character information.")
+        if "gold" not in character_info:
+            raise ValueError("No gold found in character information.")
         self.user = user
         self.character_id = character_id
         self.character_info = character_info

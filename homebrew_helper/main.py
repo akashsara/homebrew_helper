@@ -2,13 +2,15 @@ from typing import Dict, List, Union
 
 import discord
 import homebrew_helper.config as config
+import homebrew_helper.templates as templates
 import homebrew_helper.utils.database as database
 from discord.ext import commands
 from discord.ext.commands import Bot, DefaultHelpCommand
 from pymongo import MongoClient
-from homebrew_helper.templates import *
+from pymongo.database import Database
+
 from homebrew_helper.utils import gen_utils
-from homebrew_helper.utils.player_character import PlayerCharacter
+from homebrew_helper.utils.repositories import HomebrewRepository
 
 
 class HomebrewHelper(Bot):
@@ -18,13 +20,18 @@ class HomebrewHelper(Bot):
         initial_extensions: List[str],
         character_cache: dict,
         user_cache: dict,
+        mongo_client: MongoClient,
+        mongo_db: Database,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.initial_extensions = initial_extensions
         self.character_cache = character_cache
         self.user_cache = user_cache
-        self.logger = gen_utils.create_logger("bot")
+        self.mongo_client = mongo_client
+        self.mongo_db = mongo_db
+        self.repo = HomebrewRepository(mongo_db)
+        self.logger = gen_utils.get_logger("bot")
 
     def get_current_chara(self, server_id, user_id):
         return self.user_cache.get(server_id, {}).get(user_id, {}).get("active")
@@ -36,42 +43,26 @@ class HomebrewHelper(Bot):
             await self.load_extension(extension)
 
 
-def load_all_characters() -> Dict[str, Dict[str, Union[str, int]]]:
+def load_all_users(
+    db: Database,
+) -> Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]:
     """
-    Returns a dictionary of all the characters in the database.
-    Keys are character IDs and values are that character's information.
-    Character IDs for users can be found in the user table.
+    Returns nested dicts: server_id -> user_id -> user document.
     """
-    with MongoClient(config.DB_TOKEN) as db:
-        character_information = database.load_all_characters(db[config.DB_NAME])
-    characters = {}
-    for character_id, character_data in character_information.items():
-        character = PlayerCharacter()
-        character.import_stats(character_data)
-        characters[character_id] = character
-    return characters
-
-
-def load_all_users() -> Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]:
-    """
-    Returns a dictionary of dictionaries for all the users in the database.
-    Top level keys are server IDs and the corresponding dictionaries have
-    user IDs as the key and the user's info including their active character
-    and list of characters as the value.
-    {server_id: {character_id: user_info}}
-    """
-    with MongoClient(config.DB_TOKEN) as db:
-        users = database.load_all_users(db[config.DB_NAME])
-    return users
+    return database.load_all_users(db)
 
 
 def run_bot():
-    logger = gen_utils.create_logger(__name__)
+    config.require_config()
+    gen_utils.configure_logging()
+    logger = gen_utils.get_logger(__name__)
     # Load and cache character DB
     # WARNING: This is not built to scale
     logger.info("Loading DnData.")
-    character_cache = load_all_characters()
-    user_cache = load_all_users()
+    mongo_client = MongoClient(config.DB_TOKEN)
+    mongo_db = mongo_client[config.DB_NAME]
+    character_cache = database.hydrate_character_models(mongo_db)
+    user_cache = load_all_users(mongo_db)
 
     # List of cogs we use
     initial_extensions = [
@@ -96,6 +87,8 @@ def run_bot():
         initial_extensions=initial_extensions,
         character_cache=character_cache,
         user_cache=user_cache,
+        mongo_client=mongo_client,
+        mongo_db=mongo_db,
     )
 
     # Register event handlers
@@ -106,26 +99,61 @@ def run_bot():
     @client.event
     async def on_command_error(context, error):
         """Handles command errors with custom messages based on the error type."""
+        inner = getattr(error, "original", None)
+        if isinstance(error, commands.CommandOnCooldown) or (
+            isinstance(error, commands.CommandInvokeError)
+            and isinstance(inner, commands.CommandOnCooldown)
+        ):
+            exc = (
+                error
+                if isinstance(error, commands.CommandOnCooldown)
+                else inner
+            )
+            logger.warning("CommandOnCooldown: %s", error)
+            await context.send(
+                templates.ERROR_COMMAND_ON_COOLDOWN.format(
+                    user=context.author.id, seconds=exc.retry_after
+                )
+            )
+            return
+
+        if isinstance(error, commands.BadArgument) or (
+            isinstance(error, commands.CommandInvokeError)
+            and isinstance(inner, commands.BadArgument)
+        ):
+            exc = error if isinstance(error, commands.BadArgument) else inner
+            logger.warning("BadArgument: %s", error)
+            await context.send(
+                templates.ERROR_BAD_ARGUMENT.format(
+                    user=context.author.id, detail=str(exc)
+                )
+            )
+            return
+
         error_handlers = {
-            commands.MissingRequiredArgument: ERROR_MISSING_ARGUMENTS.format(
+            commands.MissingRequiredArgument: templates.ERROR_MISSING_ARGUMENTS.format(
                 user=context.author.id
             ),
-            commands.MissingPermissions: ERROR_MISSING_PERMISSIONS.format(
+            commands.MissingPermissions: templates.ERROR_MISSING_PERMISSIONS.format(
                 user=context.author.id
             ),
-            commands.CommandInvokeError: ERROR_COMMAND_INVOKE.format(
+            commands.CommandInvokeError: templates.ERROR_COMMAND_INVOKE.format(
                 user=context.author.id
             ),
-            commands.CommandNotFound: ERROR_COMMAND_NOT_FOUND.format(
+            commands.CommandNotFound: templates.ERROR_COMMAND_NOT_FOUND.format(
                 user=context.author.id
             ),
         }
         if type(error) in error_handlers:
-            logger.warning(f"{type(error).__name__}: {error}")
+            logger.warning("%s: %s", type(error).__name__, error)
             await context.send(error_handlers.get(type(error)))
-        else:
-            logger.error(f"Unhandled command error: {error}")
-            raise error
+            return
+
+        if isinstance(error, commands.CheckFailure):
+            return
+
+        logger.error("Unhandled command error: %s", error)
+        raise error
 
     logger.info("Running client..")
     client.run(config.TOKEN)
