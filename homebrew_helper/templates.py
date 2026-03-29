@@ -26,7 +26,7 @@ CHARACTER_SWITCH_AMBIGUOUS = (
     "<@{user}>, `{query}` matches multiple characters: {matches}. Be more specific."
 )
 CHARACTER_SWITCH_SUCCESS = (
-    "<@{user}>, your active character is now {name} (`{character_id}`)."
+    "<@{user}>, active character for <@{target_user}> is now {name} (`{character_id}`)."
 )
 CHARACTER_LIST_HEADER = "{count} character(s) for <@{user}>:"
 CHARACTER_RENAME_USAGE = (
@@ -39,8 +39,11 @@ CHARACTER_RENAME_NOT_FOUND = (
 CHARACTER_RENAME_AMBIGUOUS = (
     "<@{user}>, `{query}` matches multiple characters: {matches}. Be more specific."
 )
+CHARACTER_ADMIN_TARGET_USAGE = (
+    "<@{user}>, admins can target another user by starting the command with a user mention."
+)
 CHARACTER_RENAME_SUCCESS = (
-    "<@{user}>, renamed {old_name} (`{character_id}`) to {new_name}."
+    "<@{user}>, renamed <@{target_user}>'s {old_name} (`{character_id}`) to {new_name}."
 )
 CHARACTER_DELETE_NOT_FOUND = (
     "<@{user}>, I couldn't find one of your characters to delete matching `{query}`."
@@ -53,7 +56,7 @@ CHARACTER_DELETE_CONFIRM_PROMPT = (
 )
 CHARACTER_DELETE_CANCEL = "<@{user}>, character deletion cancelled."
 CHARACTER_DELETE_SUCCESS = (
-    "<@{user}>, deleted {name} (`{character_id}`)."
+    "<@{user}>, deleted <@{target_user}>'s {name} (`{character_id}`)."
 )
 
 # Dice Commands

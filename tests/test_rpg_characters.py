@@ -3,10 +3,12 @@ from homebrew_helper.cogs.rpg.characters import (
     _format_character_matches,
     _format_owned_character_list,
     _is_yes_response,
+    _resolve_target_user_id,
     _split_rename_payload,
     _get_owned_characters,
 )
 from homebrew_helper.utils.player_character import PlayerCharacter
+from types import SimpleNamespace
 
 
 def _character(character_id: str, name: str) -> PlayerCharacter:
@@ -114,3 +116,31 @@ def test_is_yes_response_accepts_yes_prefix():
 def test_is_yes_response_rejects_non_yes_prefix():
     assert _is_yes_response("n") is False
     assert _is_yes_response("cancel") is False
+
+
+def test_resolve_target_user_id_keeps_self_for_regular_user():
+    context = SimpleNamespace(
+        author=SimpleNamespace(
+            id="111",
+            guild_permissions=SimpleNamespace(administrator=False),
+        )
+    )
+
+    target_user_id, query = _resolve_target_user_id(context, "<@222> Ayla")
+
+    assert target_user_id == "111"
+    assert query == "<@222> Ayla"
+
+
+def test_resolve_target_user_id_extracts_admin_target():
+    context = SimpleNamespace(
+        author=SimpleNamespace(
+            id="111",
+            guild_permissions=SimpleNamespace(administrator=True),
+        )
+    )
+
+    target_user_id, query = _resolve_target_user_id(context, "<@222> Ayla Prime")
+
+    assert target_user_id == "222"
+    assert query == "Ayla Prime"
