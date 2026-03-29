@@ -75,9 +75,9 @@ class RPGCommands(commands.Cog):
         self.logger = logging.getLogger("bot.rpg_commands")
 
     @commands.command(
-        name="create_character",
-        aliases=["create_char", "cc"],
-        help="Admin only. Create a character for a user with `!create_character @user <json>`.",
+        name="create",
+        aliases=["create_character", "create_char", "cc"],
+        help="Admin only. Create a character for a user with `!create @user <json>`.",
         brief="To create a character.",
     )
     @commands.has_permissions(administrator=True)
@@ -195,8 +195,8 @@ class RPGCommands(commands.Cog):
             await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(
-        name="list_characters",
-        aliases=["characters", "chars"],
+        name="chars",
+        aliases=["list_characters", "characters"],
         help="List the characters owned by you or another user.",
         brief="List a user's characters.",
     )
@@ -225,8 +225,8 @@ class RPGCommands(commands.Cog):
         )
 
     @commands.command(
-        name="rename_character",
-        aliases=["rename_char", "rc"],
+        name="rename",
+        aliases=["rename_character", "rename_char", "rc"],
         help="Rename one of your characters with `<current name or id> | <new name>`.",
         brief="Rename one of your characters.",
     )
@@ -285,8 +285,8 @@ class RPGCommands(commands.Cog):
         )
 
     @commands.command(
-        name="switch_character",
-        aliases=["switch_char", "sc"],
+        name="switch",
+        aliases=["switch_character", "switch_char", "sc"],
         help="Set your active character by name or character ID.",
         brief="Switch your active character.",
     )
@@ -336,8 +336,8 @@ class RPGCommands(commands.Cog):
         )
 
     @commands.command(
-        name="delete_character",
-        aliases=["delete_char", "dc"],
+        name="delete",
+        aliases=["delete_character", "delete_char", "dc"],
         help="Delete one of your characters by name or character ID.",
         brief="Delete one of your characters.",
     )
@@ -476,9 +476,9 @@ class RPGCommands(commands.Cog):
             await context.send(templates.CHARACTER_NOT_FOUND.format(user=user_id))
 
     @commands.command(
-        name="change_stat",
-        aliases=["stat_change"],
-        help="Admin only. Set a stat on a user's active character with `!change_stat @user <stat> <value>`.",
+        name="setstat",
+        aliases=["change_stat", "stat_change"],
+        help="Admin only. Set a stat on a user's active character with `!setstat @user <stat> <value>`.",
         brief="To modify character stats.",
     )
     @commands.has_permissions(administrator=True)
@@ -514,8 +514,8 @@ class RPGCommands(commands.Cog):
             await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(
-        name="add_alias",
-        aliases=["add_alt", "aa"],
+        name="alias",
+        aliases=["add_alias", "add_alt", "aa"],
         help="Admin only. Link two users so the first user's characters are transferred to the second user.",
         brief="To add nickname.",
     )
@@ -540,8 +540,8 @@ class RPGCommands(commands.Cog):
                 await context.send(templates.USER_NOT_FOUND.format(user=user2))
 
     @commands.command(
-        name="get_current_gold",
-        aliases=["gold"],
+        name="gold",
+        aliases=["get_current_gold"],
         help="Show how much gold the active character has for you or another user.",
         brief="How much gold do you have?",
     )
@@ -568,9 +568,9 @@ class RPGCommands(commands.Cog):
             await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(
-        name="change_gold",
-        aliases=["cg"],
-        help="Admin only. Add or remove gold from a user's active character with `!change_gold @user <amount>`.",
+        name="goldadd",
+        aliases=["change_gold", "cg"],
+        help="Admin only. Add or remove gold from a user's active character with `!goldadd @user <amount>`.",
         brief="To add or remove gold.",
     )
     @commands.has_permissions(administrator=True)
@@ -611,9 +611,9 @@ class RPGCommands(commands.Cog):
             await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(
-        name="set_gold",
-        aliases=["sg"],
-        help="Admin only. Set the gold total for a user's active character with `!set_gold @user <amount>`.",
+        name="goldset",
+        aliases=["set_gold", "sg"],
+        help="Admin only. Set the gold total for a user's active character with `!goldset @user <amount>`.",
         brief="To set gold to a particular amount.",
     )
     @commands.has_permissions(administrator=True)
@@ -642,9 +642,9 @@ class RPGCommands(commands.Cog):
             await context.send(templates.USER_NOT_FOUND.format(user=user))
 
     @commands.command(
-        name="transfer_gold",
-        aliases=["transfer"],
-        help="Transfer gold from your active character to another user's active character with `!transfer_gold <amount> @user`.",
+        name="pay",
+        aliases=["transfer_gold", "transfer"],
+        help="Transfer gold from your active character to another user's active character with `!pay <amount> @user`.",
         brief="To transfer gold between characters.",
     )
     async def transfer_gold(self, context, amount, target):

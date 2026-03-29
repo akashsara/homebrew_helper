@@ -97,7 +97,7 @@ class RNGCommands(commands.Cog):
 
     @commands.command(
         name="coin_toss",
-        aliases=["cointoss", "toss", "flip", "cointoin"],
+        aliases=["cointoss", "toss", "flip", "cointoin", "toincoss", "toss_coin"],
         help="Tosses a coin and returns the outcome heards or tails.",
         brief="To toss one or many coin(s).",
     )

@@ -157,3 +157,44 @@ def test_rpg_command_help_messages_do_not_use_placeholders():
 
     assert command_helps
     assert all(help_text and "coming soon" not in help_text.lower() for help_text in command_helps)
+
+
+def test_rpg_commands_use_short_primary_names_and_keep_legacy_aliases():
+    commands_by_attr = {
+        attr: command
+        for attr, command in vars(RPGCommands).items()
+        if isinstance(command, commands.Command)
+    }
+
+    assert commands_by_attr["create_character"].name == "create"
+    assert "create_character" in commands_by_attr["create_character"].aliases
+
+    assert commands_by_attr["list_characters"].name == "chars"
+    assert "list_characters" in commands_by_attr["list_characters"].aliases
+
+    assert commands_by_attr["rename_character"].name == "rename"
+    assert "rename_character" in commands_by_attr["rename_character"].aliases
+
+    assert commands_by_attr["switch_character"].name == "switch"
+    assert "switch_character" in commands_by_attr["switch_character"].aliases
+
+    assert commands_by_attr["delete_character"].name == "delete"
+    assert "delete_character" in commands_by_attr["delete_character"].aliases
+
+    assert commands_by_attr["change_stat"].name == "setstat"
+    assert "change_stat" in commands_by_attr["change_stat"].aliases
+
+    assert commands_by_attr["add_alias"].name == "alias"
+    assert "add_alias" in commands_by_attr["add_alias"].aliases
+
+    assert commands_by_attr["get_current_gold"].name == "gold"
+    assert "get_current_gold" in commands_by_attr["get_current_gold"].aliases
+
+    assert commands_by_attr["change_gold"].name == "goldadd"
+    assert "change_gold" in commands_by_attr["change_gold"].aliases
+
+    assert commands_by_attr["set_gold"].name == "goldset"
+    assert "set_gold" in commands_by_attr["set_gold"].aliases
+
+    assert commands_by_attr["transfer_gold"].name == "pay"
+    assert "transfer_gold" in commands_by_attr["transfer_gold"].aliases
