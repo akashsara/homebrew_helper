@@ -1,4 +1,5 @@
 from homebrew_helper.cogs.rpg.characters import (
+    RPGCommands,
     _find_owned_character_matches,
     _format_character_matches,
     _format_owned_character_list,
@@ -9,6 +10,7 @@ from homebrew_helper.cogs.rpg.characters import (
 )
 from homebrew_helper.utils.player_character import PlayerCharacter
 from types import SimpleNamespace
+from discord.ext import commands
 
 
 def _character(character_id: str, name: str) -> PlayerCharacter:
@@ -144,3 +146,14 @@ def test_resolve_target_user_id_extracts_admin_target():
 
     assert target_user_id == "222"
     assert query == "Ayla Prime"
+
+
+def test_rpg_command_help_messages_do_not_use_placeholders():
+    command_helps = [
+        command.help
+        for _, command in vars(RPGCommands).items()
+        if isinstance(command, commands.Command)
+    ]
+
+    assert command_helps
+    assert all(help_text and "coming soon" not in help_text.lower() for help_text in command_helps)

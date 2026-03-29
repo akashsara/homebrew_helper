@@ -77,7 +77,7 @@ class RPGCommands(commands.Cog):
     @commands.command(
         name="create_character",
         aliases=["create_char", "cc"],
-        help="Coming soon.",
+        help="Admin only. Create a character for a user with `!create_character @user <json>`.",
         brief="To create a character.",
     )
     @commands.has_permissions(administrator=True)
@@ -172,7 +172,11 @@ class RPGCommands(commands.Cog):
         else:
             await context.send(templates.USER_NOT_FOUND.format(user=user))
 
-    @commands.command(name="info", help="Coming soon.", brief="To get character info.")
+    @commands.command(
+        name="info",
+        help="Show the active character for you or another user.",
+        brief="To get character info.",
+    )
     async def character_info(self, context, user=None):
         if user:
             user_id = gen_utils.discord_name_to_id(user)
@@ -421,7 +425,7 @@ class RPGCommands(commands.Cog):
     @commands.command(
         name="saving_throw",
         aliases=["st", "stat_roll"],
-        help="Coming soon.",
+        help="Roll a saving throw or ability check with `!st <stat> [modifiers]`, including `a` or `d` for advantage or disadvantage.",
         brief="To roll a saving throw for your character.",
     )
     async def saving_throw(self, context, stat=None, modifiers=""):
@@ -453,7 +457,7 @@ class RPGCommands(commands.Cog):
 
     @commands.command(
         name="attack",
-        help="Coming soon.",
+        help="Roll an attack for your active character, with optional modifiers and advantage or disadvantage.",
         brief="To make an attack roll.",
     )
     async def attack(self, context, modifiers=""):
@@ -474,7 +478,7 @@ class RPGCommands(commands.Cog):
     @commands.command(
         name="change_stat",
         aliases=["stat_change"],
-        help="Coming soon.",
+        help="Admin only. Set a stat on a user's active character with `!change_stat @user <stat> <value>`.",
         brief="To modify character stats.",
     )
     @commands.has_permissions(administrator=True)
@@ -512,7 +516,7 @@ class RPGCommands(commands.Cog):
     @commands.command(
         name="add_alias",
         aliases=["add_alt", "aa"],
-        help="Coming soon.",
+        help="Admin only. Link two users so the first user's characters are transferred to the second user.",
         brief="To add nickname.",
     )
     @commands.has_permissions(administrator=True)
@@ -538,7 +542,7 @@ class RPGCommands(commands.Cog):
     @commands.command(
         name="get_current_gold",
         aliases=["gold"],
-        help="Coming soon.",
+        help="Show how much gold the active character has for you or another user.",
         brief="How much gold do you have?",
     )
     async def get_current_gold(self, context, user=None):
@@ -566,7 +570,7 @@ class RPGCommands(commands.Cog):
     @commands.command(
         name="change_gold",
         aliases=["cg"],
-        help="Coming soon.",
+        help="Admin only. Add or remove gold from a user's active character with `!change_gold @user <amount>`.",
         brief="To add or remove gold.",
     )
     @commands.has_permissions(administrator=True)
@@ -609,7 +613,7 @@ class RPGCommands(commands.Cog):
     @commands.command(
         name="set_gold",
         aliases=["sg"],
-        help="Coming soon.",
+        help="Admin only. Set the gold total for a user's active character with `!set_gold @user <amount>`.",
         brief="To set gold to a particular amount.",
     )
     @commands.has_permissions(administrator=True)
@@ -640,7 +644,7 @@ class RPGCommands(commands.Cog):
     @commands.command(
         name="transfer_gold",
         aliases=["transfer"],
-        help="Coming soon.",
+        help="Transfer gold from your active character to another user's active character with `!transfer_gold <amount> @user`.",
         brief="To transfer gold between characters.",
     )
     async def transfer_gold(self, context, amount, target):
