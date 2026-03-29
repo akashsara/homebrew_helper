@@ -44,6 +44,18 @@ def test_set_details_false_on_exception():
     assert database.set_details({"user": "u1"}, {}, "users", db) is False
 
 
+def test_delete_details_true_on_success():
+    db = MagicMock()
+    assert database.delete_details({"character_id": "c1"}, "characters", db) is True
+    db["characters"].delete_one.assert_called_once_with({"character_id": "c1"})
+
+
+def test_delete_details_false_on_exception():
+    db = MagicMock()
+    db["characters"].delete_one.side_effect = RuntimeError("db down")
+    assert database.delete_details({"character_id": "c1"}, "characters", db) is False
+
+
 def test_load_all_characters_indexed_by_id():
     db = MagicMock()
     db["characters"].find.return_value = [

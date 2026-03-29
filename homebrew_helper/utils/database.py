@@ -38,6 +38,22 @@ def set_details(
         return False
 
 
+def delete_details(
+    query: Dict, collection: str, db: pymongo.database.Database
+) -> bool:
+    """
+    query: to select exactly one item from the DB
+    collection: the table in our DB
+    db: MongoDB database cursor
+    """
+    try:
+        db[collection].delete_one(query)
+        return True
+    except Exception as e:
+        logger.info(f"Exception in delete_details: {e}")
+        return False
+
+
 def load_all_characters(db: pymongo.database.Database):
     """
     db: MongoDB database cursor

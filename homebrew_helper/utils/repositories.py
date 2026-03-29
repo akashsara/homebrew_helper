@@ -22,6 +22,11 @@ class HomebrewRepository:
             {"character_id": character_id}, document, "characters", self._db
         )
 
+    def delete_character(self, character_id: str) -> bool:
+        return database.delete_details(
+            {"character_id": character_id}, "characters", self._db
+        )
+
     def get_user(self, server_id: str, user_id: str) -> Dict[str, Any]:
         return database.get_details(
             {"server": server_id, "user": user_id}, "users", self._db

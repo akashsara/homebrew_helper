@@ -1,10 +1,59 @@
 import asyncio
 import json
 import logging
+from typing import List
 
 from discord.ext import commands
 import homebrew_helper.templates as templates
 from homebrew_helper.utils import database, gen_utils, player_character
+
+
+def _get_owned_characters(user_info, character_cache) -> List[player_character.PlayerCharacter]:
+    characters = []
+    for character_id in user_info.get("characters", []):
+        character = character_cache.get(character_id)
+        if character:
+            characters.append(character)
+    return characters
+
+
+def _find_owned_character_matches(user_info, character_cache, query: str):
+    query = query.strip().lower()
+    matches = []
+    for character_id in user_info.get("characters", []):
+        character = character_cache.get(character_id)
+        if not character:
+            continue
+        name = character.get_name()
+        lowered_name = name.lower()
+        if query == character_id.lower() or query == lowered_name:
+            return [character]
+        if query in lowered_name or character_id.lower().startswith(query):
+            matches.append(character)
+    return matches
+
+
+def _format_character_matches(characters) -> str:
+    return ", ".join(f"{character.get_name()} (`{character.character_id}`)" for character in characters)
+
+
+def _format_owned_character_list(characters, active_character_id: str, user_id: str) -> str:
+    lines = [templates.CHARACTER_LIST_HEADER.format(count=len(characters), user=user_id)]
+    for character in characters:
+        marker = " [active]" if character.character_id == active_character_id else ""
+        lines.append(f"- {character.get_name()} (`{character.character_id}`){marker}")
+    return "\n".join(lines)
+
+
+def _split_rename_payload(payload: str):
+    if "|" not in payload:
+        return None, None
+    query, new_name = payload.split("|", 1)
+    return query.strip(), new_name.strip()
+
+
+def _is_yes_response(content: str) -> bool:
+    return content.lower().strip().startswith("y")
 
 
 # Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands
@@ -128,6 +177,226 @@ class RPGCommands(commands.Cog):
                 await context.send(templates.CHARACTER_NOT_FOUND.format(user=user_id))
         else:
             await context.send(templates.USER_NOT_FOUND.format(user=user))
+
+    @commands.command(
+        name="list_characters",
+        aliases=["characters", "chars"],
+        help="List the characters owned by you or another user.",
+        brief="List a user's characters.",
+    )
+    async def list_characters(self, context, user=None):
+        if user:
+            user_id = gen_utils.discord_name_to_id(user)
+        else:
+            user_id = str(context.author.id)
+        if not user_id:
+            await context.send(templates.USER_NOT_FOUND.format(user=user))
+            return
+
+        server = str(context.guild.id)
+        user_info = self.bot.user_cache.get(server, {}).get(user_id, {})
+        owned_characters = _get_owned_characters(user_info, self.bot.character_cache)
+        if not owned_characters:
+            await context.send(templates.CHARACTER_NOT_FOUND.format(user=user_id))
+            return
+
+        await context.send(
+            _format_owned_character_list(
+                owned_characters,
+                user_info.get("active"),
+                user_id,
+            )
+        )
+
+    @commands.command(
+        name="rename_character",
+        aliases=["rename_char", "rc"],
+        help="Rename one of your characters with `<current name or id> | <new name>`.",
+        brief="Rename one of your characters.",
+    )
+    async def rename_character(self, context, *, payload):
+        server = str(context.guild.id)
+        user_id = str(context.author.id)
+        user_info = self.bot.user_cache.get(server, {}).get(user_id, {})
+        owned_characters = _get_owned_characters(user_info, self.bot.character_cache)
+        if not owned_characters:
+            await context.send(
+                templates.CHARACTER_SWITCH_NO_OWNED_CHARACTERS.format(user=user_id)
+            )
+            return
+
+        query, new_name = _split_rename_payload(payload)
+        if not query or new_name is None:
+            await context.send(templates.CHARACTER_RENAME_USAGE.format(user=user_id))
+            return
+        if not new_name:
+            await context.send(templates.CHARACTER_RENAME_EMPTY.format(user=user_id))
+            return
+
+        matches = _find_owned_character_matches(
+            user_info, self.bot.character_cache, query
+        )
+        if not matches:
+            await context.send(
+                templates.CHARACTER_RENAME_NOT_FOUND.format(
+                    user=user_id, query=query
+                )
+            )
+            return
+        if len(matches) > 1:
+            await context.send(
+                templates.CHARACTER_RENAME_AMBIGUOUS.format(
+                    user=user_id,
+                    query=query,
+                    matches=_format_character_matches(matches),
+                )
+            )
+            return
+
+        selected = matches[0]
+        old_name = selected.get_name()
+        selected.character_info["name"] = new_name
+        self.bot.repo.save_character(selected.character_id, selected.export_stats())
+        await context.send(
+            templates.CHARACTER_RENAME_SUCCESS.format(
+                user=user_id,
+                old_name=old_name,
+                new_name=new_name,
+                character_id=selected.character_id,
+            )
+        )
+
+    @commands.command(
+        name="switch_character",
+        aliases=["switch_char", "sc"],
+        help="Set your active character by name or character ID.",
+        brief="Switch your active character.",
+    )
+    async def switch_character(self, context, *, query):
+        server = str(context.guild.id)
+        user_id = str(context.author.id)
+        user_info = self.bot.user_cache.get(server, {}).get(user_id, {})
+        owned_characters = _get_owned_characters(user_info, self.bot.character_cache)
+        if not owned_characters:
+            await context.send(
+                templates.CHARACTER_SWITCH_NO_OWNED_CHARACTERS.format(user=user_id)
+            )
+            return
+
+        matches = _find_owned_character_matches(
+            user_info, self.bot.character_cache, query
+        )
+        if not matches:
+            await context.send(
+                templates.CHARACTER_SWITCH_NOT_FOUND.format(
+                    user=user_id, query=query
+                )
+            )
+            return
+        if len(matches) > 1:
+            await context.send(
+                templates.CHARACTER_SWITCH_AMBIGUOUS.format(
+                    user=user_id,
+                    query=query,
+                    matches=_format_character_matches(matches),
+                )
+            )
+            return
+
+        selected = matches[0]
+        user_info["active"] = selected.character_id
+        self.bot.repo.save_user(server, user_id, user_info)
+        self.bot.user_cache.setdefault(server, {})[user_id] = user_info
+        await context.send(
+            templates.CHARACTER_SWITCH_SUCCESS.format(
+                user=user_id,
+                name=selected.get_name(),
+                character_id=selected.character_id,
+            )
+        )
+
+    @commands.command(
+        name="delete_character",
+        aliases=["delete_char", "dc"],
+        help="Delete one of your characters by name or character ID.",
+        brief="Delete one of your characters.",
+    )
+    async def delete_character(self, context, *, query):
+        server = str(context.guild.id)
+        user_id = str(context.author.id)
+        user_info = self.bot.user_cache.get(server, {}).get(user_id, {})
+        owned_characters = _get_owned_characters(user_info, self.bot.character_cache)
+        if not owned_characters:
+            await context.send(
+                templates.CHARACTER_SWITCH_NO_OWNED_CHARACTERS.format(user=user_id)
+            )
+            return
+
+        matches = _find_owned_character_matches(
+            user_info, self.bot.character_cache, query
+        )
+        if not matches:
+            await context.send(
+                templates.CHARACTER_DELETE_NOT_FOUND.format(
+                    user=user_id, query=query
+                )
+            )
+            return
+        if len(matches) > 1:
+            await context.send(
+                templates.CHARACTER_DELETE_AMBIGUOUS.format(
+                    user=user_id,
+                    query=query,
+                    matches=_format_character_matches(matches),
+                )
+            )
+            return
+
+        selected = matches[0]
+        selected_name = selected.get_name()
+        await context.send(
+            templates.CHARACTER_DELETE_CONFIRM_PROMPT.format(
+                user=user_id,
+                name=selected_name,
+                character_id=selected.character_id,
+            )
+        )
+        def confirm_check(m):
+            return m.author == context.author and m.channel == context.channel
+
+        try:
+            message = await self.bot.wait_for(
+                "message", timeout=60, check=confirm_check
+            )
+            if not message or not _is_yes_response(message.content):
+                await context.send(
+                    templates.CHARACTER_DELETE_CANCEL.format(user=user_id)
+                )
+                return
+        except asyncio.TimeoutError:
+            await context.send(templates.CHARACTER_DELETE_CANCEL.format(user=user_id))
+            return
+
+        user_info["characters"] = [
+            character_id
+            for character_id in user_info.get("characters", [])
+            if character_id != selected.character_id
+        ]
+        if user_info.get("active") == selected.character_id:
+            user_info["active"] = (
+                user_info["characters"][0] if user_info["characters"] else None
+            )
+        self.bot.repo.delete_character(selected.character_id)
+        self.bot.repo.save_user(server, user_id, user_info)
+        self.bot.character_cache.pop(selected.character_id, None)
+        self.bot.user_cache.setdefault(server, {})[user_id] = user_info
+        await context.send(
+            templates.CHARACTER_DELETE_SUCCESS.format(
+                user=user_id,
+                name=selected_name,
+                character_id=selected.character_id,
+            )
+        )
 
     @commands.command(
         name="saving_throw",

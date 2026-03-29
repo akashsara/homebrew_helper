@@ -20,6 +20,14 @@ def test_save_character_delegates_to_set_details():
     db["characters"].replace_one.assert_called_once()
 
 
+def test_delete_character_delegates_to_delete_details():
+    db = MagicMock()
+    db["characters"].delete_one.return_value = MagicMock()
+    repo = HomebrewRepository(db)
+    assert repo.delete_character("x") is True
+    db["characters"].delete_one.assert_called_once_with({"character_id": "x"})
+
+
 def test_get_user_and_save_user():
     db = MagicMock()
     db["users"].find_one.return_value = {"user": "u1"}
