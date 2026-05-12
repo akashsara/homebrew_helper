@@ -7,13 +7,17 @@ from homebrew_helper.cogs.rpg.characters import (
     _resolve_target_user_id,
     _split_rename_payload,
     _get_owned_characters,
+    _normalize_modifiers,
 )
 from homebrew_helper.utils.player_character import PlayerCharacter
+import asyncio
 from types import SimpleNamespace
 from discord.ext import commands
 
 
-def _character(character_id: str, name: str) -> PlayerCharacter:
+def _character(character_id: str, name: str, stats=None) -> PlayerCharacter:
+    if stats is None:
+        stats = {"strength": 2}
     return PlayerCharacter(
         user="u1",
         character_id=character_id,
@@ -25,7 +29,7 @@ def _character(character_id: str, name: str) -> PlayerCharacter:
             "speed": 30,
             "level": 2,
             "gold": 50,
-            "stats": {"strength": 2},
+            "stats": stats,
         },
     )
 
@@ -146,6 +150,77 @@ def test_resolve_target_user_id_extracts_admin_target():
 
     assert target_user_id == "222"
     assert query == "Ayla Prime"
+
+
+def test_normalize_modifiers_joins_bonus_and_advantage_tokens():
+    assert _normalize_modifiers(("+3", "a")) == "+3a"
+
+
+class _FakeContext:
+    def __init__(self):
+        self.author = SimpleNamespace(id="111")
+        self.guild = SimpleNamespace(id="guild")
+        self.sent = []
+        self.invocations = []
+
+    async def send(self, message):
+        self.sent.append(message)
+
+    async def invoke(self, command, *args):
+        self.invocations.append((command, args))
+
+
+class _FakeBot:
+    def __init__(self, stats=None):
+        self.character_cache = {"c1": _character("c1", "Ayla", stats=stats)}
+        self.roll_command = SimpleNamespace(name="roll")
+
+    def get_current_chara(self, server, user_id):
+        return "c1"
+
+    def get_command(self, name):
+        if name == "roll":
+            return self.roll_command
+        return None
+
+
+def test_saving_throw_accepts_separate_bonus_and_advantage_tokens():
+    cog = RPGCommands(_FakeBot())
+    context = _FakeContext()
+
+    asyncio.run(cog.saving_throw.callback(cog, context, "str", "+3", "a"))
+
+    assert context.sent == ["Rolling for Strength."]
+    assert context.invocations == [(cog.bot.roll_command, ("1d20+2+3a",))]
+
+
+def test_saving_throw_resolves_capitalized_stat_keys():
+    cog = RPGCommands(_FakeBot(stats={"Strength": 2}))
+    context = _FakeContext()
+
+    asyncio.run(cog.saving_throw.callback(cog, context, "str", "+3", "a"))
+
+    assert context.sent == ["Rolling for Strength."]
+    assert context.invocations == [(cog.bot.roll_command, ("1d20+2+3a",))]
+
+
+def test_saving_throw_invalid_stat_sends_message_instead_of_raising():
+    cog = RPGCommands(_FakeBot())
+    context = _FakeContext()
+
+    asyncio.run(cog.saving_throw.callback(cog, context, "notastat", "+3", "a"))
+
+    assert context.sent == ["Hey <@111>, that doesn't seem like a valid stat."]
+    assert context.invocations == []
+
+
+def test_attack_accepts_separate_bonus_and_advantage_tokens():
+    cog = RPGCommands(_FakeBot())
+    context = _FakeContext()
+
+    asyncio.run(cog.attack.callback(cog, context, "+3", "a"))
+
+    assert context.invocations == [(cog.bot.roll_command, ("1d20+2+3a",))]
 
 
 def test_rpg_command_help_messages_do_not_use_placeholders():

@@ -68,6 +68,10 @@ def _resolve_target_user_id(context, raw_text: str):
     return str(context.author.id), raw_text
 
 
+def _normalize_modifiers(modifiers) -> str:
+    return "".join(modifiers).lower().replace(" ", "")
+
+
 # Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands
 class RPGCommands(commands.Cog):
     def __init__(self, bot):
@@ -428,7 +432,7 @@ class RPGCommands(commands.Cog):
         help="Roll a saving throw or ability check with `!st <stat> [modifiers]`, including `a` or `d` for advantage or disadvantage.",
         brief="To roll a saving throw for your character.",
     )
-    async def saving_throw(self, context, stat=None, modifiers=""):
+    async def saving_throw(self, context, stat=None, *modifiers):
         server = str(context.guild.id)
         user_id = gen_utils.discord_name_to_id(str(context.author.id))
         if not stat:
@@ -437,14 +441,14 @@ class RPGCommands(commands.Cog):
             )
             return
         # Parse out modifiers and advantage/disadvantage
+        modifiers = _normalize_modifiers(modifiers)
         modifiers, advantage_or_disadvantage = gen_utils.parse_modifiers(modifiers)
         # Get active character
         current = self.bot.get_current_chara(server, user_id)
         if current:
-            stat_name, stat_path = self.bot.character_cache[current].resolve_stat_name(
-                stat
-            )
-            if stat_name:
+            resolved_stat = self.bot.character_cache[current].resolve_stat_name(stat)
+            if resolved_stat:
+                stat_name, stat_path = resolved_stat
                 stat_bonus = self.bot.character_cache[current].get_stat(stat_path)
                 sign = "+" if stat_bonus >= 0 else ""
                 query = f"1d20{sign}{stat_bonus}{modifiers}{advantage_or_disadvantage}"
@@ -460,10 +464,11 @@ class RPGCommands(commands.Cog):
         help="Roll an attack for your active character, with optional modifiers and advantage or disadvantage.",
         brief="To make an attack roll.",
     )
-    async def attack(self, context, modifiers=""):
+    async def attack(self, context, *modifiers):
         server = str(context.guild.id)
         user_id = gen_utils.discord_name_to_id(str(context.author.id))
         # Parse out modifiers and advantage/disadvantage
+        modifiers = _normalize_modifiers(modifiers)
         modifiers, advantage_or_disadvantage = gen_utils.parse_modifiers(modifiers)
         # Get active character
         current = self.bot.get_current_chara(server, user_id)

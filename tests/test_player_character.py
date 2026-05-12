@@ -81,6 +81,11 @@ def test_resolve_stat_name_partial_unique():
     assert pc.resolve_stat_name("stre") == ("strength", "stats__strength")
 
 
+def test_resolve_stat_name_is_case_insensitive_for_character_sheet_keys():
+    pc = PlayerCharacter(character_info=_minimal_info(stats={"Strength": 2}))
+    assert pc.resolve_stat_name("str") == ("Strength", "stats__Strength")
+
+
 def test_resolve_stat_name_ambiguous_returns_false():
     info = _minimal_info(stats={"strength": 1, "stealth": 1})
     pc = PlayerCharacter(character_info=info)
