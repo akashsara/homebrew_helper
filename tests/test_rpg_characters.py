@@ -1,6 +1,8 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+from discord.ext.commands.view import StringView
+
 from homebrew_helper.cogs.rpg.characters import (
     RPGCommands,
     _find_owned_character_matches,
@@ -250,3 +252,54 @@ def test_change_stat_with_unresolvable_stat_sends_invalid_stat_message():
     bot.repo.save_character.assert_not_called()
     context.send.assert_awaited_once()
     assert "valid stat" in context.send.call_args[0][0].lower()
+
+
+async def _dispatch(command, cog, raw_args: str):
+    """
+    Runs `raw_args` through discord.py's real argument parser (the same
+    StringView-based parser the bot uses in production) and then invokes the
+    command body with the parsed args/kwargs, exactly like discord.py's own
+    invocation path.
+    """
+    command = command.copy()
+    command.cog = cog
+    context = SimpleNamespace(
+        view=StringView(raw_args),
+        message=SimpleNamespace(attachments=[]),
+        guild=SimpleNamespace(id=1),
+        author=SimpleNamespace(id=999),
+        channel=object(),
+        send=AsyncMock(),
+    )
+    await command._parse_arguments(context)
+    await command.callback(*context.args, **context.kwargs)
+    return context
+
+
+def test_create_character_preserves_spaces_in_quoted_json_string_values():
+    # Regression: create_character used to collect its JSON payload with a
+    # variadic `*character_info` parameter and rejoin the tokens with
+    # "".join(character_info). Discord.py's argument parser treats `"` as a
+    # quoting character, so real JSON (which always starts `{"key":`) either
+    # lost the spaces inside quoted string values or, in the common case of a
+    # payload like `{"name": "John Doe", ...}`, raised UnexpectedQuoteError
+    # before the command body even ran -- an error type the bot's error
+    # handler doesn't recognize, so admins got no response at all.
+    # `character_info` is now a keyword-only "consume rest" parameter, so
+    # discord.py hands it the raw remainder of the message untouched.
+    bot = SimpleNamespace(
+        character_cache={},
+        wait_for=AsyncMock(side_effect=asyncio.TimeoutError),
+    )
+    cog = RPGCommands(bot)
+    raw_args = (
+        '<@123> {"name": "John Doe", "attack": 1, "armor_class": 10, '
+        '"speed": 30, "level": 1, "gold": 0, "stats": {}}'
+    )
+
+    context = asyncio.run(
+        _dispatch(RPGCommands.create_character, cog, raw_args)
+    )
+
+    sent_messages = [call.args[0] for call in context.send.await_args_list]
+    assert any("John Doe" in message for message in sent_messages)

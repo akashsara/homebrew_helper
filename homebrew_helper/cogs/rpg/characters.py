@@ -81,7 +81,7 @@ class RPGCommands(commands.Cog):
         brief="To create a character.",
     )
     @commands.has_permissions(administrator=True)
-    async def create_character(self, context, user, *character_info):
+    async def create_character(self, context, user, *, character_info=""):
         """
         character_info is a dictionary with the following keys:
             name: name of the character
@@ -96,11 +96,14 @@ class RPGCommands(commands.Cog):
         """
         server = str(context.guild.id)
         user_id = gen_utils.discord_name_to_id(user)
-        character_info = "".join(character_info)
+        # `character_info` is a keyword-only "consume rest" parameter so it captures
+        # the raw remainder of the message verbatim. Splitting it into `*args` and
+        # rejoining with "".join() (the previous approach) destroyed whitespace
+        # inside quoted JSON string values, e.g. "John Doe" -> "JohnDoe".
+        character_info = character_info.strip()
         # Invalid or no user
         if user_id:
-            # Heuristic that ensures mimimum info is present
-            if len(character_info) > 50:
+            if character_info:
                 # Load character info if possible
                 try:
                     character_info = json.loads(character_info)
