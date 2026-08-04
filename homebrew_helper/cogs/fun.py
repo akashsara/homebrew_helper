@@ -3,29 +3,13 @@ import random
 
 import homebrew_helper.templates as templates
 from discord.ext import commands
+from homebrew_helper.cogs._cooldown import CooldownCogMixin
 
 
-# Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands
-class FunStuff(commands.Cog):
+class FunStuff(CooldownCogMixin, commands.Cog):
     def __init__(self, bot, n_messages=3, cooldown=10):
         self.bot = bot
-        self.cooldown = commands.CooldownMapping.from_cooldown(
-            n_messages, cooldown, commands.BucketType.user
-        )
-
-    async def cog_check(self, context):
-        # Don't use a cooldown with the help command.
-        if context.invoked_with == "help":
-            return True
-        bucket = self.cooldown.get_bucket(context.message)
-        retry_after = bucket.update_rate_limit()
-        if retry_after:
-            # You're rate limited, send message here
-            await context.send(
-                f"<@{context.author.id}>: Stop spamming! Please wait {round(retry_after, 2)} seconds to use the command."
-            )
-            return False
-        return True
+        self._init_cooldown(n_messages, cooldown)
 
     @commands.command(
         name="git",

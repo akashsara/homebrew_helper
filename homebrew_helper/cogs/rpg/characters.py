@@ -5,6 +5,7 @@ from typing import List
 
 from discord.ext import commands
 import homebrew_helper.templates as templates
+from homebrew_helper.cogs._cooldown import CooldownCogMixin
 from homebrew_helper.utils import database, gen_utils, player_character
 
 
@@ -68,11 +69,11 @@ def _resolve_target_user_id(context, raw_text: str):
     return str(context.author.id), raw_text
 
 
-# Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands
-class RPGCommands(commands.Cog):
-    def __init__(self, bot):
+class RPGCommands(CooldownCogMixin, commands.Cog):
+    def __init__(self, bot, n_messages=5, cooldown=8):
         self.bot = bot
         self.logger = logging.getLogger("bot.rpg_commands")
+        self._init_cooldown(n_messages, cooldown)
 
     @commands.command(
         name="create",
@@ -138,8 +139,8 @@ class RPGCommands(commands.Cog):
                                 # Write character to DB
                                 repo = self.bot.repo
                                 payload = character.export_stats()
-                                repo.save_character(uuid, payload)
-                                user_info = repo.get_user(server, user_id)
+                                await repo.save_character(uuid, payload)
+                                user_info = await repo.get_user(server, user_id)
                                 if user_info:
                                     user_info["characters"].append(uuid)
                                 else:
@@ -149,7 +150,7 @@ class RPGCommands(commands.Cog):
                                         "characters": [uuid],
                                     }
                                 user_info["active"] = uuid
-                                repo.save_user(server, user_id, user_info)
+                                await repo.save_user(server, user_id, user_info)
                                 # Update local caches
                                 self.bot.character_cache[uuid] = character
                                 if server not in self.bot.user_cache:
@@ -279,7 +280,7 @@ class RPGCommands(commands.Cog):
         selected = matches[0]
         old_name = selected.get_name()
         selected.character_info["name"] = new_name
-        self.bot.repo.save_character(selected.character_id, selected.export_stats())
+        await self.bot.repo.save_character(selected.character_id, selected.export_stats())
         await context.send(
             templates.CHARACTER_RENAME_SUCCESS.format(
                 user=acting_user_id,
@@ -330,7 +331,7 @@ class RPGCommands(commands.Cog):
 
         selected = matches[0]
         user_info["active"] = selected.character_id
-        self.bot.repo.save_user(server, target_user_id, user_info)
+        await self.bot.repo.save_user(server, target_user_id, user_info)
         self.bot.user_cache.setdefault(server, {})[target_user_id] = user_info
         await context.send(
             templates.CHARACTER_SWITCH_SUCCESS.format(
@@ -415,8 +416,8 @@ class RPGCommands(commands.Cog):
             user_info["active"] = (
                 user_info["characters"][0] if user_info["characters"] else None
             )
-        self.bot.repo.delete_character(selected.character_id)
-        self.bot.repo.save_user(server, target_user_id, user_info)
+        await self.bot.repo.delete_character(selected.character_id)
+        await self.bot.repo.save_user(server, target_user_id, user_info)
         self.bot.character_cache.pop(selected.character_id, None)
         self.bot.user_cache.setdefault(server, {})[target_user_id] = user_info
         await context.send(
@@ -503,7 +504,7 @@ class RPGCommands(commands.Cog):
                     self.bot.character_cache[current].set_stat(stat_path, value)
                     character_name = self.bot.character_cache[current].get_name()
                     payload = self.bot.character_cache[current].export_stats()
-                    self.bot.repo.save_character(current, payload)
+                    await self.bot.repo.save_character(current, payload)
                     await context.send(
                         templates.STAT_CHANGE_SUCCESSFUL.format(
                             character_name=character_name,
@@ -532,10 +533,16 @@ class RPGCommands(commands.Cog):
         user2_id = gen_utils.discord_name_to_id(user2)
         if user1_id and user2_id:
             repo = self.bot.repo
-            repo.set_alias(user1_id, user2_id)
-            repo.transfer_user_characters(server, user1_id, user2_id)
-            self.bot.user_cache = database.load_all_users(repo.raw_db)
-            self.bot.character_cache = database.hydrate_character_models(repo.raw_db)
+            await repo.set_alias(user1_id, user2_id)
+            await repo.transfer_user_characters(server, user1_id, user2_id)
+            # Full reload -- offload to a thread so it doesn't block the event
+            # loop for the (potentially large) collection scans involved.
+            self.bot.user_cache = await asyncio.to_thread(
+                database.load_all_users, repo.raw_db
+            )
+            self.bot.character_cache = await asyncio.to_thread(
+                database.hydrate_character_models, repo.raw_db
+            )
             await context.send(
                 templates.ALIAS_CHANGE_SUCCESS.format(user1=user1_id, user2=user2_id)
             )
@@ -594,7 +601,7 @@ class RPGCommands(commands.Cog):
                     # Accepted - write changes to DB
                     self.bot.character_cache[current].set_gold(new_gold)
                     payload = self.bot.character_cache[current].export_stats()
-                    self.bot.repo.save_character(current, payload)
+                    await self.bot.repo.save_character(current, payload)
                     await context.send(
                         templates.CHANGE_GOLD_SUCCESS.format(
                             name=self.bot.character_cache[current].get_name(),
@@ -634,7 +641,7 @@ class RPGCommands(commands.Cog):
                 # Accepted - write changes to DB
                 self.bot.character_cache[current].set_gold(amount)
                 payload = self.bot.character_cache[current].export_stats()
-                self.bot.repo.save_character(current, payload)
+                await self.bot.repo.save_character(current, payload)
                 await context.send(
                     templates.SET_GOLD_SUCCESS.format(
                         name=self.bot.character_cache[current].get_name(),
@@ -682,7 +689,7 @@ class RPGCommands(commands.Cog):
                             gold=source_gold,
                         )
                     )
-                elif self.bot.repo.transfer_gold_between_characters(
+                elif await self.bot.repo.transfer_gold_between_characters(
                     source, target, amount
                 ):
                     self.bot.character_cache[source].set_gold(source_gold - amount)

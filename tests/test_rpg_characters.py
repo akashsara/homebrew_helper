@@ -303,3 +303,24 @@ def test_create_character_preserves_spaces_in_quoted_json_string_values():
 
     sent_messages = [call.args[0] for call in context.send.await_args_list]
     assert any("John Doe" in message for message in sent_messages)
+
+
+def test_rpg_commands_have_a_shared_cooldown():
+    # Regression: unlike FunStuff, RPGCommands previously had no cooldown check
+    # at all, so its DB-writing commands (goldadd, create, etc.) could be spammed
+    # without limit -- worsened by every write going through blocking pymongo
+    # calls on the bot's single event loop.
+    cog = RPGCommands(SimpleNamespace(), n_messages=1, cooldown=100)
+    author = SimpleNamespace(id=1)
+    context = _context(
+        invoked_with="gold",
+        author=author,
+        message=SimpleNamespace(author=author),
+    )
+
+    allowed_first = asyncio.run(cog.cog_check(context))
+    allowed_second = asyncio.run(cog.cog_check(context))
+
+    assert allowed_first is True
+    assert allowed_second is False
+    context.send.assert_awaited_once()
