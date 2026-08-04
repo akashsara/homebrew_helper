@@ -107,12 +107,15 @@ class RPGCommands(commands.Cog):
                     # Validate character info
                     result = player_character.validate_character(character_info)
                     if result["status"]:
-                        # Create character
+                        # Create character. Use the normalized payload (not the raw
+                        # JSON) so fields with schema defaults, e.g. `hp`, are
+                        # actually present -- omitting them would otherwise pass
+                        # validation but crash later when displaying the character.
                         uuid = gen_utils.generate_unique_id(
                             set(self.bot.character_cache.keys())
                         )
                         character = player_character.PlayerCharacter(
-                            user_id, uuid, character_info
+                            user_id, uuid, result["data"]
                         )
                         await context.send(templates.CREATE_CHARACTER_CONFIRM_PROMPT)
                         await context.send(character.info())

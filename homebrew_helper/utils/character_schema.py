@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
@@ -22,10 +22,15 @@ class CharacterInfoPayload(BaseModel):
     stats: Dict[str, StatEntry]
 
 
-def validate_character_payload(chara: dict) -> Dict[str, Union[bool, str]]:
+def validate_character_payload(chara: dict) -> Dict[str, Any]:
+    """
+    On success, "data" holds the normalized payload (defaults applied, e.g. missing
+    `hp`, and unknown fields dropped) -- callers must persist/build from this, not
+    the raw input, or fields with defaults can end up silently missing downstream.
+    """
     try:
-        CharacterInfoPayload.model_validate(chara)
-        return {"status": True, "error": "None"}
+        validated = CharacterInfoPayload.model_validate(chara)
+        return {"status": True, "error": "None", "data": validated.model_dump()}
     except ValidationError as e:
         err = e.errors()[0] if e.errors() else {}
         loc = ".".join(str(x) for x in err.get("loc", ()))
