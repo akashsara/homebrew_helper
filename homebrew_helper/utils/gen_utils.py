@@ -50,6 +50,22 @@ def discord_name_to_id(name: str) -> Optional[str]:
     return None
 
 
+_MENTION_RE = re.compile(r"^<@!?(\d+)>$")
+
+
+def mention_to_id(token: str) -> Optional[str]:
+    """
+    Like discord_name_to_id, but only matches an actual mention token
+    (`<@id>` or `<@!id>`), not bare digits or digits embedded in other text.
+    Use this instead of discord_name_to_id whenever the surrounding text could
+    legitimately be free-form content containing digits (e.g. a character
+    name/id search query) rather than a dedicated "give me a user" argument --
+    otherwise a query like "4a2f | New Name" gets misread as targeting user "4".
+    """
+    match = _MENTION_RE.match(token.strip())
+    return match.group(1) if match else None
+
+
 def format_stat(name):
     return name.replace("_", " ").title()
 

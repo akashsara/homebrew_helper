@@ -153,6 +153,24 @@ def test_resolve_target_user_id_extracts_admin_target():
     assert query == "Ayla Prime"
 
 
+def test_resolve_target_user_id_does_not_misread_numeric_query_as_admin_target():
+    # Regression: character ids are UUIDs (hex, so plausibly digit-led prefixes
+    # like "4a2f"). discord_name_to_id would match the leading digits of any such
+    # query and misinterpret an admin's own character search as "target user 4".
+    # Only an actual <@id> mention should be treated as a target-user override.
+    context = SimpleNamespace(
+        author=SimpleNamespace(
+            id="111",
+            guild_permissions=SimpleNamespace(administrator=True),
+        )
+    )
+
+    target_user_id, query = _resolve_target_user_id(context, "4a2f | New Name")
+
+    assert target_user_id == "111"
+    assert query == "4a2f | New Name"
+
+
 def test_rpg_command_help_messages_do_not_use_placeholders():
     command_helps = [
         command.help

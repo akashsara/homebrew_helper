@@ -62,6 +62,19 @@ def test_discord_name_to_id_none_when_no_digits():
     assert gen_utils.discord_name_to_id("no-id-here") is None
 
 
+def test_mention_to_id_matches_plain_and_nickname_mentions():
+    assert gen_utils.mention_to_id("<@123456789012345678>") == "123456789012345678"
+    assert gen_utils.mention_to_id("<@!123456789012345678>") == "123456789012345678"
+
+
+def test_mention_to_id_none_for_bare_digits_or_embedded_digits():
+    # Regression: a query like a character id prefix ("4a2f") must never be
+    # mistaken for a user mention just because it contains digits.
+    assert gen_utils.mention_to_id("123456789012345678") is None
+    assert gen_utils.mention_to_id("4a2f") is None
+    assert gen_utils.mention_to_id("character4") is None
+
+
 def test_format_stat():
     assert gen_utils.format_stat("armor_class") == "Armor Class"
 

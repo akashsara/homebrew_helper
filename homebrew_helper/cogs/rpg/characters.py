@@ -62,7 +62,10 @@ def _resolve_target_user_id(context, raw_text: str):
     if not raw_text:
         return str(context.author.id), raw_text
     first_token, separator, remainder = raw_text.partition(" ")
-    target_user_id = gen_utils.discord_name_to_id(first_token)
+    # Only an actual `<@id>`/`<@!id>` mention counts as targeting another user here --
+    # discord_name_to_id would also match bare digits, which collides with character
+    # id/name queries that happen to contain digits (e.g. a UUID prefix like "4a2f").
+    target_user_id = gen_utils.mention_to_id(first_token)
     is_admin = getattr(context.author.guild_permissions, "administrator", False)
     if separator and target_user_id and is_admin:
         return target_user_id, remainder.strip()
