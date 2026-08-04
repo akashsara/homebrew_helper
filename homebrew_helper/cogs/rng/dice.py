@@ -19,6 +19,16 @@ _INIT_ROLL_STATE = {
 }
 
 
+def _normalize_roll_text(roll_parts) -> str:
+    return "".join(roll_parts).lower().replace(" ", "")
+
+
+def _looks_like_dice_roll(roll: str) -> bool:
+    if roll[-1:] in ["a", "d"]:
+        roll = roll[:-1]
+    return bool(roll) and config.VALID_ROLL_CHARACTERS.issuperset(set(roll))
+
+
 def _npc_key(npc_name: str, index: int) -> str:
     return f"{NPC_PREFIX}{npc_name} {index + 1}"
 
@@ -31,7 +41,9 @@ def _initiative_player_label(bot, server: str, reaction_user) -> str:
     return str(reaction_user.display_name)
 
 
-def _format_initiative_table_row(result: int, all_rolls: List[str], player_name: str) -> str:
+def _format_initiative_table_row(
+    result: int, all_rolls: List[str], player_name: str
+) -> str:
     result = str(result).rjust(2)
     if len(all_rolls) == 2:
         r0 = all_rolls[0].rjust(2)
@@ -130,7 +142,11 @@ class RNGCommands(commands.Cog):
         brief="To roll one or many dice(s).",
     )
     async def roll(self, context, *roll):
-        roll = "".join(roll).lower().replace(" ", "")
+        roll_parts = [part.lower().replace(" ", "") for part in roll]
+        if await self._try_character_roll(context, roll_parts):
+            return
+
+        roll = _normalize_roll_text(roll_parts)
         author = context.author
         self.logger.info("Roll: %s (%s) :: %s", author, author.id, roll)
         if not roll:
@@ -147,6 +163,30 @@ class RNGCommands(commands.Cog):
         else:
             result = dice.roll_wrapper(roll, author.id, "normal")
         await context.send(result["message"])
+
+    async def _try_character_roll(self, context, roll_parts) -> bool:
+        if not roll_parts:
+            return False
+
+        command_name = roll_parts[0]
+        modifiers = _normalize_roll_text(roll_parts[1:])
+
+        if command_name == "attack":
+            attack_command = self.bot.get_command("attack")
+            if attack_command:
+                await context.invoke(attack_command, modifiers)
+                return True
+
+        roll = _normalize_roll_text(roll_parts)
+        if _looks_like_dice_roll(roll):
+            return False
+
+        saving_throw_command = self.bot.get_command("saving_throw")
+        if saving_throw_command:
+            await context.invoke(saving_throw_command, command_name, modifiers)
+            return True
+
+        return False
 
     @commands.command(
         name="roll_initiative",

@@ -134,9 +134,10 @@ class PlayerCharacter:
         partial_matches = {}
 
         def match_stat(stat_name, stat_path):
-            if candidate == stat_name:
+            normalized_stat = stat_name.lower()
+            if candidate == normalized_stat:
                 return (stat_name, stat_path)
-            elif stat_name.startswith(candidate):
+            elif normalized_stat.startswith(candidate):
                 partial_matches[stat_name] = stat_path
 
         for path, stat in self.stat_cache.items():
