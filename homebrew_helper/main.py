@@ -79,11 +79,19 @@ def run_bot():
     intents.message_content = True
     intents.members = True
 
+    # Several fun.py commands interpolate a raw, unsanitized user-supplied string
+    # (e.g. `!slap <target>`) directly into a sent message. Without this, discord.py's
+    # default lets @everyone/@here and role mentions actually ping, turning those
+    # commands into a mass-ping griefing vector. Direct user mentions stay allowed
+    # since the bot legitimately pings users everywhere (e.g. error templates).
+    allowed_mentions = discord.AllowedMentions(everyone=False, roles=False, users=True)
+
     # Initialize the bot client
     client = HomebrewHelper(
         command_prefix=config.BOT_PREFIX,
         help_command=help_command,
         intents=intents,
+        allowed_mentions=allowed_mentions,
         initial_extensions=initial_extensions,
         character_cache=character_cache,
         user_cache=user_cache,
