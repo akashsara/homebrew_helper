@@ -423,6 +423,13 @@ class RPGCommands(CooldownCogMixin, commands.Cog):
         await self.bot.repo.save_user(server, target_user_id, user_info)
         self.bot.character_cache.pop(selected.character_id, None)
         self.bot.user_cache.setdefault(server, {})[target_user_id] = user_info
+        self.logger.info(
+            "delete: acting_user=%s target_user=%s character=%s(%s)",
+            acting_user_id,
+            target_user_id,
+            selected_name,
+            selected.character_id,
+        )
         await context.send(
             templates.CHARACTER_DELETE_SUCCESS.format(
                 user=acting_user_id,
@@ -491,10 +498,9 @@ class RPGCommands(CooldownCogMixin, commands.Cog):
         brief="To modify character stats.",
     )
     @commands.has_permissions(administrator=True)
-    async def change_stat(self, context, user, stat, value):
+    async def change_stat(self, context, user, stat, value: int):
         server = str(context.guild.id)
         user_id = gen_utils.discord_name_to_id(user)
-        value = int(value)
         if user_id:
             # Get active character
             current = self.bot.get_current_chara(server, user_id)
@@ -508,6 +514,15 @@ class RPGCommands(CooldownCogMixin, commands.Cog):
                     character_name = self.bot.character_cache[current].get_name()
                     payload = self.bot.character_cache[current].export_stats()
                     await self.bot.repo.save_character(current, payload)
+                    self.logger.info(
+                        "setstat: admin=%s target_user=%s character=%s(%s) stat=%s value=%s",
+                        context.author.id,
+                        user_id,
+                        character_name,
+                        current,
+                        stat_name,
+                        value,
+                    )
                     await context.send(
                         templates.STAT_CHANGE_SUCCESSFUL.format(
                             character_name=character_name,
@@ -545,6 +560,13 @@ class RPGCommands(CooldownCogMixin, commands.Cog):
             )
             self.bot.character_cache = await asyncio.to_thread(
                 database.hydrate_character_models, repo.raw_db
+            )
+            self.logger.info(
+                "alias: admin=%s source_user=%s target_user=%s server=%s",
+                context.author.id,
+                user1_id,
+                user2_id,
+                server,
             )
             await context.send(
                 templates.ALIAS_CHANGE_SUCCESS.format(user1=user1_id, user2=user2_id)
@@ -590,10 +612,9 @@ class RPGCommands(CooldownCogMixin, commands.Cog):
         brief="To add or remove gold.",
     )
     @commands.has_permissions(administrator=True)
-    async def change_gold(self, context, user, amount):
+    async def change_gold(self, context, user, amount: int):
         server = str(context.guild.id)
         user_id = gen_utils.discord_name_to_id(user)
-        amount = int(amount)
         if user_id:
             # Get active character
             current = self.bot.get_current_chara(server, user_id)
@@ -605,6 +626,14 @@ class RPGCommands(CooldownCogMixin, commands.Cog):
                     self.bot.character_cache[current].set_gold(new_gold)
                     payload = self.bot.character_cache[current].export_stats()
                     await self.bot.repo.save_character(current, payload)
+                    self.logger.info(
+                        "goldadd: admin=%s target_user=%s character=%s delta=%s new_total=%s",
+                        context.author.id,
+                        user_id,
+                        current,
+                        amount,
+                        new_gold,
+                    )
                     await context.send(
                         templates.CHANGE_GOLD_SUCCESS.format(
                             name=self.bot.character_cache[current].get_name(),
@@ -633,10 +662,9 @@ class RPGCommands(CooldownCogMixin, commands.Cog):
         brief="To set gold to a particular amount.",
     )
     @commands.has_permissions(administrator=True)
-    async def set_gold(self, context, user, amount):
+    async def set_gold(self, context, user, amount: int):
         server = str(context.guild.id)
         user_id = gen_utils.discord_name_to_id(user)
-        amount = int(amount)
         if user_id:
             # Get active character
             current = self.bot.get_current_chara(server, user_id)
@@ -645,6 +673,13 @@ class RPGCommands(CooldownCogMixin, commands.Cog):
                 self.bot.character_cache[current].set_gold(amount)
                 payload = self.bot.character_cache[current].export_stats()
                 await self.bot.repo.save_character(current, payload)
+                self.logger.info(
+                    "goldset: admin=%s target_user=%s character=%s new_total=%s",
+                    context.author.id,
+                    user_id,
+                    current,
+                    amount,
+                )
                 await context.send(
                     templates.SET_GOLD_SUCCESS.format(
                         name=self.bot.character_cache[current].get_name(),
@@ -663,11 +698,10 @@ class RPGCommands(CooldownCogMixin, commands.Cog):
         help="Transfer gold from your active character to another user's active character with `!pay <amount> @user`.",
         brief="To transfer gold between characters.",
     )
-    async def transfer_gold(self, context, amount, target):
+    async def transfer_gold(self, context, amount: int, target):
         server = str(context.guild.id)
         source_user_id = str(context.author.id)
         target_user_id = gen_utils.discord_name_to_id(target)
-        amount = int(amount)
         if amount <= 0:
             await context.send(
                 templates.GOLD_TRANSFER_AMOUNT_LESS_THAN_ZERO.format(source_user=source_user_id)

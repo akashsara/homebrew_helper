@@ -1,6 +1,8 @@
 import asyncio
+import logging
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from discord.ext.commands.view import StringView
 
 from homebrew_helper.cogs.rpg.characters import (
@@ -342,3 +344,127 @@ def test_rpg_commands_have_a_shared_cooldown():
     assert allowed_first is True
     assert allowed_second is False
     context.send.assert_awaited_once()
+
+
+@pytest.mark.parametrize(
+    "command_name, raw_args",
+    [
+        ("change_stat", "<@1> strength notanumber"),
+        ("change_gold", "<@1> notanumber"),
+        ("set_gold", "<@1> notanumber"),
+    ],
+)
+def test_numeric_commands_reject_bad_values_with_bad_argument(command_name, raw_args):
+    # Regression: value/amount used to be converted manually via int(value) inside
+    # the command body, so a bad value raised a bare ValueError, which main.py's
+    # error handler shows as a generic "something went wrong" message -- leaving
+    # its dedicated, more helpful BadArgument branch unreachable. Typing these
+    # parameters as `int` lets discord.py's own argument parser raise BadArgument
+    # directly, which the error handler already knows how to turn into a specific
+    # "invalid argument: ..." message.
+    cog = RPGCommands(SimpleNamespace())
+    command = getattr(RPGCommands, command_name)
+
+    with pytest.raises(commands.BadArgument):
+        asyncio.run(_dispatch(command, cog, raw_args))
+
+
+def test_transfer_gold_rejects_non_integer_amount_with_bad_argument():
+    cog = RPGCommands(SimpleNamespace())
+
+    with pytest.raises(commands.BadArgument):
+        asyncio.run(_dispatch(RPGCommands.transfer_gold, cog, "notanumber <@1>"))
+
+
+# Cleanup: goldadd/goldset/setstat/delete/alias mutate persistent game state but
+# previously logged nothing, leaving no record of who changed what. Each of these
+# verifies the command now emits an audit-trail log line on success.
+
+
+def test_change_stat_success_logs_audit_entry(caplog):
+    character = _character("c1", "Ayla")
+    bot = SimpleNamespace(
+        get_current_chara=lambda server, user_id: "c1",
+        character_cache={"c1": character},
+        repo=AsyncMock(),
+    )
+    cog = RPGCommands(bot)
+    context = _context()
+
+    with caplog.at_level(logging.INFO, logger="bot.rpg_commands"):
+        asyncio.run(RPGCommands.change_stat.callback(cog, context, "123", "strength", 9))
+
+    assert any("setstat:" in record.message for record in caplog.records)
+
+
+def test_change_gold_success_logs_audit_entry(caplog):
+    character = _character("c1", "Ayla")
+    bot = SimpleNamespace(
+        get_current_chara=lambda server, user_id: "c1",
+        character_cache={"c1": character},
+        repo=AsyncMock(),
+    )
+    cog = RPGCommands(bot)
+    context = _context()
+
+    with caplog.at_level(logging.INFO, logger="bot.rpg_commands"):
+        asyncio.run(RPGCommands.change_gold.callback(cog, context, "123", 50))
+
+    assert any("goldadd:" in record.message for record in caplog.records)
+
+
+def test_set_gold_success_logs_audit_entry(caplog):
+    character = _character("c1", "Ayla")
+    bot = SimpleNamespace(
+        get_current_chara=lambda server, user_id: "c1",
+        character_cache={"c1": character},
+        repo=AsyncMock(),
+    )
+    cog = RPGCommands(bot)
+    context = _context()
+
+    with caplog.at_level(logging.INFO, logger="bot.rpg_commands"):
+        asyncio.run(RPGCommands.set_gold.callback(cog, context, "123", 200))
+
+    assert any("goldset:" in record.message for record in caplog.records)
+
+
+def test_delete_character_success_logs_audit_entry(caplog):
+    character = _character("c1", "Ayla")
+    author = SimpleNamespace(
+        id=111, guild_permissions=SimpleNamespace(administrator=False)
+    )
+    bot = SimpleNamespace(
+        user_cache={"1": {"111": {"characters": ["c1"], "active": "c1"}}},
+        character_cache={"c1": character},
+        repo=AsyncMock(),
+        wait_for=AsyncMock(return_value=SimpleNamespace(content="y")),
+    )
+    cog = RPGCommands(bot)
+    context = _context(author=author, guild=SimpleNamespace(id=1))
+
+    with caplog.at_level(logging.INFO, logger="bot.rpg_commands"):
+        asyncio.run(RPGCommands.delete_character.callback(cog, context, query="Ayla"))
+
+    assert any("delete:" in record.message for record in caplog.records)
+
+
+def test_add_alias_success_logs_audit_entry(caplog, monkeypatch):
+    bot = SimpleNamespace(repo=AsyncMock())
+    bot.repo.raw_db = MagicMock()
+    cog = RPGCommands(bot)
+    context = _context(guild=SimpleNamespace(id=1))
+
+    monkeypatch.setattr(
+        "homebrew_helper.cogs.rpg.characters.database.load_all_users",
+        lambda db: {},
+    )
+    monkeypatch.setattr(
+        "homebrew_helper.cogs.rpg.characters.database.hydrate_character_models",
+        lambda db: {},
+    )
+
+    with caplog.at_level(logging.INFO, logger="bot.rpg_commands"):
+        asyncio.run(RPGCommands.add_alias.callback(cog, context, "<@222>", "<@333>"))
+
+    assert any("alias:" in record.message for record in caplog.records)

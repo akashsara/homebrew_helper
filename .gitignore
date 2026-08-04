@@ -7,3 +7,5 @@ data/
 venv/
 .vscode/
 .env
+.coverage
+.pytest_cache/
