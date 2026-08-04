@@ -27,7 +27,7 @@ packages = [{ include = "homebrew_helper" }]
 
 [tool.poetry.group.dev.dependencies]
 black = ">=26.3.1,<27.0.0"
-pytest = ">=8.0.0,<9.0.0"
+pytest = ">=9.0.3,<10.0.0"
 pytest-cov = "^6.0.0"
 
 [tool.pytest.ini_options]
