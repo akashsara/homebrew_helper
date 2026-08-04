@@ -1,3 +1,6 @@
+import asyncio
+from unittest.mock import AsyncMock, MagicMock
+
 from homebrew_helper.cogs.rpg.characters import (
     RPGCommands,
     _find_owned_character_matches,
@@ -198,3 +201,52 @@ def test_rpg_commands_use_short_primary_names_and_keep_legacy_aliases():
 
     assert commands_by_attr["transfer_gold"].name == "pay"
     assert "transfer_gold" in commands_by_attr["transfer_gold"].aliases
+
+
+def _context(**overrides):
+    defaults = dict(
+        guild=SimpleNamespace(id=1),
+        author=SimpleNamespace(id=123),
+        send=AsyncMock(),
+        invoke=AsyncMock(),
+    )
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
+
+
+def test_saving_throw_with_unresolvable_stat_sends_invalid_stat_message():
+    # Regression: resolve_stat_name returns None (previously False) when a stat
+    # can't be resolved. saving_throw used to unpack that return value as a tuple
+    # unconditionally, which raised a TypeError instead of showing INVALID_STAT.
+    character = _character("c1", "Ayla")
+    bot = SimpleNamespace(
+        get_current_chara=lambda server, user_id: "c1",
+        character_cache={"c1": character},
+    )
+    cog = RPGCommands(bot)
+    context = _context()
+
+    asyncio.run(RPGCommands.saving_throw.callback(cog, context, "nonexistent_stat"))
+
+    context.invoke.assert_not_awaited()
+    context.send.assert_awaited_once()
+    assert "valid stat" in context.send.call_args[0][0].lower()
+
+
+def test_change_stat_with_unresolvable_stat_sends_invalid_stat_message():
+    character = _character("c1", "Ayla")
+    bot = SimpleNamespace(
+        get_current_chara=lambda server, user_id: "c1",
+        character_cache={"c1": character},
+        repo=MagicMock(),
+    )
+    cog = RPGCommands(bot)
+    context = _context()
+
+    asyncio.run(
+        RPGCommands.change_stat.callback(cog, context, "123", "nonexistent_stat", "5")
+    )
+
+    bot.repo.save_character.assert_not_called()
+    context.send.assert_awaited_once()
+    assert "valid stat" in context.send.call_args[0][0].lower()

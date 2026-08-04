@@ -81,10 +81,15 @@ def test_resolve_stat_name_partial_unique():
     assert pc.resolve_stat_name("stre") == ("strength", "stats__strength")
 
 
-def test_resolve_stat_name_ambiguous_returns_false():
+def test_resolve_stat_name_ambiguous_returns_none():
     info = _minimal_info(stats={"strength": 1, "stealth": 1})
     pc = PlayerCharacter(character_info=info)
-    assert pc.resolve_stat_name("st") is False
+    assert pc.resolve_stat_name("st") is None
+
+
+def test_resolve_stat_name_no_match_returns_none():
+    pc = PlayerCharacter(character_info=_minimal_info())
+    assert pc.resolve_stat_name("nonexistent") is None
 
 
 def test_get_and_set_stat_nested():

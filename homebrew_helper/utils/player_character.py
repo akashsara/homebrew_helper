@@ -123,12 +123,12 @@ class PlayerCharacter:
             else:
                 self.stat_cache[key] = key
 
-    def resolve_stat_name(self, candidate: str) -> Union[Tuple[str, str], bool]:
+    def resolve_stat_name(self, candidate: str) -> Optional[Tuple[str, str]]:
         """
         Checks if user input exact matches the stat.
         If not then it checks for a partial match.
         If there is exactly one partial match, it works with that.
-        If there are none or more than one matches, return False.
+        If there are none or more than one matches, return None.
         """
         candidate = candidate.lower()
         partial_matches = {}
@@ -145,7 +145,7 @@ class PlayerCharacter:
 
         if len(partial_matches) == 1:
             return list(partial_matches.items())[0]
-        return False
+        return None
 
     def get_stat(self, stat: str) -> Union[str, bool]:
         result = self.character_info
