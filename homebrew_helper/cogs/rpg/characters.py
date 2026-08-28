@@ -553,9 +553,30 @@ class RPGCommands(CooldownCogMixin, commands.Cog):
     @commands.has_permissions(administrator=True)
     async def add_alias(self, context, user1, user2):
         server = str(context.guild.id)
+        acting_user_id = str(context.author.id)
         user1_id = gen_utils.discord_name_to_id(user1)
         user2_id = gen_utils.discord_name_to_id(user2)
         if user1_id and user2_id:
+            await context.send(
+                templates.ALIAS_CONFIRM_PROMPT.format(
+                    user=acting_user_id, user1=user1_id, user2=user2_id
+                )
+            )
+
+            def confirm_check(m):
+                return m.author == context.author and m.channel == context.channel
+
+            try:
+                message = await self.bot.wait_for(
+                    "message", timeout=60, check=confirm_check
+                )
+                if not message or not _is_yes_response(message.content):
+                    await context.send(templates.ALIAS_CANCEL.format(user=acting_user_id))
+                    return
+            except asyncio.TimeoutError:
+                await context.send(templates.ALIAS_CANCEL.format(user=acting_user_id))
+                return
+
             repo = self.bot.repo
             await repo.set_alias(user1_id, user2_id)
             await repo.transfer_user_characters(server, user1_id, user2_id)

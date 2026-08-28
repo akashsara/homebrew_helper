@@ -95,6 +95,30 @@ def test_roll_wrapper_too_many_dice_for_repeat():
     assert "not gonna roll" in r["message"].lower()
 
 
+def test_roll_wrapper_caps_repeats_for_dice_free_roll():
+    # A pure-modifier roll has n_dice == 0, so the repeat cap must not rely
+    # on n_dice alone or a huge n_repeats would sail through uncapped.
+    r = dice_mod.roll_wrapper(
+        "5",
+        "999",
+        "repeat",
+        n_repeats=str(config.DICE_ROLL_MAX_DICE + 1),
+    )
+    assert r["error"] is True
+    assert "not gonna roll" in r["message"].lower()
+
+
+def test_roll_wrapper_caps_repeats_for_empty_roll():
+    r = dice_mod.roll_wrapper(
+        "",
+        "999",
+        "repeat",
+        n_repeats=str(config.DICE_ROLL_MAX_DICE + 1),
+    )
+    assert r["error"] is True
+    assert "not gonna roll" in r["message"].lower()
+
+
 def test_roll_wrapper_invalid_roll_type():
     r = dice_mod.roll_wrapper("1d20", "999", "not_a_mode")
     assert r["error"] is True

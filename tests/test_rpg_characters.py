@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from discord.ext.commands.view import StringView
@@ -524,7 +524,9 @@ def test_delete_character_success_logs_audit_entry(caplog):
 
 
 def test_add_alias_success_logs_audit_entry(caplog, monkeypatch):
-    bot = SimpleNamespace(repo=AsyncMock())
+    bot = SimpleNamespace(
+        repo=AsyncMock(), wait_for=AsyncMock(return_value=SimpleNamespace(content="y"))
+    )
     bot.repo.raw_db = MagicMock()
     cog = RPGCommands(bot)
     context = _context(guild=SimpleNamespace(id=1))
@@ -542,3 +544,44 @@ def test_add_alias_success_logs_audit_entry(caplog, monkeypatch):
         asyncio.run(RPGCommands.add_alias.callback(cog, context, "<@222>", "<@333>"))
 
     assert any("alias:" in record.message for record in caplog.records)
+
+
+def test_add_alias_prompts_for_confirmation_before_transferring():
+    # Regression: add_alias used to transfer every character from user1 to
+    # user2 immediately with no confirmation, unlike delete_character which
+    # requires a Y/N reply -- inconsistent for an equally irreversible action.
+    bot = SimpleNamespace(
+        repo=AsyncMock(), wait_for=AsyncMock(return_value=SimpleNamespace(content="y"))
+    )
+    bot.repo.raw_db = MagicMock()
+    cog = RPGCommands(bot)
+    context = _context(guild=SimpleNamespace(id=1))
+
+    with patch(
+        "homebrew_helper.cogs.rpg.characters.database.load_all_users",
+        return_value={},
+    ), patch(
+        "homebrew_helper.cogs.rpg.characters.database.hydrate_character_models",
+        return_value={},
+    ):
+        asyncio.run(RPGCommands.add_alias.callback(cog, context, "<@222>", "<@333>"))
+
+    bot.wait_for.assert_awaited_once()
+    bot.repo.set_alias.assert_awaited_once_with("222", "333")
+    sent_messages = [call.args[0] for call in context.send.await_args_list]
+    assert any("are you sure" in message.lower() for message in sent_messages)
+
+
+def test_add_alias_cancels_transfer_on_non_yes_reply():
+    bot = SimpleNamespace(
+        repo=AsyncMock(), wait_for=AsyncMock(return_value=SimpleNamespace(content="n"))
+    )
+    cog = RPGCommands(bot)
+    context = _context(guild=SimpleNamespace(id=1))
+
+    asyncio.run(RPGCommands.add_alias.callback(cog, context, "<@222>", "<@333>"))
+
+    bot.repo.set_alias.assert_not_awaited()
+    bot.repo.transfer_user_characters.assert_not_awaited()
+    sent_messages = [call.args[0] for call in context.send.await_args_list]
+    assert any("cancelled" in message.lower() for message in sent_messages)

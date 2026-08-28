@@ -15,6 +15,8 @@ CHARACTER_NOT_FOUND = "<@{user}> doesn't have any characters."
 USER_NOT_FOUND = "<@{user}> doesn't exist."
 NOT_ENOUGH_GOLD = "{name} (<@{user}>) doesn't have enough gold for that. They currently have {gold} gold."
 GET_CURRENT_GOLD = "{name} (<@{user}>) currently has {gold} gold."
+ALIAS_CONFIRM_PROMPT = "<@{user}>, are you sure you want to move all of <@!{user1}>'s characters to <@!{user2}>? This cannot be undone. Reply with `Y` to confirm or `N` to cancel."
+ALIAS_CANCEL = "<@{user}>, alias creation cancelled."
 ALIAS_CHANGE_SUCCESS = "<@!{user1}> is now an alias of <@!{user2}>"
 CHARACTER_SWITCH_NO_OWNED_CHARACTERS = (
     "<@{user}>, you don't have any characters to switch to."

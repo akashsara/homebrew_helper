@@ -166,8 +166,11 @@ def roll_wrapper(
                 author_id=author_id
             ),
         }
-    # If there are too many repetitions
-    elif (n_dice * n_repeats) > config.DICE_ROLL_MAX_DICE:
+    # If there are too many repetitions. `n_dice` is 0 for a pure-modifier or
+    # empty roll (e.g. "5" or ""), which would let n_repeats through uncapped
+    # and stall the event loop building millions of trivial results -- floor
+    # it at 1 so every roll is still bounded by DICE_ROLL_MAX_DICE.
+    elif (max(n_dice, 1) * n_repeats) > config.DICE_ROLL_MAX_DICE:
         return {
             "error": True,
             "message": templates.ROLL_WRAPPER_TOO_MANY_DICE.format(

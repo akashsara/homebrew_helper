@@ -7,6 +7,7 @@ from typing import Dict, List
 import homebrew_helper.config as config
 import homebrew_helper.templates as templates
 from discord.ext import commands
+from homebrew_helper.cogs._cooldown import CooldownCogMixin
 from homebrew_helper.utils import dice, gen_utils
 
 # Initiative dict keys: Discord user snowflake, or "npc:{name} {n}" for NPC slots.
@@ -102,10 +103,11 @@ def _collect_initiative_rolls(
 
 
 # Ref: https://stackoverflow.com/questions/65595213/how-to-add-shared-cooldown-to-multiple-discord-py-commands
-class RNGCommands(commands.Cog):
-    def __init__(self, bot):
+class RNGCommands(CooldownCogMixin, commands.Cog):
+    def __init__(self, bot, n_messages=5, cooldown=8):
         self.bot = bot
         self.logger = logging.getLogger("bot.rng_commands")
+        self._init_cooldown(n_messages, cooldown)
 
     @commands.command(
         name="coin_toss",

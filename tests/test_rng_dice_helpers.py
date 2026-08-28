@@ -1,6 +1,7 @@
 from homebrew_helper.cogs.rng import dice as rng_dice
 import asyncio
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 
 def test_npc_key_format():
@@ -105,3 +106,25 @@ def test_roll_does_not_dispatch_advantage_dice_rolls_to_character_commands():
 
     assert handled is False
     assert context.invocations == []
+
+
+def test_rng_commands_have_a_shared_cooldown():
+    # Regression: unlike FunStuff/RPGCommands, RNGCommands previously had no
+    # cooldown check at all, so `roll`/`roll_initiative` -- the commands most
+    # exposed to abuse (e.g. spammed heavy repeat rolls) -- could be fired
+    # without limit.
+    cog = rng_dice.RNGCommands(_FakeBot(), n_messages=1, cooldown=100)
+    author = SimpleNamespace(id=1)
+    context = SimpleNamespace(
+        invoked_with="roll",
+        author=author,
+        message=SimpleNamespace(author=author),
+        send=AsyncMock(),
+    )
+
+    allowed_first = asyncio.run(cog.cog_check(context))
+    allowed_second = asyncio.run(cog.cog_check(context))
+
+    assert allowed_first is True
+    assert allowed_second is False
+    context.send.assert_awaited_once()
