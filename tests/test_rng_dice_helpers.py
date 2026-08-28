@@ -88,6 +88,33 @@ def test_roll_dispatches_stat_with_bonus_and_advantage_to_saving_throw_command()
     ]
 
 
+def test_roll_dispatches_stat_with_glued_bonus_to_saving_throw_command():
+    # Regression: "!r str+4" used to be parsed as the single stat candidate
+    # "str+4", which never resolves, so the bot always replied with an
+    # invalid-stat message instead of rolling the check.
+    cog = rng_dice.RNGCommands(_FakeBot())
+    context = _FakeContext()
+
+    handled = asyncio.run(cog._try_character_roll(context, ["str+4"]))
+
+    assert handled is True
+    assert context.invocations == [(cog.bot.commands["saving_throw"], ("str", "+4"))]
+
+
+def test_roll_dispatches_stat_with_trailing_sign_and_separate_dice_modifier():
+    # Regression: "!r str+ 1d4" split into tokens ["str+", "1d4"]; "str+" was
+    # used as the stat candidate and also failed to resolve.
+    cog = rng_dice.RNGCommands(_FakeBot())
+    context = _FakeContext()
+
+    handled = asyncio.run(cog._try_character_roll(context, ["str+", "1d4"]))
+
+    assert handled is True
+    assert context.invocations == [
+        (cog.bot.commands["saving_throw"], ("str", "+1d4"))
+    ]
+
+
 def test_roll_does_not_dispatch_dice_rolls_to_character_commands():
     cog = rng_dice.RNGCommands(_FakeBot())
     context = _FakeContext()

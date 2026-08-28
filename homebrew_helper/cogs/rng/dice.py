@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import random
+import re
 from collections import Counter
 from typing import Dict, List
 
@@ -12,6 +13,10 @@ from homebrew_helper.utils import dice, gen_utils
 
 # Initiative dict keys: Discord user snowflake, or "npc:{name} {n}" for NPC slots.
 NPC_PREFIX = "npc:"
+
+# Splits a stat name from a modifier glued directly onto it, e.g. "str+4" or
+# "str+" (the rest typed as a separate token, like "str+ 1d4").
+_STAT_MODIFIER_RE = re.compile(r"^([a-z]+)([+-].*)$")
 
 _INIT_ROLL_STATE = {
     config.INITIATIVE_REACTIONS["normal_roll"]: (False, False),
@@ -183,9 +188,15 @@ class RNGCommands(CooldownCogMixin, commands.Cog):
         if _looks_like_dice_roll(roll):
             return False
 
+        stat_name = command_name
+        match = _STAT_MODIFIER_RE.match(command_name)
+        if match:
+            stat_name, attached_modifier = match.groups()
+            modifiers = attached_modifier + modifiers
+
         saving_throw_command = self.bot.get_command("saving_throw")
         if saving_throw_command:
-            await context.invoke(saving_throw_command, command_name, modifiers)
+            await context.invoke(saving_throw_command, stat_name, modifiers)
             return True
 
         return False
